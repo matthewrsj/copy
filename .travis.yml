@@ -5,6 +5,10 @@ go:
 
 go_import_path: github.com/matthewrsj/copy
 
+before_install:
+  - go get -u gopkg.in/alecthomas/gometalinter.v2
+  - gometalinter.v2 --install
+
 script:
   - make lint
   - make check
