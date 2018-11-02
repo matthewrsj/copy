@@ -6,7 +6,7 @@ import (
 )
 
 func TestDirectoryString(t *testing.T) {
-	d := directory{path: "foo"}
+	d := directory{base{path: "foo"}}
 	ds := d.String()
 	if ds != "directory: foo" {
 		t.Errorf("expected 'directory: foo' but got '%s'", ds)
@@ -14,7 +14,7 @@ func TestDirectoryString(t *testing.T) {
 }
 
 func TestDirectoryPath(t *testing.T) {
-	d := directory{path: "foo"}
+	d := directory{base{path: "foo"}}
 	dp := d.Path()
 	if dp != "foo" {
 		t.Errorf("expected 'foo' but got '%s'", dp)

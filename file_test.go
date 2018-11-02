@@ -7,7 +7,7 @@ import (
 )
 
 func TestFileString(t *testing.T) {
-	f := file{path: "foo"}
+	f := file{base{path: "foo"}}
 	fs := f.String()
 	if fs != "file: foo" {
 		t.Errorf("expected 'file: foo' but got '%s'", fs)
@@ -15,7 +15,7 @@ func TestFileString(t *testing.T) {
 }
 
 func TestFilePath(t *testing.T) {
-	f := file{path: "foo"}
+	f := file{base{path: "foo"}}
 	fp := f.Path()
 	if fp != "foo" {
 		t.Errorf("expected 'foo' but got '%s'", fp)

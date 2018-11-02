@@ -3,8 +3,11 @@ package copy
 import "os"
 
 type link struct {
-	path string
-	info os.FileInfo
+	base
+}
+
+func newLink(path string, fi os.FileInfo) link {
+	return link{base{path, fi}}
 }
 
 // copyTo copies a symlink by replicating the l.path symlink at dst
@@ -19,12 +22,4 @@ func (l link) copyTo(dst string) error {
 
 func (l link) String() string {
 	return "link: " + l.path
-}
-
-func (l link) Path() string {
-	return l.path
-}
-
-func (l link) Info() os.FileInfo {
-	return l.info
 }

@@ -7,8 +7,11 @@ import (
 )
 
 type directory struct {
-	path string
-	info os.FileInfo
+	base
+}
+
+func newDirectory(path string, fi os.FileInfo) directory {
+	return directory{base{path, fi}}
 }
 
 // copyTo recursively copies directories from d.path to dst
@@ -43,12 +46,4 @@ func (d directory) copyTo(dst string) error {
 
 func (d directory) String() string {
 	return "directory: " + d.path
-}
-
-func (d directory) Path() string {
-	return d.path
-}
-
-func (d directory) Info() os.FileInfo {
-	return d.info
 }

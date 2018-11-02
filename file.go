@@ -7,8 +7,11 @@ import (
 )
 
 type file struct {
-	path string
-	info os.FileInfo
+	base
+}
+
+func newFile(path string, fi os.FileInfo) file {
+	return file{base{path, fi}}
 }
 
 // copyTo copies the f.path file to dst location, creating all parent directories
@@ -46,12 +49,4 @@ func (f file) copyTo(dst string) error {
 
 func (f file) String() string {
 	return "file: " + f.path
-}
-
-func (f file) Path() string {
-	return f.path
-}
-
-func (f file) Info() os.FileInfo {
-	return f.info
 }

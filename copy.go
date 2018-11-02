@@ -20,11 +20,11 @@ func newObject(path string) (copyObject, error) {
 	}
 	switch {
 	case fi.Mode()&os.ModeSymlink != 0:
-		return link{path, fi}, nil
+		return newLink(path, fi), nil
 	case fi.IsDir():
-		return directory{path, fi}, nil
+		return newDirectory(path, fi), nil
 	case fi.Mode().IsRegular():
-		return file{path, fi}, nil
+		return newFile(path, fi), nil
 	default:
 		return nil, errors.New("unsupported file type")
 	}

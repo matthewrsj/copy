@@ -7,7 +7,7 @@ import (
 )
 
 func TestLinkString(t *testing.T) {
-	l := link{path: "foo"}
+	l := link{base{path: "foo"}}
 	ls := l.String()
 	if ls != "link: foo" {
 		t.Errorf("expected 'link: foo' but got '%s'", ls)
@@ -15,7 +15,7 @@ func TestLinkString(t *testing.T) {
 }
 
 func TestLinkPath(t *testing.T) {
-	l := link{path: "foo"}
+	l := link{base{path: "foo"}}
 	lp := l.Path()
 	if lp != "foo" {
 		t.Errorf("expected 'foo' but got '%s'", lp)
@@ -44,7 +44,7 @@ func TestLinkInfo(t *testing.T) {
 }
 
 func TestLinkCopyToError(t *testing.T) {
-	l := link{path: "foo"}
+	l := link{base{path: "foo"}}
 	if err := l.copyTo("nowhere"); err == nil {
 		t.Error("expected error when file did not exist but no error was returned")
 	}
