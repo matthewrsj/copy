@@ -27,7 +27,7 @@ func (d directory) copyTo(dst string) error {
 	// copy each child recursively
 	for _, child := range children {
 		childSrc := filepath.Join(d.path, child.Name())
-		childDst := filepath.Join(d.path, child.Name())
+		childDst := filepath.Join(dst, child.Name())
 		obj, err := newObject(childSrc)
 		if err != nil {
 			return err
@@ -41,7 +41,14 @@ func (d directory) copyTo(dst string) error {
 	return nil
 }
 
-
 func (d directory) String() string {
 	return "directory: " + d.path
+}
+
+func (d directory) Path() string {
+	return d.path
+}
+
+func (d directory) Info() os.FileInfo {
+	return d.info
 }

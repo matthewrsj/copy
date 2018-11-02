@@ -47,3 +47,11 @@ func (f file) copyTo(dst string) error {
 func (f file) String() string {
 	return "file: " + f.path
 }
+
+func (f file) Path() string {
+	return f.path
+}
+
+func (f file) Info() os.FileInfo {
+	return f.info
+}

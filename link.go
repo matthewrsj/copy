@@ -20,3 +20,11 @@ func (l link) copyTo(dst string) error {
 func (l link) String() string {
 	return "link: " + l.path
 }
+
+func (l link) Path() string {
+	return l.path
+}
+
+func (l link) Info() os.FileInfo {
+	return l.info
+}

@@ -8,6 +8,8 @@ import (
 // interface for copying files, directories, or links
 type copyObject interface {
 	copyTo(dst string) error
+	Path() string
+	Info() os.FileInfo
 }
 
 // create a new object based on what type of file it is
@@ -43,7 +45,7 @@ func All(src, dst string) error {
 // fail.
 func LinkOrCopy(src, dst string) error {
 	if err := os.Link(src, dst); err != nil {
-		// link failed, fallback to recursive copy
+		// link failed, might be a directory, fallback to recursive copy
 		return All(src, dst)
 	}
 	return nil
