@@ -1,0 +1,10 @@
+language: go
+
+go:
+  - 1.9
+
+go_import_path: github.com/matthewrsj/copy
+
+script:
+  - make lint
+  - make check
