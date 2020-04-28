@@ -1,0 +1,4 @@
+github.com/google/uuid v1.1.1/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
+stash.teslamotors.com/ctet/gohermes v0.0.2/go.mod h1:ggWaZuyx6eUsOoi7hAIsNXMb8L6ZTO6Oc5+J0ZpapR8=
+stash.teslamotors.com/ctet/statemachine v1.1.0 h1:Er29yigI1sYQlmXSHTKK9ajM/d29zCfxjiYH7BbAYGQ=
+stash.teslamotors.com/ctet/statemachine v1.1.0/go.mod h1:fX/T0mHnG9IvRtCydJBsMW6ougdP8ATkbECRe7ymPvs=
