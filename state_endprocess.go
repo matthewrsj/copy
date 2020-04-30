@@ -10,6 +10,7 @@ func (e *EndProcess) action() {}
 
 func (e *EndProcess) Actions() []func() {
 	e.SetLast(true)
+
 	return []func(){
 		e.action,
 	}

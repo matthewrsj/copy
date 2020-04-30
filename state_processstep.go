@@ -4,6 +4,9 @@ import "stash.teslamotors.com/ctet/statemachine"
 
 type ProcessStep struct {
 	statemachine.Common
+
+	tbc  trayBarcode
+	fxbc fixtureBarcode
 }
 
 func (p *ProcessStep) action() {}
