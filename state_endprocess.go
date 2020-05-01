@@ -8,6 +8,7 @@ import (
 type EndProcess struct {
 	statemachine.Common
 
+	Config Configuration
 	Logger *logrus.Logger
 
 	tbc  trayBarcode

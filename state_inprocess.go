@@ -8,6 +8,7 @@ import (
 type InProcess struct {
 	statemachine.Common
 
+	Config Configuration
 	Logger *logrus.Logger
 
 	tbc  trayBarcode
@@ -24,6 +25,7 @@ func (i *InProcess) Actions() []func() {
 
 func (i *InProcess) Next() statemachine.State {
 	next := &EndProcess{
+		Config: i.Config,
 		Logger: i.Logger,
 		tbc:    i.tbc,
 		fxbc:   i.fxbc,

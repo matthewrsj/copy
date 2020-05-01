@@ -10,6 +10,7 @@ import (
 type TrayBarcode struct {
 	statemachine.Common
 
+	Config Configuration
 	Logger *logrus.Logger
 
 	tbc          trayBarcode
@@ -40,6 +41,7 @@ func (t *TrayBarcode) Actions() []func() {
 
 func (t *TrayBarcode) Next() statemachine.State {
 	next := &FixtureBarcode{
+		Config:       t.Config,
 		Logger:       t.Logger,
 		tbc:          t.tbc,
 		scanDeadline: t.scanDeadline,

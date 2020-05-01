@@ -11,13 +11,15 @@ import (
 )
 
 const (
-	_logLvlDef  = logrus.InfoLevel
-	_logFileDef = "logs/towercontroller/statemachine.log"
+	_logLvlDef   = logrus.InfoLevel
+	_logFileDef  = "logs/towercontroller/statemachine.log"
+	_confFileDef = "../configuration/statemachine/statemachine.yaml"
 )
 
 func main() {
 	logLvl := cmdlineutils.LogLevelFlag()
 	logFile := flag.String("logf", _logFileDef, "path to the log file")
+	configFile := flag.String("conf", _confFileDef, "path to the configuration file")
 
 	flag.Parse()
 
@@ -31,6 +33,14 @@ func main() {
 		log.Fatalf("setup logger: %v", err)
 	}
 
+	conf, err := towercontroller.LoadConfig(*configFile)
+	if err != nil {
+		log.Fatalf("load configuration: %v", err)
+	}
+
 	logger.Info("starting state machine")
-	statemachine.RunFrom(&towercontroller.TrayBarcode{Logger: logger})
+	statemachine.RunFrom(&towercontroller.TrayBarcode{
+		Config: conf,
+		Logger: logger,
+	})
 }

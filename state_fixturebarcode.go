@@ -12,6 +12,7 @@ const _scanDeadline = 10 * time.Second
 type FixtureBarcode struct {
 	statemachine.Common
 
+	Config Configuration
 	Logger *logrus.Logger
 
 	tbc          trayBarcode
@@ -56,6 +57,7 @@ func (f *FixtureBarcode) Actions() []func() {
 
 func (f *FixtureBarcode) Next() statemachine.State {
 	next := &ProcessStep{
+		Config: f.Config,
 		Logger: f.Logger,
 		fxbc:   f.fxbc,
 		tbc:    f.tbc,
