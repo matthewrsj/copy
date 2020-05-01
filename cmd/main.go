@@ -6,7 +6,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"stash.teslamotors.com/ctet/cmdlineutils"
-	"stash.teslamotors.com/ctet/statemachine"
+	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/towercontroller"
 )
 

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/sirupsen/logrus"
-	"stash.teslamotors.com/ctet/statemachine"
+	"stash.teslamotors.com/ctet/statemachine/v2"
 )
 
 func TestStartProcess_Action(t *testing.T) {

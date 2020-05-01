@@ -2,7 +2,7 @@ package towercontroller
 
 import (
 	"github.com/sirupsen/logrus"
-	"stash.teslamotors.com/ctet/statemachine"
+	"stash.teslamotors.com/ctet/statemachine/v2"
 )
 
 type ProcessStep struct {
