@@ -3,12 +3,13 @@ package towercontroller
 import (
 	"testing"
 
+	"github.com/sirupsen/logrus"
 	"stash.teslamotors.com/ctet/statemachine"
 )
 
 func TestEndProcess_Action(t *testing.T) {
 	exp := 1
-	as := (&EndProcess{}).Actions()
+	as := (&EndProcess{Logger: logrus.New()}).Actions()
 
 	if l := len(as); l != exp {
 		t.Errorf("expected %d actions, got %d", exp, l)
@@ -26,8 +27,7 @@ func TestEndProcess_Action(t *testing.T) {
 }
 
 func TestEndProcess_Next(t *testing.T) {
-	exp := "EndProcess"
-	if n := statemachine.NameOf((&EndProcess{}).Next()); n != exp {
-		t.Errorf("expected next state name to be %s, got %s", exp, n)
+	if n := (&EndProcess{Logger: logrus.New()}).Next(); n != nil {
+		t.Errorf("expected next state nil, got %s", statemachine.NameOf(n))
 	}
 }

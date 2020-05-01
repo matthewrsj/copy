@@ -1,9 +1,17 @@
 package towercontroller
 
-import "stash.teslamotors.com/ctet/statemachine"
+import (
+	"github.com/sirupsen/logrus"
+	"stash.teslamotors.com/ctet/statemachine"
+)
 
 type StartProcess struct {
 	statemachine.Common
+
+	Logger *logrus.Logger
+
+	tbc  trayBarcode
+	fxbc fixtureBarcode
 }
 
 func (s *StartProcess) action() {}
@@ -15,5 +23,12 @@ func (s *StartProcess) Actions() []func() {
 }
 
 func (s *StartProcess) Next() statemachine.State {
-	return &InProcess{}
+	next := &InProcess{
+		Logger: s.Logger,
+		tbc:    s.tbc,
+		fxbc:   s.fxbc,
+	}
+	s.Logger.WithField("tray", s.tbc.sn).Tracef("next state: %s", statemachine.NameOf(next))
+
+	return next
 }

@@ -1,12 +1,25 @@
 package towercontroller
 
-import "stash.teslamotors.com/ctet/statemachine"
+import (
+	"github.com/sirupsen/logrus"
+	"stash.teslamotors.com/ctet/statemachine"
+)
 
 type EndProcess struct {
 	statemachine.Common
+
+	Logger *logrus.Logger
+
+	tbc  trayBarcode
+	fxbc fixtureBarcode
 }
 
-func (e *EndProcess) action() {}
+func (e *EndProcess) action() {
+	e.Logger.WithFields(logrus.Fields{
+		"tray":    e.tbc.raw,
+		"fixture": e.fxbc.raw,
+	}).Infof("tray complete")
+}
 
 func (e *EndProcess) Actions() []func() {
 	e.SetLast(true)
@@ -17,5 +30,6 @@ func (e *EndProcess) Actions() []func() {
 }
 
 func (e *EndProcess) Next() statemachine.State {
-	return &EndProcess{}
+	e.Logger.WithField("tray", e.tbc.sn).Trace("statemachine exiting")
+	return nil
 }

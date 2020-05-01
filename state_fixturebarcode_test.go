@@ -3,12 +3,13 @@ package towercontroller
 import (
 	"testing"
 
+	"github.com/sirupsen/logrus"
 	"stash.teslamotors.com/ctet/statemachine"
 )
 
 func TestFixtureBarcode_Action(t *testing.T) {
 	exp := 1
-	as := (&FixtureBarcode{}).Actions()
+	as := (&FixtureBarcode{Logger: logrus.New()}).Actions()
 
 	if l := len(as); l != exp {
 		t.Errorf("expected %d actions, got %d", exp, l)
@@ -27,7 +28,7 @@ func TestFixtureBarcode_Action(t *testing.T) {
 
 func TestFixtureBarcode_Next(t *testing.T) {
 	exp := "ProcessStep"
-	if n := statemachine.NameOf((&FixtureBarcode{}).Next()); n != exp {
+	if n := statemachine.NameOf((&FixtureBarcode{Logger: logrus.New()}).Next()); n != exp {
 		t.Errorf("expected next state name to be %s, got %s", exp, n)
 	}
 }
