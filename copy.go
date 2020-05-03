@@ -8,6 +8,7 @@ import (
 // interface for copying files, directories, or links
 type copyObject interface {
 	copyTo(dst string) error
+	linkOrCopyTo(dst string) error
 	Path() string
 	Info() os.FileInfo
 }
@@ -44,11 +45,11 @@ func All(src, dst string) error {
 // you might be copying over partition boundaries where a link will
 // fail.
 func LinkOrCopy(src, dst string) error {
-	if err := os.Link(src, dst); err != nil {
-		// link failed, might be a directory, fallback to recursive copy
-		return All(src, dst)
+	obj, err := newObject(src)
+	if err != nil {
+		return err
 	}
-	return nil
+	return obj.linkOrCopyTo(dst)
 }
 
 // internal function to throw away file close errors in deferred
