@@ -44,6 +44,10 @@ func (d directory) copyTo(dst string) error {
 	return nil
 }
 
+func (d directory) linkOrCopyTo(dst string) error {
+	return d.copyTo(dst)
+}
+
 func (d directory) String() string {
 	return "directory: " + d.path
 }
