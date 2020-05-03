@@ -27,6 +27,12 @@ func (d directory) copyTo(dst string) error {
 		return err
 	}
 
+	// Make sure we *can* copy the children if any
+	if len(children) > 0 && d.info.Mode()&0200 == 0 {
+		if err := os.Chmod(dst,d.info.Mode()|0200);err != nil {
+			return err
+		}
+	}
 	// copy each child recursively
 	for _, child := range children {
 		childSrc := filepath.Join(d.path, child.Name())
@@ -36,6 +42,13 @@ func (d directory) copyTo(dst string) error {
 			return err
 		}
 		if err = obj.copyTo(childDst); err != nil {
+			return err
+		}
+	}
+
+	// Restore the directories modes if we made it writeable
+	if len(children) > 0 && d.info.Mode()&0200 == 0 {
+		if err := os.Chmod(dst,d.info.Mode());err != nil {
 			return err
 		}
 	}
