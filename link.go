@@ -20,6 +20,10 @@ func (l link) copyTo(dst string) error {
 	return os.Symlink(src, dst)
 }
 
+func (l link) linkTo(dst string) error {
+	return l.copyTo(dst)
+}
+
 func (l link) String() string {
 	return "link: " + l.path
 }

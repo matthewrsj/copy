@@ -47,6 +47,14 @@ func (f file) copyTo(dst string) error {
 	return err
 }
 
+func (f file) linkTo(dst string) error {
+	if err := os.Link(f.path, dst); err != nil {
+		// link failed, might be a directory, fallback to recursive copy
+		return f.copyTo(dst)
+	}
+	return nil
+}
+
 func (f file) String() string {
 	return "file: " + f.path
 }

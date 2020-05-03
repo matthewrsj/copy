@@ -16,7 +16,7 @@ func newDirectory(path string, fi os.FileInfo) directory {
 
 // copyTo recursively copies directories from d.path to dst
 func (d directory) copyTo(dst string) error {
-	// create new directory with source mode
+	// create new directory with source mode matching
 	if err := os.MkdirAll(dst, d.info.Mode()); err != nil {
 		return err
 	}
@@ -42,6 +42,10 @@ func (d directory) copyTo(dst string) error {
 
 	// successful
 	return nil
+}
+
+func (d directory) linkTo(dst string) error {
+	return d.copyTo(dst)
 }
 
 func (d directory) String() string {

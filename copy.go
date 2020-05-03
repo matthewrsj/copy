@@ -8,6 +8,7 @@ import (
 // interface for copying files, directories, or links
 type copyObject interface {
 	copyTo(dst string) error
+	linkTo(dst string) error
 	Path() string
 	Info() os.FileInfo
 }
@@ -49,6 +50,14 @@ func LinkOrCopy(src, dst string) error {
 		return All(src, dst)
 	}
 	return nil
+}
+
+func LinkOrCopyAll(src,dst string) error {
+	obj, err := newObject(src)
+	if err != nil {
+		return err
+	}
+	return obj.linkTo(dst)
 }
 
 // internal function to throw away file close errors in deferred
