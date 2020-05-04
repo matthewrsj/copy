@@ -14,6 +14,7 @@ type ProcessStep struct {
 	processStepName string
 	tbc             trayBarcode
 	fxbc            fixtureBarcode
+	apiErr          error
 }
 
 func (p *ProcessStep) action() {
@@ -22,8 +23,13 @@ func (p *ProcessStep) action() {
 		"fixture_num": p.fxbc.raw,
 	}).Info("querying Cell API for process step")
 
-	// TODO: query Cell API for process step for this tray
-	p.processStepName = "FORM_FIRST_CHARGE"
+	p.processStepName, p.apiErr = getNextProcessStep(p.Config.CellAPI, p.tbc.sn)
+	if p.apiErr != nil {
+		p.Logger.Error(p.apiErr)
+		p.SetLast(true)
+
+		return
+	}
 
 	p.Logger.WithFields(logrus.Fields{
 		"tray":         p.tbc.sn,
