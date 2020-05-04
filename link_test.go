@@ -45,7 +45,7 @@ func TestLinkInfo(t *testing.T) {
 
 func TestLinkCopyToError(t *testing.T) {
 	l := link{base{path: "foo"}}
-	if err := l.copyTo("nowhere"); err == nil {
+	if err := l.copyTo("nowhere", false); err == nil {
 		t.Error("expected error when file did not exist but no error was returned")
 	}
 }

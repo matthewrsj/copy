@@ -17,10 +17,29 @@ func newFile(path string, fi os.FileInfo) file {
 // copyTo copies the f.path file to dst location, creating all parent directories
 // along the way. This means that directories that did not exist before
 // will exist after copying.
-func (f file) copyTo(dst string) error {
+func (f file) copyTo(dst string, linkOrCopy bool) error {
 	// make any parent directories. Assume os.ModePerm
 	if err := os.MkdirAll(filepath.Dir(dst), os.ModePerm); err != nil {
 		return err
+	}
+
+	// If the file already exists, check to see if its the same file.  If not, remove it.
+	dstInfo, err := os.Stat(dst)
+	if err == nil {
+		if linkOrCopy && os.SameFile(f.info, dstInfo) {
+			return nil
+		}
+	}
+
+	if err := os.Remove(dst); err != nil && !os.IsNotExist(err) {
+		return err
+	}
+
+	if linkOrCopy {
+		err := os.Link(f.path, dst)
+		if err == nil {
+			return nil
+		}
 	}
 
 	// create dst file for write
@@ -45,14 +64,6 @@ func (f file) copyTo(dst string) error {
 	// copy contents
 	_, err = io.Copy(df, sf)
 	return err
-}
-
-func (f file) linkOrCopyTo(dst string) error {
-	if err := os.Link(f.path, dst); err != nil {
-		// link failed, might be a directory, fallback to recursive copy
-		return f.copyTo(dst)
-	}
-	return nil
 }
 
 func (f file) String() string {

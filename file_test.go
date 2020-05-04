@@ -50,7 +50,7 @@ func TestFileCopyToError(t *testing.T) {
 	if err := os.RemoveAll(fe.Name()); err != nil {
 		t.Fatal(err)
 	}
-	if err := fo.copyTo("nowhere"); err == nil {
+	if err := fo.copyTo("nowhere", false); err == nil {
 		t.Error("expected error when file did not exist but no error was returned")
 	}
 }
