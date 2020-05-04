@@ -47,7 +47,7 @@ func TestDirectoryCopyToError(t *testing.T) {
 	if err := os.RemoveAll(d); err != nil {
 		t.Fatal(err)
 	}
-	if err := do.copyTo("nowhere"); err == nil {
+	if err := do.copyTo("nowhere", false); err == nil {
 		t.Error("expected error when file did not exist but no error was returned")
 	}
 }
