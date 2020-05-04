@@ -12,6 +12,13 @@ import (
 	"github.com/fatih/color"
 )
 
+type deadlineErr error
+
+func isDeadline(err error) bool {
+	_, ok := err.(deadlineErr)
+	return ok
+}
+
 func promptDeadline(message string, td time.Time) (string, error) {
 	ctx, cancel := context.WithDeadline(context.Background(), td)
 	defer cancel()
@@ -24,7 +31,7 @@ func promptDeadline(message string, td time.Time) (string, error) {
 
 	select {
 	case <-ctx.Done():
-		return "", errors.New("prompt timeout exceeded")
+		return "", deadlineErr(errors.New("prompt timeout exceeded"))
 	case r := <-resultCh:
 		return r, nil
 	}
