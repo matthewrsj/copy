@@ -9,8 +9,9 @@ import (
 
 // Configuration contains the configuration parameters for the statemachine
 type Configuration struct {
-	RecipeFile      string `yaml:"recipefile"`
-	IngredientsFile string `yaml:"ingredientsfile"`
+	RecipeFile      string      `yaml:"recipefile"`
+	IngredientsFile string      `yaml:"ingredientsfile"`
+	CellAPI         cellAPIConf `yaml:"cell_api"`
 }
 
 // LoadConfig loads the configuration file at path

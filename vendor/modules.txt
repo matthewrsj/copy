@@ -1,5 +1,10 @@
+# bou.ke/monkey v1.0.2
+## explicit
+bou.ke/monkey
 # github.com/BurntSushi/toml v0.3.1
 ## explicit
+# github.com/davecgh/go-spew v1.1.1
+github.com/davecgh/go-spew/spew
 # github.com/fatih/color v1.9.0
 ## explicit
 github.com/fatih/color
@@ -9,9 +14,14 @@ github.com/konsorten/go-windows-terminal-sequences
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.11
 github.com/mattn/go-isatty
+# github.com/pmezard/go-difflib v1.0.0
+github.com/pmezard/go-difflib/difflib
 # github.com/sirupsen/logrus v1.5.0
 ## explicit
 github.com/sirupsen/logrus
+# github.com/stretchr/testify v1.5.1
+## explicit
+github.com/stretchr/testify/assert
 # golang.org/x/sys v0.0.0-20191026070338-33540a1f6037
 golang.org/x/sys/unix
 # gopkg.in/natefinch/lumberjack.v2 v2.0.0
