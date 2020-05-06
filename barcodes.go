@@ -1,6 +1,7 @@
 package towercontroller
 
 import (
+	"errors"
 	"fmt"
 )
 
@@ -45,20 +46,8 @@ func ScanBarcodes(c Configuration) (Barcodes, error) {
 		return bcs, fmt.Errorf("get next process step: %v", err)
 	}
 
-	msg := fmt.Sprintf(
-		"NEXT PROCESS STEP %s; press enter to confirm; any other key + enter to cancel",
-		bcs.ProcessStepName,
-	)
-
-	confirm, err := prompt(msg, func(string) error { return nil })
-	if err != nil {
-		return bcs, err
-	}
-
-	switch confirm {
-	case "":
-	default:
-		return bcs, fmt.Errorf("process step canceled with %s", confirm)
+	if !promptConfirm(fmt.Sprintf("next process step %s", bcs.ProcessStepName)) {
+		return bcs, errors.New("process step canceled")
 	}
 
 	return bcs, nil

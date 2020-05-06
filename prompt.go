@@ -34,3 +34,13 @@ func prompt(message string, val promptui.ValidateFunc) (string, error) {
 
 	return strings.TrimSpace(result), nil
 }
+
+func promptConfirm(message string) bool {
+	_, err := (&promptui.Prompt{
+		Label:     color.New(color.FgCyan).SprintFunc()(message),
+		IsConfirm: true,
+		Default:   "Y",
+	}).Run()
+
+	return err == nil
+}
