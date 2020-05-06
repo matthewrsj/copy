@@ -1,0 +1,204 @@
+syntax = "proto3";
+
+// https://confluence.teslamotors.com/x/fFElIg
+
+// split messages into two main messages
+// - tower controller to fixture
+// - fixture to tower controller
+
+// tower controller to fixture
+
+// - recipe
+// - request type (start / stop / update bitmask)
+// - cell bitmask
+
+// fixture to tower controller messages broken up into two types
+
+// - operational information
+// -- fixture status (available / in process / done / faulted)
+// -- fixture power draw
+// -- cell state and measurements
+
+// - diagnostic information
+// -- PCBA / ambient temperature sensors
+// -- tied to controllers in each fixture
+
+message FxrSensors {
+  float  bus_voltage          = 1;  // 80V bus
+  bool  cc_enable_input      = 2;  // comms harness digital input
+  float  v_bus_24             = 3;
+  bool  position_switch_up   = 4;
+  bool  position_siwtch_down = 5;
+}
+
+message FxrOutputs {
+  bool stib_enable_line     = 1;
+  bool fixture_close_enable  = 2;
+  bool cc_enabout_output    = 3;  // comms harness digital output
+}
+
+message Fxr {
+  FxrSensors sensors = 1;
+  FxrOutputs outputs = 2;
+}
+
+message FibSensors {
+  float i_bus_24     = 1;
+  float v_bus_24     = 2;
+  float p_bus_24     = 3;
+  float pcb_temp     = 4;
+  float v_rail_5v    = 5;
+  float v_rail_3v3   = 6;
+  float micro_temp   = 7;
+  bool tray_present = 8;
+}
+
+message FibInternal {
+  float cpu_time_isr       = 1;
+  float cpu_time_isr_max   = 2;
+  float cpu_time_1khz      = 3;
+  float cpu_time_1khz_max  = 4;
+  float cpu_time_10hz      = 5;
+  float cpu_time_10khz_max = 6;
+  float stack_usage_system = 7;  // %
+  float stack_usage_1khz   = 8;
+  float stack_usage_10hz   = 9;
+  float stack_usage_uds    = 10;
+  float stack_usage_nvram  = 11;
+}
+
+enum FanStatus {
+  FAN_STATUS_UNKNOWN_UNSPECIFIED = 0;
+  FAN_STATUS_ON                  = 1;
+  FAN_STATUS_OFF                 = 2;
+  FAN_STATUS_FAULTED             = 3;
+}
+
+message FanMeasurements {
+  float speed               = 1;
+  float speed_request       = 2;
+  float duty                = 3;
+  bool duty_control_active = 4;
+}
+
+message Fan {
+  FanStatus       status       = 1;
+  FanMeasurements measurements = 2;
+}
+
+message Fib {
+  FibSensors    sensors  = 1;
+  FibInternal   internal = 2;
+  repeated Fan  fans     = 3;  // always 9 fans
+}
+
+message StibSensors {
+  float bus_voltage       = 1;
+  float string_voltage    = 2;
+  float string_current    = 3;
+  float temperature_sense = 4;
+  float dcdc_state        = 5;
+  float pcb_temp          = 6;
+}
+
+message StibStatistics {
+  float lifetime_ah = 1;
+  float lifetime_wh = 2;
+}
+
+message Stib {
+  StibSensors    sensors    = 1;
+  StibStatistics statistics = 2;
+}
+
+enum CellStatus {
+  CELL_STATUS_NONE_UNSPECIFIED    = 0;
+  CELL_STATUS_IDLE                = 1;
+  CELL_STATUS_IN_PROCESS          = 2;
+  CELL_STATUS_COMPLETE            = 3;
+  CELL_STATUS_FAILED              = 4;
+  CELL_STATUS_FAILED_SAFETY_LIMIT = 5;
+}
+
+message CellMeasurement {
+  float      current              = 1;
+  float      voltage              = 2;
+  float      charge_ah            = 3;
+  float      energy_wh            = 4;
+  float      temperature_estimate = 5;
+  float      pogo_resistance      = 6;
+}
+
+message Cell {
+  CellStatus      cellstatus      = 1;
+  CellMeasurement cellmeasurement = 2;
+}
+
+enum FixtureStatus {
+  FIXTURE_STATUS_UNKNOWN_UNSPECIFIED = 0;
+  FIXTURE_STATUS_IDLE                = 1;
+  FIXTURE_STATUS_READY               = 2;  // same as ready but tray present
+  FIXTURE_STATUS_ACTIVE              = 3;  // faulted
+  FIXTURE_STATUS_FAULTED             = 4;
+  FIXTURE_STATUS_COMPLETE            = 5;  // complete, but tray has not been removed yet
+  FIXTURE_STATUS_UPDATING            = 6;  // discuss if we need this
+}
+
+enum FixturePosition {
+  FIXTURE_POSITION_UNKNOWN_UNSPECIFIED = 0;
+  FIXTURE_POSITION_CLOSED              = 1;
+  FIXTURE_POSITION_OPEN                = 2;
+  FIXTURE_POSITION_INTERMEDIATE        = 3;
+  FIXTURE_POSITION_INVALID             = 4;
+}
+
+
+message FixtureOperational {
+  FixtureStatus   status   = 1;
+  FixturePosition position = 2;
+  repeated Cell   cells    = 3;
+}
+
+message FixtureDiagnostic {
+  Fxr           fxr   = 1;
+  Fib           fib    = 2;
+  repeated Stib stibs = 3;  // 4 stibs
+}
+
+message FixtureToTower {
+  oneof content {
+    FixtureOperational op    = 1;
+    FixtureDiagnostic  diag  = 2;
+  }
+  string identifier = 3;
+}
+
+message RecipeStep {
+  enum FormMode {
+    FORM_MODE_UNKNOWN_UNSPECIFIED = 0;
+    FORM_MODE_CC                  = 1;
+    FORM_MODE_CV                  = 2;
+  }
+  FormMode mode                   = 1;
+  float     charge_current         = 2;
+  float     max_current            = 3;
+  float     cut_off_voltage        = 4;
+  float     cut_off_current        = 5;
+  float     cell_drop_out_v        = 6;
+  float     step_timeout           = 7;
+}
+
+enum FormRequest {
+  FORM_REQUEST_UNKNOWN_UNSPECIFIED = 0;
+  FORM_REQUEST_STOP                = 1;
+  FORM_REQUEST_START               = 2;
+  FORM_REQUEST_UPDATE_CELLS        = 3;
+}
+
+message Recipe {
+  repeated        RecipeStep steps = 1;
+  repeated uint32 cell_masks       = 2;
+  FormRequest     formrequest      = 3;
+}
+
+//message TowerToFixture {}
