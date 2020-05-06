@@ -9,7 +9,7 @@ import (
 	"github.com/manifoldco/promptui"
 )
 
-// IsInterrupt returns whether the error is from a CTRL-C being pressed in a prompt
+// IsInterrupt returns whether the error is from a CTRL-C being pressed in a prompt.
 func IsInterrupt(err error) bool {
 	return err == promptui.ErrInterrupt
 }

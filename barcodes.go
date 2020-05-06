@@ -6,7 +6,7 @@ import (
 )
 
 // Barcodes contains the Fixture and Tray barcodes
-// that initiate a towercontroller state machine
+// that initiate a towercontroller state machine.
 type Barcodes struct {
 	Fixture         FixtureBarcode
 	Tray            TrayBarcode

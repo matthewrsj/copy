@@ -1,5 +1,5 @@
-recipefile: /home/mfgtest/configuration/recipes/recipes.yaml
-ingredientsfile: /home/mfgtest/configuration/recipes/ingredients.yaml
+recipefile: /home/mfgtest/projects/towercontroller/configuration/recipes/recipes.yaml
+ingredientsfile: /home/mfgtest/projects/towercontroller/configuration/recipes/ingredients.yaml
 
 cell_api:
   base: https://celltest-kato.mo.tesla.services/module/api/v0.1
@@ -14,3 +14,8 @@ fixtures:
   - 02
   - 03
   - 04
+
+can:
+  dev: vcan0
+  txid: 256
+  rxid: 512
