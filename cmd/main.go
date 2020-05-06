@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 
 	"github.com/sirupsen/logrus"
@@ -16,6 +17,8 @@ const (
 	_confFileDef = "../configuration/statemachine/statemachine.yaml"
 )
 
+// main is long because of logging and error handling, not complicated logic
+// nolint:funlen
 func main() {
 	logLvl := cmdlineutils.LogLevelFlag()
 	logFile := flag.String("logf", _logFileDef, "path to the log file")
@@ -38,9 +41,47 @@ func main() {
 		log.Fatalf("load configuration: %v", err)
 	}
 
-	logger.Info("starting state machine")
-	statemachine.RunFrom(&towercontroller.TrayBarcode{
-		Config: conf,
-		Logger: logger,
-	})
+	s := statemachine.NewScheduler()
+
+	for _, fixture := range conf.Fixtures {
+		s.Register(fixture, &towercontroller.ProcessStep{Config: conf, Logger: logger}, nil /* runner (default) */)
+	}
+
+	logger.Info("starting state machine scheduler")
+
+	for {
+		logger.Info("waiting for tray barcode scan")
+
+		barcodes, err := towercontroller.ScanBarcodes(conf)
+		if err != nil {
+			if towercontroller.IsInterrupt(err) {
+				log.Fatal("received CTRL-C, exiting...")
+			}
+
+			err = fmt.Errorf("scan barcodes: %v", err)
+			logger.Error(err)
+			log.Println(err)
+
+			continue
+		}
+
+		logger.WithFields(logrus.Fields{
+			"tray_sn":          barcodes.Tray.SN,
+			"tray_orientation": barcodes.Tray.O,
+			"fixture_location": barcodes.Fixture.Location,
+			"fixture_aisle":    barcodes.Fixture.Aisle,
+			"fixture_tower":    barcodes.Fixture.Tower,
+			"fixture_num":      barcodes.Fixture.Fxn,
+		}).Info("starting state machine")
+
+		if err := s.Schedule(statemachine.Job{Name: barcodes.Fixture.Fxn, Work: barcodes}); err != nil {
+			err := fmt.Errorf("schedule tray job on fixture: %v", err)
+			logger.Error(err)
+			log.Println(err)
+
+			continue
+		}
+
+		log.Println("starting tray state machine")
+	}
 }

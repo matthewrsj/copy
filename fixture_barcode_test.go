@@ -7,49 +7,49 @@ import "testing"
 func Test_newFixtureBarcode(t *testing.T) {
 	testCases := []struct {
 		in          string
-		out         fixtureBarcode
+		out         FixtureBarcode
 		errExpected bool
 	}{
 		{
 			in: "A-B-C-D",
-			out: fixtureBarcode{
-				location: "A",
-				aisle:    "B",
-				tower:    "C",
-				fxn:      "D",
+			out: FixtureBarcode{
+				Location: "A",
+				Aisle:    "B",
+				Tower:    "C",
+				Fxn:      "D",
 				raw:      "A-B-C-D",
 			},
 			errExpected: false,
 		},
 		{
 			in: "a-b-c-d",
-			out: fixtureBarcode{
-				location: "a",
-				aisle:    "b",
-				tower:    "c",
-				fxn:      "d",
+			out: FixtureBarcode{
+				Location: "a",
+				Aisle:    "b",
+				Tower:    "c",
+				Fxn:      "d",
 				raw:      "a-b-c-d",
 			},
 			errExpected: false,
 		},
 		{
 			in: "1-2-3-4",
-			out: fixtureBarcode{
-				location: "1",
-				aisle:    "2",
-				tower:    "3",
-				fxn:      "4",
+			out: FixtureBarcode{
+				Location: "1",
+				Aisle:    "2",
+				Tower:    "3",
+				Fxn:      "4",
 				raw:      "1-2-3-4",
 			},
 			errExpected: false,
 		},
 		{
 			in: "SWIFT-01-A-04",
-			out: fixtureBarcode{
-				location: "SWIFT",
-				aisle:    "01",
-				tower:    "A",
-				fxn:      "04",
+			out: FixtureBarcode{
+				Location: "SWIFT",
+				Aisle:    "01",
+				Tower:    "A",
+				Fxn:      "04",
 				raw:      "SWIFT-01-A-04",
 			},
 			errExpected: false,
@@ -83,10 +83,10 @@ func Test_newFixtureBarcode(t *testing.T) {
 				return
 			}
 
-			if actual.location != tc.out.location ||
-				actual.aisle != tc.out.aisle ||
-				actual.fxn != tc.out.fxn ||
-				actual.tower != tc.out.tower ||
+			if actual.Location != tc.out.Location ||
+				actual.Aisle != tc.out.Aisle ||
+				actual.Fxn != tc.out.Fxn ||
+				actual.Tower != tc.out.Tower ||
 				actual.raw != tc.out.raw {
 				t.Errorf("got %#v; expect %#v", actual, tc.out)
 			}

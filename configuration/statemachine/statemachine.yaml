@@ -8,3 +8,9 @@ cell_api:
     process_status: /trays/%s/%s/%s        # tray_serial|process|status
     next_process_step: /trays/%s/formation # tray_serial
     cell_status: /cells/set_cell_status
+
+fixtures:
+  - 01
+  - 02
+  - 03
+  - 04

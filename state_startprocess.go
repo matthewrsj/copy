@@ -12,14 +12,14 @@ type StartProcess struct {
 	Logger *logrus.Logger
 
 	processStepName string
-	tbc             trayBarcode
-	fxbc            fixtureBarcode
+	tbc             TrayBarcode
+	fxbc            FixtureBarcode
 	rcpe            []ingredients
 }
 
 func (s *StartProcess) action() {
 	s.Logger.WithFields(logrus.Fields{
-		"tray":         s.tbc.sn,
+		"tray":         s.tbc.SN,
 		"fixture_num":  s.fxbc.raw,
 		"process_step": s.processStepName,
 	}).Info("sending recipe and other information to FXR")
@@ -27,7 +27,7 @@ func (s *StartProcess) action() {
 	// TODO: send proto to FXR
 
 	s.Logger.WithFields(logrus.Fields{
-		"tray":         s.tbc.sn,
+		"tray":         s.tbc.SN,
 		"fixture_num":  s.fxbc.raw,
 		"process_step": s.processStepName,
 	}).Trace("sent recipe and other information to FXR")
@@ -46,7 +46,7 @@ func (s *StartProcess) Next() statemachine.State {
 		tbc:    s.tbc,
 		fxbc:   s.fxbc,
 	}
-	s.Logger.WithField("tray", s.tbc.sn).Tracef("next state: %s", statemachine.NameOf(next))
+	s.Logger.WithField("tray", s.tbc.SN).Tracef("next state: %s", statemachine.NameOf(next))
 
 	return next
 }

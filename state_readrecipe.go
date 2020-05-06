@@ -14,15 +14,15 @@ type ReadRecipe struct {
 	Logger *logrus.Logger
 
 	processStepName string
-	tbc             trayBarcode
-	fxbc            fixtureBarcode
+	tbc             TrayBarcode
+	fxbc            FixtureBarcode
 	rcpe            []ingredients
 	rcpErr          error
 }
 
 func (r *ReadRecipe) action() {
 	r.Logger.WithFields(logrus.Fields{
-		"tray":         r.tbc.sn,
+		"tray":         r.tbc.SN,
 		"fixture_num":  r.fxbc.raw,
 		"process_step": r.processStepName,
 	}).Info("loading recipe for process step")
@@ -35,7 +35,7 @@ func (r *ReadRecipe) action() {
 	}
 
 	r.Logger.WithFields(logrus.Fields{
-		"tray":         r.tbc.sn,
+		"tray":         r.tbc.SN,
 		"fixture_num":  r.fxbc.raw,
 		"process_step": r.processStepName,
 		"recipe":       fmt.Sprintf("%#v", r.rcpe),
@@ -57,7 +57,7 @@ func (r *ReadRecipe) Next() statemachine.State {
 		tbc:             r.tbc,
 		rcpe:            r.rcpe,
 	}
-	r.Logger.WithField("tray", r.tbc.sn).Tracef("next state: %s", statemachine.NameOf(next))
+	r.Logger.WithField("tray", r.tbc.SN).Tracef("next state: %s", statemachine.NameOf(next))
 
 	return next
 }

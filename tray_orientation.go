@@ -4,7 +4,9 @@ import (
 	"fmt"
 )
 
-type orientation int
+// Orientation defines one of the four orientations
+// for a tray. A, B, C, or D.
+type Orientation int
 
 const (
 	_orientA = iota + 1
@@ -13,7 +15,7 @@ const (
 	_orientD
 )
 
-func newOrientation(input byte) (orientation, error) {
+func newOrientation(input byte) (Orientation, error) {
 	switch input {
 	case 'a', 'A':
 		return _orientA, nil

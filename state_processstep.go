@@ -3,12 +3,13 @@ package towercontroller
 import (
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/sirupsen/logrus"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 )
 
+// ProcessStep exists entirely to type assert the Context() into
+// the tray and fixture barcodes and process step name.
 type ProcessStep struct {
 	statemachine.Common
 
@@ -16,53 +17,36 @@ type ProcessStep struct {
 	Logger *logrus.Logger
 
 	processStepName string
-	tbc             trayBarcode
-	fxbc            fixtureBarcode
+	tbc             TrayBarcode
+	fxbc            FixtureBarcode
 	apiErr          error
 }
 
 func (p *ProcessStep) action() {
-	p.Logger.WithFields(logrus.Fields{
-		"tray":        p.tbc.sn,
-		"fixture_num": p.fxbc.raw,
-	}).Info("querying Cell API for process step")
+	p.Logger.Trace("setting tbc and fxbc from context")
 
-	p.processStepName, p.apiErr = getNextProcessStep(p.Config.CellAPI, p.tbc.sn)
-	if p.apiErr != nil {
+	bc, ok := p.Context().(Barcodes)
+	if !ok {
+		p.apiErr = fmt.Errorf("state context %v (%T) was not correct type (Barcodes)", p.Context(), p.Context())
 		p.Logger.Error(p.apiErr)
+		log.Println(p.apiErr)
 		p.SetLast(true)
 
 		return
 	}
 
-	msg := fmt.Sprintf("NEXT PROCESS STEP %s; press enter to confirm; any other key + enter to cancel", p.processStepName)
-
-	confirm, err := promptDeadline(msg, time.Now().Add(time.Second*10))
-	if err != nil {
-		if !isDeadline(err) {
-			p.Logger.Error(err)
-			p.apiErr = err
-
-			return
-		}
-
-		fmt.Println() // clear the prompt line
-		log.Println("process step confirmation timed out, continuing")
-		p.Logger.Warn("process step confirmation timed out, continuing")
-	}
-
-	switch confirm {
-	case "":
-	default:
-		log.Printf("process step canceled with %s\n", confirm)
-		p.Logger.Errorf("process step canceled with %s", confirm)
-		p.apiErr = err
-
-		return
-	}
+	p.tbc = bc.Tray
+	p.fxbc = bc.Fixture
+	p.processStepName = bc.ProcessStepName
 
 	p.Logger.WithFields(logrus.Fields{
-		"tray":         p.tbc.sn,
+		"tray":         p.tbc.SN,
+		"fixture_num":  p.fxbc.raw,
+		"process_step": p.processStepName,
+	}).Info("querying Cell API for process step")
+
+	p.Logger.WithFields(logrus.Fields{
+		"tray":         p.tbc.SN,
 		"fixture_num":  p.fxbc.raw,
 		"process_step": p.processStepName,
 	}).Info("running process step")
@@ -82,7 +66,7 @@ func (p *ProcessStep) Next() statemachine.State {
 		tbc:             p.tbc,
 		fxbc:            p.fxbc,
 	}
-	p.Logger.WithField("tray", p.tbc.sn).Tracef("next state: %s", statemachine.NameOf(next))
+	p.Logger.WithField("tray", p.tbc.SN).Tracef("next state: %s", statemachine.NameOf(next))
 
 	return next
 }

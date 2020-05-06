@@ -7,41 +7,41 @@ import "testing"
 func Test_isValidTrayBarcode(t *testing.T) {
 	testCases := []struct {
 		in          string
-		out         trayBarcode
+		out         TrayBarcode
 		errExpected bool
 	}{
 		{
 			in: "00000000A",
-			out: trayBarcode{
-				sn:  "00000000",
-				o:   _orientA,
+			out: TrayBarcode{
+				SN:  "00000000",
+				O:   _orientA,
 				raw: "00000000A",
 			},
 			errExpected: false,
 		},
 		{
 			in: "0000000A",
-			out: trayBarcode{
-				sn:  "0000000",
-				o:   _orientA,
+			out: TrayBarcode{
+				SN:  "0000000",
+				O:   _orientA,
 				raw: "0000000A",
 			},
 			errExpected: false,
 		},
 		{
 			in: "00000000000000000B",
-			out: trayBarcode{
-				sn:  "00000000000000000",
-				o:   _orientB,
+			out: TrayBarcode{
+				SN:  "00000000000000000",
+				O:   _orientB,
 				raw: "00000000000000000B",
 			},
 			errExpected: false,
 		},
 		{
 			in: "00000000a",
-			out: trayBarcode{
-				sn:  "00000000",
-				o:   _orientA,
+			out: TrayBarcode{
+				SN:  "00000000",
+				O:   _orientA,
 				raw: "00000000a",
 			},
 			errExpected: false,
@@ -79,8 +79,8 @@ func Test_isValidTrayBarcode(t *testing.T) {
 				return
 			}
 
-			if actual.sn != tc.out.sn ||
-				actual.o != tc.out.o ||
+			if actual.SN != tc.out.SN ||
+				actual.O != tc.out.O ||
 				actual.raw != tc.out.raw {
 				t.Errorf("got %#v; expect %#v", actual, tc.out)
 			}

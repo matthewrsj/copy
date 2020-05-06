@@ -170,7 +170,7 @@ func getNextProcessStep(apiConf cellAPIConf, sn string) (string, error) {
 	}
 
 	if r.Next == "" {
-		return "", fmt.Errorf("next process step not defined for this tray")
+		return "", fmt.Errorf("next process step not defined for tray %s", sn)
 	}
 
 	prefixes := map[string]string{

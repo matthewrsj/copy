@@ -12,6 +12,7 @@ type Configuration struct {
 	RecipeFile      string      `yaml:"recipefile"`
 	IngredientsFile string      `yaml:"ingredientsfile"`
 	CellAPI         cellAPIConf `yaml:"cell_api"`
+	Fixtures        []string    `yaml:"fixtures"`
 }
 
 // LoadConfig loads the configuration file at path

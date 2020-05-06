@@ -1,48 +1,36 @@
 package towercontroller
 
 import (
-	"bufio"
-	"context"
-	"errors"
 	"fmt"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/fatih/color"
+	"github.com/manifoldco/promptui"
 )
 
-type deadlineErr error
-
-func isDeadline(err error) bool {
-	_, ok := err.(deadlineErr)
-	return ok
+// IsInterrupt returns whether the error is from a CTRL-C being pressed in a prompt
+func IsInterrupt(err error) bool {
+	return err == promptui.ErrInterrupt
 }
 
-func promptDeadline(message string, td time.Time) (string, error) {
-	ctx, cancel := context.WithDeadline(context.Background(), td)
-	defer cancel()
-
-	resultCh := make(chan string)
-
-	go func() {
-		resultCh <- prompt(message)
-	}()
-
-	select {
-	case <-ctx.Done():
-		return "", deadlineErr(errors.New("prompt timeout exceeded"))
-	case r := <-resultCh:
-		return r, nil
+func prompt(message string, val promptui.ValidateFunc) (string, error) {
+	p := promptui.Prompt{
+		Label:    color.New(color.FgCyan).SprintFunc()(message),
+		Validate: val,
+		Stdin:    os.Stdin,
 	}
-}
 
-func prompt(message string) string {
-	cyan := color.New(color.FgCyan).SprintFunc()
-	fmt.Print(cyan(message + " >>> "))
-	// ignore error from ReadString. No real way for this to error without memory corruption
-	// (see golang source code)
-	response, _ := bufio.NewReader(os.Stdin).ReadString('\n' /* delim */)
+	result, err := p.Run()
+	if err != nil {
+		if IsInterrupt(err) {
+			// return as-is so we can react
+			return "", err
+		}
 
-	return strings.TrimSpace(response)
+		// our custom error
+		return "", fmt.Errorf("prompt: %v", err)
+	}
+
+	return strings.TrimSpace(result), nil
 }

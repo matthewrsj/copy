@@ -11,7 +11,7 @@ func Test_newOrientation(t *testing.T) {
 	// nolint: maligned
 	testCases := []struct {
 		in          byte
-		out         orientation
+		out         Orientation
 		errExpected bool
 	}{
 		{

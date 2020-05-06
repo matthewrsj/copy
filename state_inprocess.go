@@ -11,8 +11,8 @@ type InProcess struct {
 	Config Configuration
 	Logger *logrus.Logger
 
-	tbc  trayBarcode
-	fxbc fixtureBarcode
+	tbc  TrayBarcode
+	fxbc FixtureBarcode
 }
 
 func (i *InProcess) action() {}
@@ -30,7 +30,7 @@ func (i *InProcess) Next() statemachine.State {
 		tbc:    i.tbc,
 		fxbc:   i.fxbc,
 	}
-	i.Logger.WithField("tray", i.tbc.sn).Tracef("next state: %s", statemachine.NameOf(next))
+	i.Logger.WithField("tray", i.tbc.SN).Tracef("next state: %s", statemachine.NameOf(next))
 
 	return next
 }

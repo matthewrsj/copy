@@ -11,8 +11,8 @@ type EndProcess struct {
 	Config Configuration
 	Logger *logrus.Logger
 
-	tbc  trayBarcode
-	fxbc fixtureBarcode
+	tbc  TrayBarcode
+	fxbc FixtureBarcode
 }
 
 func (e *EndProcess) action() {
@@ -31,6 +31,6 @@ func (e *EndProcess) Actions() []func() {
 }
 
 func (e *EndProcess) Next() statemachine.State {
-	e.Logger.WithField("tray", e.tbc.sn).Trace("statemachine exiting")
+	e.Logger.WithField("tray", e.tbc.SN).Trace("statemachine exiting")
 	return nil
 }
