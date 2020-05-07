@@ -59,7 +59,7 @@ func getCellMap(apiConf cellAPIConf, sn string) (map[string]string, error) {
 	}()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("POST response NOT OK: %v", resp.StatusCode)
+		return nil, fmt.Errorf("POST response NOT OK: %v; %s", resp.StatusCode, resp.Status)
 	}
 
 	rBody, err := ioutil.ReadAll(resp.Body)
@@ -105,10 +105,37 @@ func updateProcessStatus(apiConf cellAPIConf, sn, rcpeName string, s status) err
 		return fmt.Errorf("POST to %s: %v", url, err)
 	}
 
-	_ = resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("POST response NOT OK: %v", resp.StatusCode)
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return fmt.Errorf("POST response NOT OK: %v; %s", resp.StatusCode, resp.Status)
+		}
+
+		type errMsg struct {
+			Message     string `json:"message"`
+			Description string `json:"description"`
+		}
+
+		type response struct {
+			Error errMsg `json:"error"`
+		}
+
+		var eResp response
+		if err := json.Unmarshal(body, &eResp); err != nil {
+			return fmt.Errorf("POST response NOT OK: %v; %s", resp.StatusCode, resp.Status)
+		}
+
+		return fmt.Errorf(
+			"POST response NOT OK: %v; %s; %s; %s",
+			resp.StatusCode,
+			resp.Status,
+			eResp.Error.Message,
+			eResp.Error.Description,
+		)
 	}
 
 	return nil

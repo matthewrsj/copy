@@ -16,9 +16,11 @@ type InProcess struct {
 	Config Configuration
 	Logger *logrus.Logger
 
-	tbc    TrayBarcode
-	fxbc   FixtureBarcode
-	canErr error
+	tbc             TrayBarcode
+	fxbc            FixtureBarcode
+	canErr          error
+	processStepName string
+	fixtureFault    bool
 }
 
 // action function does a lot of logging
@@ -94,7 +96,8 @@ func (i *InProcess) action() {
 				"tray":        i.tbc.SN,
 				"fixture_num": i.fxbc.raw,
 			}).Error("fixture faulted")
-			i.SetLast(true)
+
+			i.fixtureFault = true
 
 			return
 		default:
@@ -115,10 +118,12 @@ func (i *InProcess) Actions() []func() {
 
 func (i *InProcess) Next() statemachine.State {
 	next := &EndProcess{
-		Config: i.Config,
-		Logger: i.Logger,
-		tbc:    i.tbc,
-		fxbc:   i.fxbc,
+		Config:          i.Config,
+		Logger:          i.Logger,
+		tbc:             i.tbc,
+		fxbc:            i.fxbc,
+		processStepName: i.processStepName,
+		fixtureFault:    i.fixtureFault,
 	}
 	i.Logger.WithField("tray", i.tbc.SN).Tracef("next state: %s", statemachine.NameOf(next))
 

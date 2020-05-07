@@ -109,6 +109,14 @@ func (s *StartProcess) action() {
 		return
 	}
 
+	if err := updateProcessStatus(s.Config.CellAPI, s.tbc.SN, s.processStepName, _statusStart); err != nil {
+		s.Logger.Error(err)
+		log.Println(err)
+		s.SetLast(true)
+
+		return
+	}
+
 	s.Logger.WithFields(logrus.Fields{
 		"tray":         s.tbc.SN,
 		"fixture_num":  s.fxbc.raw,
@@ -124,10 +132,11 @@ func (s *StartProcess) Actions() []func() {
 
 func (s *StartProcess) Next() statemachine.State {
 	next := &InProcess{
-		Config: s.Config,
-		Logger: s.Logger,
-		tbc:    s.tbc,
-		fxbc:   s.fxbc,
+		Config:          s.Config,
+		Logger:          s.Logger,
+		tbc:             s.tbc,
+		fxbc:            s.fxbc,
+		processStepName: s.processStepName,
 	}
 	s.Logger.WithField("tray", s.tbc.SN).Tracef("next state: %s", statemachine.NameOf(next))
 
