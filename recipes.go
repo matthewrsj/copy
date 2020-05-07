@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 
 	"gopkg.in/yaml.v2"
+	pb "stash.teslamotors.com/rr/towercontroller/pb"
 )
 
 /*
@@ -24,8 +25,9 @@ type ingredients struct {
 	ChargeCurrentAmps  float32 `yaml:"charge_current"`
 	MaxCurrentAmps     float32 `yaml:"max_current"` // amps limited to this value charge/discharge
 	CutOffVoltage      float32 `yaml:"cut_off_voltage"`
+	CutOffCurrent      float32 `yaml:"cut_off_current"`
 	CellDropOutVoltage float32 `yaml:"cell_drop_out_v"`
-	StepTimeoutSeconds int     `yaml:"step_timeout"`
+	StepTimeoutSeconds float32 `yaml:"step_timeout"`
 }
 
 type cookbook map[string][]ingredients
@@ -122,4 +124,15 @@ func loadRecipe(recipePath, ingredientsPath, recipe string) ([]ingredients, erro
 	}
 
 	return ings, nil
+}
+
+func modeStringToEnum(input string) pb.RecipeStep_FormMode {
+	switch input {
+	case "FORM_REQ_CC":
+		return pb.RecipeStep_FORM_MODE_CC
+	case "FORM_REQ_CV":
+		return pb.RecipeStep_FORM_MODE_CV
+	default:
+		return pb.RecipeStep_FORM_MODE_UNKNOWN_UNSPECIFIED
+	}
 }

@@ -1,8 +1,13 @@
 package towercontroller
 
 import (
+	"log"
+
+	"github.com/linklayer/go-socketcan/pkg/socketcan"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/protobuf/proto"
 	"stash.teslamotors.com/ctet/statemachine/v2"
+	pb "stash.teslamotors.com/rr/towercontroller/pb"
 )
 
 type StartProcess struct {
@@ -15,6 +20,7 @@ type StartProcess struct {
 	tbc             TrayBarcode
 	fxbc            FixtureBarcode
 	rcpe            []ingredients
+	canErr          error
 }
 
 func (s *StartProcess) action() {
@@ -24,7 +30,53 @@ func (s *StartProcess) action() {
 		"process_step": s.processStepName,
 	}).Info("sending recipe and other information to FXR")
 
-	// TODO: send proto to FXR
+	recipe := pb.Recipe{Formrequest: pb.FormRequest_FORM_REQUEST_START}
+
+	for _, ingredient := range s.rcpe {
+		recipe.Steps = append(recipe.Steps, &pb.RecipeStep{
+			Mode:          modeStringToEnum(ingredient.Mode),
+			ChargeCurrent: ingredient.ChargeCurrentAmps,
+			MaxCurrent:    ingredient.MaxCurrentAmps,
+			CutOffVoltage: ingredient.CutOffVoltage,
+			CutOffCurrent: ingredient.CutOffCurrent,
+			CellDropOutV:  ingredient.CellDropOutVoltage,
+			StepTimeout:   ingredient.StepTimeoutSeconds,
+		})
+	}
+
+	// TODO: add cell mask
+
+	var dev socketcan.Interface
+
+	if dev, s.canErr = socketcan.NewIsotpInterface(
+		s.Config.CAN.Device, s.Config.CAN.TXID, s.Config.CAN.RXID,
+	); s.canErr != nil {
+		s.Logger.Error(s.canErr)
+		log.Println(s.canErr)
+		s.SetLast(true)
+
+		return
+	}
+
+	defer dev.Close()
+
+	var data []byte
+
+	if data, s.canErr = proto.Marshal(&recipe); s.canErr != nil {
+		s.Logger.Error(s.canErr)
+		log.Println(s.canErr)
+		s.SetLast(true)
+
+		return
+	}
+
+	if s.canErr = dev.SendBuf(data); s.canErr != nil {
+		s.Logger.Error(s.canErr)
+		log.Println(s.canErr)
+		s.SetLast(true)
+
+		return
+	}
 
 	s.Logger.WithFields(logrus.Fields{
 		"tray":         s.tbc.SN,
