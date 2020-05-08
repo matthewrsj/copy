@@ -18,9 +18,11 @@ type InProcess struct {
 
 	tbc             TrayBarcode
 	fxbc            FixtureBarcode
-	canErr          error
 	processStepName string
 	fixtureFault    bool
+	cells           map[string]cellData
+	cellResponse    []*pb.Cell
+	canErr          error
 }
 
 // action function does a lot of logging
@@ -84,20 +86,19 @@ func (i *InProcess) action() {
 		}
 
 		switch s := op.Op.GetStatus(); s {
-		case pb.FixtureStatus_FIXTURE_STATUS_COMPLETE:
+		case pb.FixtureStatus_FIXTURE_STATUS_COMPLETE, pb.FixtureStatus_FIXTURE_STATUS_FAULTED:
+			msg := "fixture done with tray"
+
+			if i.fixtureFault = s == pb.FixtureStatus_FIXTURE_STATUS_FAULTED; i.fixtureFault {
+				msg += "; fixture faulted"
+			}
+
 			i.Logger.WithFields(logrus.Fields{
 				"tray":        i.tbc.SN,
 				"fixture_num": i.fxbc.raw,
-			}).Info("fixture done with tray")
+			}).Info(msg)
 
-			return
-		case pb.FixtureStatus_FIXTURE_STATUS_FAULTED:
-			i.Logger.WithFields(logrus.Fields{
-				"tray":        i.tbc.SN,
-				"fixture_num": i.fxbc.raw,
-			}).Error("fixture faulted")
-
-			i.fixtureFault = true
+			i.cellResponse = op.Op.GetCells()
 
 			return
 		default:
@@ -124,6 +125,7 @@ func (i *InProcess) Next() statemachine.State {
 		fxbc:            i.fxbc,
 		processStepName: i.processStepName,
 		fixtureFault:    i.fixtureFault,
+		cellResponse:    i.cellResponse,
 	}
 	i.Logger.WithField("tray", i.tbc.SN).Tracef("next state: %s", statemachine.NameOf(next))
 

@@ -21,6 +21,7 @@ type StartProcess struct {
 	tbc             TrayBarcode
 	fxbc            FixtureBarcode
 	rcpe            []ingredients
+	cells           map[string]cellData
 	canErr, apiErr  error
 }
 
@@ -47,10 +48,7 @@ func (s *StartProcess) action() {
 		})
 	}
 
-	// TODO: add cell mask
-	var cm map[string]string
-
-	if cm, s.apiErr = getCellMap(s.Config.CellAPI, s.tbc.SN); s.apiErr != nil {
+	if s.cells, s.apiErr = getCellMap(s.Config.CellAPI, s.tbc.SN); s.apiErr != nil {
 		s.Logger.Error(s.apiErr)
 		log.Println(s.apiErr)
 		s.SetLast(true)
@@ -71,7 +69,7 @@ func (s *StartProcess) action() {
 	present := make([]bool, len(cellMapConf))
 
 	for i, cell := range cellMapConf {
-		_, ok := cm[cell]
+		_, ok := s.cells[cell]
 		present[i] = ok
 	}
 
@@ -136,6 +134,7 @@ func (s *StartProcess) Next() statemachine.State {
 		Logger:          s.Logger,
 		tbc:             s.tbc,
 		fxbc:            s.fxbc,
+		cells:           s.cells,
 		processStepName: s.processStepName,
 	}
 	s.Logger.WithField("tray", s.tbc.SN).Tracef("next state: %s", statemachine.NameOf(next))

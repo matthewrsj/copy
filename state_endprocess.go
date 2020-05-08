@@ -1,10 +1,12 @@
 package towercontroller
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/sirupsen/logrus"
 	"stash.teslamotors.com/ctet/statemachine/v2"
+	pb "stash.teslamotors.com/rr/towercontroller/pb"
 )
 
 type EndProcess struct {
@@ -15,19 +17,73 @@ type EndProcess struct {
 
 	tbc             TrayBarcode
 	fxbc            FixtureBarcode
+	cells           map[string]cellData
+	cellResponse    []*pb.Cell
 	processStepName string
 	fixtureFault    bool
 }
 
+// error handling lengthens action
+// nolint: funlen
 func (e *EndProcess) action() {
 	if err := updateProcessStatus(e.Config.CellAPI, e.tbc.SN, e.processStepName, _statusEnd); err != nil {
+		// keep trying the other transactions
 		e.Logger.Error(err)
 		log.Println(err)
-		e.SetLast(true)
+	}
+
+	cpf := make([]cellPFData, len(e.cellResponse))
+
+	for i, cell := range e.cellResponse {
+		status := "pass"
+		if cell.GetCellstatus() != pb.CellStatus_CELL_STATUS_COMPLETE {
+			status = "fail"
+		}
+
+		// TODO: making assumption we get all cells back but only report the ones that are not empty. Confirm this.
+
+		m, ok := e.Config.CellMap[e.tbc.O.String()]
+		if !ok {
+			err := fmt.Errorf("invalid tray position: %s", e.tbc.O.String())
+			e.Logger.Warn(err)
+			log.Println("WARNING:", err)
+
+			return
+		}
+
+		if i > len(m) {
+			err := fmt.Errorf("invalid cell position index, cell list too large: %d > %d", i, len(m))
+			e.Logger.Warn(err)
+			log.Println("WARNING:", err)
+
+			// i will only increase, don't keep trying
+			return
+		}
+
+		position := m[i]
+
+		cell, ok := e.cells[position]
+		if !ok {
+			err := fmt.Errorf("invalid cell position %s, unable to find cell serial", position)
+			e.Logger.Warn(err)
+			log.Println("WARNING:", err)
+
+			continue
+		}
+
+		cpf[i] = cellPFData{
+			Serial:  cell.Serial,
+			Process: e.processStepName,
+			Status:  status,
+		}
+	}
+
+	if err := setCellStatuses(e.Config.CellAPI, cpf); err != nil {
+		e.Logger.Error(err)
+		log.Println(err)
 
 		return
 	}
-
 	// TODO: determine how to inform cell API of fault
 	msg := "tray complete"
 	if e.fixtureFault {

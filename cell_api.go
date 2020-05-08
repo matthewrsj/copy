@@ -44,7 +44,7 @@ type cellPFData struct {
 	Status  string `json:"status"`
 }
 
-func getCellMap(apiConf cellAPIConf, sn string) (map[string]string, error) {
+func getCellMap(apiConf cellAPIConf, sn string) (map[string]cellData, error) {
 	url := urlJoin(apiConf.Base, fmt.Sprintf(apiConf.Endpoints.CellMapFmt, sn))
 
 	// of course the URL has to be variable. We need to fmt in the tray_serial.
@@ -67,20 +67,20 @@ func getCellMap(apiConf cellAPIConf, sn string) (map[string]string, error) {
 		return nil, fmt.Errorf("read response body from %s: %v", url, err)
 	}
 
-	var cellData cellMapResp
-	if err := json.Unmarshal(rBody, &cellData); err != nil {
+	var cmr cellMapResp
+	if err := json.Unmarshal(rBody, &cmr); err != nil {
 		return nil, fmt.Errorf("unmarshal cell map response from %s: %v", url, err)
 	}
 
 	const maxCells = 128 // 128 is maximum number of cells in a tray
-	cm := make(map[string]string, maxCells)
+	cm := make(map[string]cellData, maxCells)
 
-	for _, cell := range cellData.Cells {
+	for _, cell := range cmr.Cells {
 		if cell.IsEmpty {
 			continue
 		}
 
-		cm[cell.Position] = cell.Serial
+		cm[cell.Position] = cell
 	}
 
 	return cm, nil
