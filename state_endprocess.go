@@ -3,6 +3,7 @@ package towercontroller
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	"stash.teslamotors.com/ctet/statemachine/v2"
@@ -36,6 +37,8 @@ func (e *EndProcess) action() {
 
 	cpf := make([]cellapi.CellPFData, len(e.cellResponse))
 
+	var failed []string
+
 	for i, cell := range e.cellResponse {
 		status := "pass"
 		if cell.GetCellstatus() != pb.CellStatus_CELL_STATUS_COMPLETE {
@@ -64,6 +67,10 @@ func (e *EndProcess) action() {
 
 		position := m[i]
 
+		if status == "fail" {
+			failed = append(failed, position)
+		}
+
 		cell, ok := e.cells[position]
 		if !ok {
 			err := fmt.Errorf("invalid cell position %s, unable to find cell serial", position)
@@ -79,6 +86,14 @@ func (e *EndProcess) action() {
 			Status:  status,
 		}
 	}
+
+	failMsg := fmt.Sprintf("failed cells: %s", strings.Join(failed, ", "))
+	e.Logger.WithFields(logrus.Fields{
+		"tray":    e.tbc.raw,
+		"fixture": e.fxbc.raw,
+	}).Infof(failMsg)
+
+	log.Printf("tray %s (fixture %s) %s", e.tbc.SN, e.fxbc.raw, failMsg)
 
 	if err := e.CellAPIClient.SetCellStatuses(cpf); err != nil {
 		e.Logger.Error(err)
