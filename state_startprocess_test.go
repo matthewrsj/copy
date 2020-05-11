@@ -5,11 +5,12 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"stash.teslamotors.com/ctet/statemachine/v2"
+	"stash.teslamotors.com/rr/cellapi"
 )
 
 func TestStartProcess_Action(t *testing.T) {
 	exp := 1
-	as := (&StartProcess{Logger: logrus.New()}).Actions()
+	as := (&StartProcess{Logger: logrus.New(), CellAPIClient: cellapi.NewClient("")}).Actions()
 
 	if l := len(as); l != exp {
 		t.Errorf("expected %d actions, got %d", exp, l)

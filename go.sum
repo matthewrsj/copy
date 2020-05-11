@@ -80,3 +80,5 @@ stash.teslamotors.com/ctet/cmdlineutils v0.0.0-20200330213028-f688d30e1a61 h1:Lg
 stash.teslamotors.com/ctet/cmdlineutils v0.0.0-20200330213028-f688d30e1a61/go.mod h1:jSEJpzv39/TzJlsGaHe+AslT47P9HDcSkXHljWSyavY=
 stash.teslamotors.com/ctet/statemachine/v2 v2.0.1 h1:ridx0bqo3kRfYNowvFoo5X+KQ16JSTSu8PfpZzWAM3c=
 stash.teslamotors.com/ctet/statemachine/v2 v2.0.1/go.mod h1:Q8mBnsDGYOonavrCEmJQUXavpy+4sp6jUhEc+irF+iI=
+stash.teslamotors.com/rr/cellapi v0.0.0-20200511205929-aa88e93224d3 h1:vAiPgHSae5m8fAbcVXVT9+MnjK4+/IPpkhem3Y9BW8A=
+stash.teslamotors.com/rr/cellapi v0.0.0-20200511205929-aa88e93224d3/go.mod h1:ew9szdkYauU5DsA2AjqBLShLuZK+5EohBMRszCF1xfI=

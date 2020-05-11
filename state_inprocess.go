@@ -7,20 +7,22 @@ import (
 	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/proto"
 	"stash.teslamotors.com/ctet/statemachine/v2"
+	"stash.teslamotors.com/rr/cellapi"
 	pb "stash.teslamotors.com/rr/towercontroller/pb"
 )
 
 type InProcess struct {
 	statemachine.Common
 
-	Config Configuration
-	Logger *logrus.Logger
+	Config        Configuration
+	Logger        *logrus.Logger
+	CellAPIClient *cellapi.Client
 
 	tbc             TrayBarcode
 	fxbc            FixtureBarcode
 	processStepName string
 	fixtureFault    bool
-	cells           map[string]cellData
+	cells           map[string]cellapi.CellData
 	cellResponse    []*pb.Cell
 	canErr          error
 }
@@ -121,6 +123,7 @@ func (i *InProcess) Next() statemachine.State {
 	next := &EndProcess{
 		Config:          i.Config,
 		Logger:          i.Logger,
+		CellAPIClient:   i.CellAPIClient,
 		tbc:             i.tbc,
 		fxbc:            i.fxbc,
 		processStepName: i.processStepName,

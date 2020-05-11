@@ -6,6 +6,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"stash.teslamotors.com/ctet/statemachine/v2"
+	"stash.teslamotors.com/rr/cellapi"
 )
 
 // ProcessStep exists entirely to type assert the Context() into
@@ -13,8 +14,9 @@ import (
 type ProcessStep struct {
 	statemachine.Common
 
-	Config Configuration
-	Logger *logrus.Logger
+	Config        Configuration
+	Logger        *logrus.Logger
+	CellAPIClient *cellapi.Client
 
 	processStepName string
 	tbc             TrayBarcode
@@ -62,6 +64,7 @@ func (p *ProcessStep) Next() statemachine.State {
 	next := &ReadRecipe{
 		Config:          p.Config,
 		Logger:          p.Logger,
+		CellAPIClient:   p.CellAPIClient,
 		processStepName: p.processStepName,
 		tbc:             p.tbc,
 		fxbc:            p.fxbc,

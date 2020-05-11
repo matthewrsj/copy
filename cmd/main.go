@@ -8,6 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"stash.teslamotors.com/ctet/cmdlineutils"
 	"stash.teslamotors.com/ctet/statemachine/v2"
+	"stash.teslamotors.com/rr/cellapi"
 	"stash.teslamotors.com/rr/towercontroller"
 )
 
@@ -41,10 +42,23 @@ func main() {
 		log.Fatalf("load configuration: %v", err)
 	}
 
+	caClient := cellapi.NewClient(conf.CellAPI.Base,
+		cellapi.WithNextProcessStepFmtEndpoint(conf.CellAPI.Endpoints.NextProcStepFmt),
+		cellapi.WithProcessStatusFmtEndpoint(conf.CellAPI.Endpoints.ProcessStatusFmt),
+		cellapi.WithCellMapFmtEndpoint(conf.CellAPI.Endpoints.CellMapFmt),
+		cellapi.WithCellStatusEndpoint(conf.CellAPI.Endpoints.CellStatus),
+	)
+
 	s := statemachine.NewScheduler()
 
 	for _, fixture := range conf.Fixtures {
-		s.Register(fixture, &towercontroller.ProcessStep{Config: conf, Logger: logger}, nil /* runner (default) */)
+		s.Register(fixture,
+			&towercontroller.ProcessStep{
+				Config:        conf,
+				Logger:        logger,
+				CellAPIClient: caClient,
+			}, nil, // runner (default)
+		)
 	}
 
 	logger.Info("starting state machine scheduler")
@@ -52,7 +66,7 @@ func main() {
 	for {
 		logger.Info("waiting for tray barcode scan")
 
-		barcodes, err := towercontroller.ScanBarcodes(conf)
+		barcodes, err := towercontroller.ScanBarcodes(caClient)
 		if err != nil {
 			if towercontroller.IsInterrupt(err) {
 				log.Fatal("received CTRL-C, exiting...")
