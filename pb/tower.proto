@@ -172,7 +172,7 @@ message FixtureToTower {
   }
   string traybarcode         = 3;
   string fixtureposition      = 4;
-  string identifier           = 5;
+  string process_step        = 5;
 }
 
 message RecipeStep {
@@ -206,6 +206,7 @@ message Recipe {
 message SystemInfo {
   string traybarcode    = 1;
   string fixtureposition = 2;
+  string process_step   = 3;
 }
 
 message TowerToFixture {
