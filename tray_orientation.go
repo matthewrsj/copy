@@ -2,6 +2,7 @@ package towercontroller
 
 import (
 	"fmt"
+	"strconv"
 )
 
 // Orientation defines one of the four orientations
@@ -27,5 +28,20 @@ func newOrientation(input byte) (Orientation, error) {
 		return _orientD, nil
 	default:
 		return 0, fmt.Errorf("orientation \"%v\" invalid", input)
+	}
+}
+
+func (o Orientation) String() string {
+	switch o {
+	case _orientA:
+		return "A"
+	case _orientB:
+		return "B"
+	case _orientC:
+		return "C"
+	case _orientD:
+		return "D"
+	default:
+		return strconv.Itoa(int(o))
 	}
 }

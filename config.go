@@ -9,11 +9,12 @@ import (
 
 // Configuration contains the configuration parameters for the statemachine.
 type Configuration struct {
-	RecipeFile      string      `yaml:"recipefile"`
-	IngredientsFile string      `yaml:"ingredientsfile"`
-	CellAPI         cellAPIConf `yaml:"cell_api"`
-	Fixtures        []string    `yaml:"fixtures"`
-	CAN             canConf     `yaml:"can"`
+	RecipeFile      string              `yaml:"recipefile"`
+	IngredientsFile string              `yaml:"ingredientsfile"`
+	CellAPI         cellAPIConf         `yaml:"cell_api"`
+	Fixtures        []string            `yaml:"fixtures"`
+	CAN             canConf             `yaml:"can"`
+	CellMap         map[string][]string `yaml:"cell_map"`
 }
 
 type canConf struct {

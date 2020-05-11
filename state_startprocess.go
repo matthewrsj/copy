@@ -1,6 +1,7 @@
 package towercontroller
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/linklayer/go-socketcan/pkg/socketcan"
@@ -20,9 +21,11 @@ type StartProcess struct {
 	tbc             TrayBarcode
 	fxbc            FixtureBarcode
 	rcpe            []ingredients
-	canErr          error
+	canErr, apiErr  error
 }
 
+// this is a simple function made long by logging
+// nolint: funlen
 func (s *StartProcess) action() {
 	s.Logger.WithFields(logrus.Fields{
 		"tray":         s.tbc.SN,
@@ -45,6 +48,34 @@ func (s *StartProcess) action() {
 	}
 
 	// TODO: add cell mask
+	var cm map[string]string
+
+	if cm, s.apiErr = getCellMap(s.Config.CellAPI, s.tbc.SN); s.apiErr != nil {
+		s.Logger.Error(s.apiErr)
+		log.Println(s.apiErr)
+		s.SetLast(true)
+
+		return
+	}
+
+	cellMapConf, ok := s.Config.CellMap[s.tbc.O.String()]
+	if !ok {
+		err := fmt.Errorf("could not find orientation %s in configuration", s.tbc.O)
+		s.Logger.Error(err)
+		log.Println(err)
+		s.SetLast(true)
+
+		return
+	}
+
+	present := make([]bool, len(cellMapConf))
+
+	for i, cell := range cellMapConf {
+		_, ok := cm[cell]
+		present[i] = ok
+	}
+
+	recipe.CellMasks = newCellMask(present)
 
 	var dev socketcan.Interface
 
