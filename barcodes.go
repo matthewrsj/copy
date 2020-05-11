@@ -13,6 +13,7 @@ type Barcodes struct {
 	Fixture         FixtureBarcode
 	Tray            TrayBarcode
 	ProcessStepName string
+	InProgress      bool
 }
 
 // ScanBarcodes prompts to scan the barcodes for tray and fixture and
@@ -28,7 +29,7 @@ func ScanBarcodes(caClient *cellapi.Client) (Barcodes, error) {
 		return bcs, err
 	}
 
-	bcs.Tray, err = newTrayBarcode(p)
+	bcs.Tray, err = NewTrayBarcode(p)
 	if err != nil {
 		return bcs, fmt.Errorf("parse tray barcode: %v", err)
 	}
@@ -38,7 +39,7 @@ func ScanBarcodes(caClient *cellapi.Client) (Barcodes, error) {
 		return bcs, err
 	}
 
-	bcs.Fixture, err = newFixtureBarcode(input)
+	bcs.Fixture, err = NewFixtureBarcode(input)
 	if err != nil {
 		return bcs, fmt.Errorf("scan fixture barcode: %v", err)
 	}

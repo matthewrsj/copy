@@ -1,6 +1,7 @@
 package towercontroller
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/linklayer/go-socketcan/pkg/socketcan"
@@ -68,11 +69,20 @@ func (i *InProcess) action() {
 			return
 		}
 
-		if msg.GetIdentifier() != i.fxbc.Fxn {
+		fxbcBroadcast, err := NewFixtureBarcode(msg.GetFixtureposition())
+		if err != nil {
+			err = fmt.Errorf("parse fixture position: %v", err)
+			i.Logger.Warn(err)
+			log.Println("WARNING:", err)
+
+			continue
+		}
+
+		if fxbcBroadcast.Fxn != i.fxbc.Fxn {
 			i.Logger.WithFields(logrus.Fields{
 				"tray":        i.tbc.SN,
 				"fixture_num": i.fxbc.raw,
-			}).Tracef("got fixture status for different fixture %s", msg.GetIdentifier())
+			}).Tracef("got fixture status for different fixture %s", fxbcBroadcast.Fxn)
 
 			continue
 		}

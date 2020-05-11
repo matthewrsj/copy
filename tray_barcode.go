@@ -23,8 +23,8 @@ func isValidTrayBarcode(input string) error {
 	return nil
 }
 
-// newTrayBarcode creates a new TrayBarcode from the input string.
-func newTrayBarcode(input string) (TrayBarcode, error) {
+// NewTrayBarcode creates a new TrayBarcode from the input string.
+func NewTrayBarcode(input string) (TrayBarcode, error) {
 	if err := isValidTrayBarcode(input); err != nil {
 		return TrayBarcode{}, fmt.Errorf("validate tray barcode: %v", err)
 	}

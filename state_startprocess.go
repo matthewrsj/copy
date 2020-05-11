@@ -36,10 +36,17 @@ func (s *StartProcess) action() {
 		"process_step": s.processStepName,
 	}).Info("sending recipe and other information to FXR")
 
-	recipe := pb.Recipe{Formrequest: pb.FormRequest_FORM_REQUEST_START}
+	twr2Fxr := pb.TowerToFixture{
+		Recipe: &pb.Recipe{Formrequest: pb.FormRequest_FORM_REQUEST_START},
+		Sysinfo: &pb.SystemInfo{
+			Traybarcode:     s.tbc.raw,
+			Fixtureposition: s.fxbc.raw,
+			ProcessStep:     s.processStepName,
+		},
+	}
 
 	for _, ingredient := range s.rcpe {
-		recipe.Steps = append(recipe.Steps, &pb.RecipeStep{
+		twr2Fxr.Recipe.Steps = append(twr2Fxr.Recipe.Steps, &pb.RecipeStep{
 			Mode:          modeStringToEnum(ingredient.Mode),
 			ChargeCurrent: ingredient.ChargeCurrentAmps,
 			MaxCurrent:    ingredient.MaxCurrentAmps,
@@ -75,7 +82,7 @@ func (s *StartProcess) action() {
 		present[i] = ok
 	}
 
-	recipe.CellMasks = newCellMask(present)
+	twr2Fxr.Recipe.CellMasks = newCellMask(present)
 
 	var dev socketcan.Interface
 
@@ -93,7 +100,7 @@ func (s *StartProcess) action() {
 
 	var data []byte
 
-	if data, s.canErr = proto.Marshal(&recipe); s.canErr != nil {
+	if data, s.canErr = proto.Marshal(&twr2Fxr); s.canErr != nil {
 		s.Logger.Error(s.canErr)
 		log.Println(s.canErr)
 		s.SetLast(true)

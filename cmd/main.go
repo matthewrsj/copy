@@ -61,6 +61,29 @@ func main() {
 		)
 	}
 
+	msg := "monitoring for in-progress trays"
+	logger.Info(msg)
+	log.Println(msg)
+
+	jobs, err := monitorForInProgress(conf)
+	if err != nil {
+		err = fmt.Errorf("monitor for in-progress trays: %v", err)
+		log.Println(err)
+		logger.Fatal(err)
+	}
+
+	for _, job := range jobs {
+		msg := fmt.Sprintf("found in-progress tray in fixture %s", job.Name)
+		logger.Info(msg)
+		log.Println(msg)
+
+		if err := s.Schedule(job); err != nil {
+			err = fmt.Errorf("schedule in-progress trays: %v", err)
+			log.Println(err)
+			logger.Fatal(err)
+		}
+	}
+
 	logger.Info("starting state machine scheduler")
 
 	for {

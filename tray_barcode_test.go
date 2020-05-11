@@ -70,7 +70,7 @@ func Test_isValidTrayBarcode(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.in, func(t *testing.T) {
-			actual, err := newTrayBarcode(tc.in)
+			actual, err := NewTrayBarcode(tc.in)
 			if err != nil != tc.errExpected {
 				t.Fatalf("got error: %v; expected error: %v", err != nil, tc.errExpected)
 			}

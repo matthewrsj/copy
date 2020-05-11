@@ -24,7 +24,8 @@ func isValidFixtureBarcode(input string) error {
 	return nil
 }
 
-func newFixtureBarcode(input string) (FixtureBarcode, error) {
+// NewFixtureBarcode returns a new FixtureBarcode object using fields parsed from the input string.
+func NewFixtureBarcode(input string) (FixtureBarcode, error) {
 	r := regexp.MustCompile(_fixtureRegex)
 	match := r.FindStringSubmatch(input)
 

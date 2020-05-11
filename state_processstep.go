@@ -21,6 +21,7 @@ type ProcessStep struct {
 	processStepName string
 	tbc             TrayBarcode
 	fxbc            FixtureBarcode
+	inProgress      bool
 	apiErr          error
 }
 
@@ -40,6 +41,7 @@ func (p *ProcessStep) action() {
 	p.tbc = bc.Tray
 	p.fxbc = bc.Fixture
 	p.processStepName = bc.ProcessStepName
+	p.inProgress = bc.InProgress
 
 	p.Logger.WithFields(logrus.Fields{
 		"tray":         p.tbc.SN,
@@ -61,14 +63,29 @@ func (p *ProcessStep) Actions() []func() {
 }
 
 func (p *ProcessStep) Next() statemachine.State {
-	next := &ReadRecipe{
-		Config:          p.Config,
-		Logger:          p.Logger,
-		CellAPIClient:   p.CellAPIClient,
-		processStepName: p.processStepName,
-		tbc:             p.tbc,
-		fxbc:            p.fxbc,
+	var next statemachine.State
+
+	if p.inProgress {
+		// if this tray was discovered to already be in-progress skip right to monitoring the status
+		next = &InProcess{
+			Config:          p.Config,
+			Logger:          p.Logger,
+			CellAPIClient:   p.CellAPIClient,
+			processStepName: p.processStepName,
+			tbc:             p.tbc,
+			fxbc:            p.fxbc,
+		}
+	} else {
+		next = &ReadRecipe{
+			Config:          p.Config,
+			Logger:          p.Logger,
+			CellAPIClient:   p.CellAPIClient,
+			processStepName: p.processStepName,
+			tbc:             p.tbc,
+			fxbc:            p.fxbc,
+		}
 	}
+
 	p.Logger.WithField("tray", p.tbc.SN).Tracef("next state: %s", statemachine.NameOf(next))
 
 	return next
