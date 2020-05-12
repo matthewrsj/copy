@@ -3,6 +3,8 @@ package towercontroller
 import (
 	"errors"
 	"fmt"
+
+	"stash.teslamotors.com/rr/cellapi"
 )
 
 // Barcodes contains the Fixture and Tray barcodes
@@ -15,7 +17,7 @@ type Barcodes struct {
 
 // ScanBarcodes prompts to scan the barcodes for tray and fixture and
 // packages them into a Barcodes object.
-func ScanBarcodes(c Configuration) (Barcodes, error) {
+func ScanBarcodes(caClient *cellapi.Client) (Barcodes, error) {
 	var (
 		bcs Barcodes
 		err error
@@ -41,7 +43,7 @@ func ScanBarcodes(c Configuration) (Barcodes, error) {
 		return bcs, fmt.Errorf("scan fixture barcode: %v", err)
 	}
 
-	bcs.ProcessStepName, err = getNextProcessStep(c.CellAPI, bcs.Tray.SN)
+	bcs.ProcessStepName, err = caClient.GetNextProcessStep(bcs.Tray.SN)
 	if err != nil {
 		return bcs, fmt.Errorf("get next process step: %v", err)
 	}

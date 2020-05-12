@@ -6,18 +6,20 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"stash.teslamotors.com/ctet/statemachine/v2"
+	"stash.teslamotors.com/rr/cellapi"
 	pb "stash.teslamotors.com/rr/towercontroller/pb"
 )
 
 type EndProcess struct {
 	statemachine.Common
 
-	Config Configuration
-	Logger *logrus.Logger
+	Config        Configuration
+	Logger        *logrus.Logger
+	CellAPIClient *cellapi.Client
 
 	tbc             TrayBarcode
 	fxbc            FixtureBarcode
-	cells           map[string]cellData
+	cells           map[string]cellapi.CellData
 	cellResponse    []*pb.Cell
 	processStepName string
 	fixtureFault    bool
@@ -26,13 +28,13 @@ type EndProcess struct {
 // error handling lengthens action
 // nolint: funlen
 func (e *EndProcess) action() {
-	if err := updateProcessStatus(e.Config.CellAPI, e.tbc.SN, e.processStepName, _statusEnd); err != nil {
+	if err := e.CellAPIClient.UpdateProcessStatus(e.tbc.SN, e.processStepName, cellapi.StatusEnd); err != nil {
 		// keep trying the other transactions
 		e.Logger.Error(err)
 		log.Println(err)
 	}
 
-	cpf := make([]cellPFData, len(e.cellResponse))
+	cpf := make([]cellapi.CellPFData, len(e.cellResponse))
 
 	for i, cell := range e.cellResponse {
 		status := "pass"
@@ -71,14 +73,14 @@ func (e *EndProcess) action() {
 			continue
 		}
 
-		cpf[i] = cellPFData{
+		cpf[i] = cellapi.CellPFData{
 			Serial:  cell.Serial,
 			Process: e.processStepName,
 			Status:  status,
 		}
 	}
 
-	if err := setCellStatuses(e.Config.CellAPI, cpf); err != nil {
+	if err := e.CellAPIClient.SetCellStatuses(cpf); err != nil {
 		e.Logger.Error(err)
 		log.Println(err)
 

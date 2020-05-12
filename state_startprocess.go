@@ -8,20 +8,22 @@ import (
 	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/proto"
 	"stash.teslamotors.com/ctet/statemachine/v2"
+	"stash.teslamotors.com/rr/cellapi"
 	pb "stash.teslamotors.com/rr/towercontroller/pb"
 )
 
 type StartProcess struct {
 	statemachine.Common
 
-	Config Configuration
-	Logger *logrus.Logger
+	Config        Configuration
+	Logger        *logrus.Logger
+	CellAPIClient *cellapi.Client
 
 	processStepName string
 	tbc             TrayBarcode
 	fxbc            FixtureBarcode
 	rcpe            []ingredients
-	cells           map[string]cellData
+	cells           map[string]cellapi.CellData
 	canErr, apiErr  error
 }
 
@@ -48,7 +50,7 @@ func (s *StartProcess) action() {
 		})
 	}
 
-	if s.cells, s.apiErr = getCellMap(s.Config.CellAPI, s.tbc.SN); s.apiErr != nil {
+	if s.cells, s.apiErr = s.CellAPIClient.GetCellMap(s.tbc.SN); s.apiErr != nil {
 		s.Logger.Error(s.apiErr)
 		log.Println(s.apiErr)
 		s.SetLast(true)
@@ -107,7 +109,7 @@ func (s *StartProcess) action() {
 		return
 	}
 
-	if err := updateProcessStatus(s.Config.CellAPI, s.tbc.SN, s.processStepName, _statusStart); err != nil {
+	if err := s.CellAPIClient.UpdateProcessStatus(s.tbc.SN, s.processStepName, cellapi.StatusStart); err != nil {
 		s.Logger.Error(err)
 		log.Println(err)
 		s.SetLast(true)
@@ -132,6 +134,7 @@ func (s *StartProcess) Next() statemachine.State {
 	next := &InProcess{
 		Config:          s.Config,
 		Logger:          s.Logger,
+		CellAPIClient:   s.CellAPIClient,
 		tbc:             s.tbc,
 		fxbc:            s.fxbc,
 		cells:           s.cells,

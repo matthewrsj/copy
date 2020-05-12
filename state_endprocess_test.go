@@ -3,13 +3,15 @@ package towercontroller
 import (
 	"testing"
 
+	"stash.teslamotors.com/rr/cellapi"
+
 	"github.com/sirupsen/logrus"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 )
 
 func TestEndProcess_Action(t *testing.T) {
 	exp := 1
-	as := (&EndProcess{Logger: logrus.New()}).Actions()
+	as := (&EndProcess{Logger: logrus.New(), CellAPIClient: cellapi.NewClient("")}).Actions()
 
 	if l := len(as); l != exp {
 		t.Errorf("expected %d actions, got %d", exp, l)

@@ -5,13 +5,15 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"stash.teslamotors.com/ctet/statemachine/v2"
+	"stash.teslamotors.com/rr/cellapi"
 )
 
 type ReadRecipe struct {
 	statemachine.Common
 
-	Config Configuration
-	Logger *logrus.Logger
+	Config        Configuration
+	Logger        *logrus.Logger
+	CellAPIClient *cellapi.Client
 
 	processStepName string
 	tbc             TrayBarcode
@@ -52,6 +54,7 @@ func (r *ReadRecipe) Next() statemachine.State {
 	next := &StartProcess{
 		Config:          r.Config,
 		Logger:          r.Logger,
+		CellAPIClient:   r.CellAPIClient,
 		processStepName: r.processStepName,
 		fxbc:            r.fxbc,
 		tbc:             r.tbc,
