@@ -1,3 +1,4 @@
+// Package towercontroller implements the state machine (statemachine.State) for the RR formation tower controller.
 package towercontroller
 
 import (
@@ -12,6 +13,7 @@ import (
 	pb "stash.teslamotors.com/rr/towercontroller/pb"
 )
 
+// StartProcess sends the recipe information to the FXR
 type StartProcess struct {
 	statemachine.Common
 
@@ -27,8 +29,6 @@ type StartProcess struct {
 	canErr, apiErr  error
 }
 
-// this is a simple function made long by logging
-// nolint: funlen
 func (s *StartProcess) action() {
 	s.Logger.WithFields(logrus.Fields{
 		"tray":         s.tbc.SN,
@@ -96,7 +96,9 @@ func (s *StartProcess) action() {
 		return
 	}
 
-	defer dev.Close()
+	defer func() {
+		_ = dev.Close()
+	}()
 
 	var data []byte
 
@@ -131,12 +133,14 @@ func (s *StartProcess) action() {
 	}).Trace("sent recipe and other information to FXR")
 }
 
+// Actions returns the action functions for this state
 func (s *StartProcess) Actions() []func() {
 	return []func(){
 		s.action,
 	}
 }
 
+// Next returns the next state to run after this one
 func (s *StartProcess) Next() statemachine.State {
 	next := &InProcess{
 		Config:          s.Config,

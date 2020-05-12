@@ -4,11 +4,9 @@ import (
 	"testing"
 )
 
-// length ok for unit tests, scopelint over-reports on test table usage
-// nolint: funlen,scopelint
+// nolint:scopelint // over-reports on test table usage
 func Test_newOrientation(t *testing.T) {
-	// order of this struct is for test readability, not efficiency
-	// nolint: maligned
+	// nolint:maligned // order of this struct is for test readability, not efficiency
 	testCases := []struct {
 		in          byte
 		out         Orientation

@@ -1,3 +1,4 @@
+// main runs the tower controller application.
 package main
 
 import (
@@ -18,8 +19,6 @@ const (
 	_confFileDef = "../configuration/statemachine/statemachine.yaml"
 )
 
-// main is long because of logging and error handling, not complicated logic
-// nolint:funlen
 func main() {
 	logLvl := cmdlineutils.LogLevelFlag()
 	logFile := flag.String("logf", _logFileDef, "path to the log file")
@@ -112,7 +111,7 @@ func main() {
 		}).Info("starting state machine")
 
 		if err := s.Schedule(statemachine.Job{Name: barcodes.Fixture.Fxn, Work: barcodes}); err != nil {
-			err := fmt.Errorf("schedule tray job on fixture: %v", err)
+			err = fmt.Errorf("schedule tray job on fixture: %v", err)
 			logger.Error(err)
 			log.Println(err)
 

@@ -59,7 +59,7 @@ func loadRecipes(recipePath, ingredientsPath string) (cookbook, error) {
 	// be performed by the recipe
 	stepsBook := make(stepsbook)
 
-	if err := yaml.Unmarshal(content, stepsBook); err != nil {
+	if err = yaml.Unmarshal(content, stepsBook); err != nil {
 		return nil, fmt.Errorf("unmarshal steps yaml: %v", err)
 	}
 

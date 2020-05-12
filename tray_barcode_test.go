@@ -2,8 +2,7 @@ package towercontroller
 
 import "testing"
 
-// length ok for unit tests, scopelint over-reports on test table usage
-// nolint: funlen,scopelint
+// nolint:scopelint // over-reports on test table usage
 func Test_isValidTrayBarcode(t *testing.T) {
 	testCases := []struct {
 		in          string

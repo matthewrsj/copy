@@ -8,6 +8,7 @@ import (
 	"stash.teslamotors.com/rr/cellapi"
 )
 
+// ReadRecipe reads the recipe from configuration files
 type ReadRecipe struct {
 	statemachine.Common
 
@@ -44,12 +45,14 @@ func (r *ReadRecipe) action() {
 	}).Debug("loaded recipe")
 }
 
+// Actions returns the action functions for this state
 func (r *ReadRecipe) Actions() []func() {
 	return []func(){
 		r.action,
 	}
 }
 
+// Next returns the next state to run after this one
 func (r *ReadRecipe) Next() statemachine.State {
 	next := &StartProcess{
 		Config:          r.Config,

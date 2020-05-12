@@ -56,12 +56,14 @@ func (p *ProcessStep) action() {
 	}).Info("running process step")
 }
 
+// Actions returns the action functions for this state
 func (p *ProcessStep) Actions() []func() {
 	return []func(){
 		p.action,
 	}
 }
 
+// Next returns the next state to run
 func (p *ProcessStep) Next() statemachine.State {
 	var next statemachine.State
 

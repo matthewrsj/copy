@@ -6,8 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// common in tests
-// nolint: scopelint
+// nolint:scopelint // common in tests
 func Test_newCellMask(t *testing.T) {
 	testCases := []struct {
 		cps []bool

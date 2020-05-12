@@ -7,6 +7,7 @@ import (
 
 const _fixtureRegex = `^([A-Za-z0-9]+)-([A-Za-z0-9]+)-([A-Za-z0-9]+)-([A-Za-z0-9]+)$`
 
+// FixtureBarcode is the barcode of the fixture
 type FixtureBarcode struct {
 	Location, Aisle, Tower, Fxn string
 	raw                         string

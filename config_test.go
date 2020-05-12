@@ -12,7 +12,9 @@ func TestLoadConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	defer os.Remove(tf.Name())
+	defer func() {
+		_ = os.Remove(tf.Name())
+	}()
 
 	if _, err = tf.Write([]byte("recipefile: foo\ningredientsfile: bar")); err != nil {
 		// don't fatal so the defer will be called

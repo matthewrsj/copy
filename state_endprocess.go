@@ -11,6 +11,7 @@ import (
 	pb "stash.teslamotors.com/rr/towercontroller/pb"
 )
 
+// EndProcess informs the cell API of process completion. This is the last state.
 type EndProcess struct {
 	statemachine.Common
 
@@ -26,8 +27,6 @@ type EndProcess struct {
 	fixtureFault    bool
 }
 
-// error handling lengthens action
-// nolint: funlen
 func (e *EndProcess) action() {
 	if err := e.CellAPIClient.UpdateProcessStatus(e.tbc.SN, e.processStepName, cellapi.StatusEnd); err != nil {
 		// keep trying the other transactions
@@ -101,6 +100,7 @@ func (e *EndProcess) action() {
 
 		return
 	}
+
 	// TODO: determine how to inform cell API of fault
 	msg := "tray complete"
 	if e.fixtureFault {
@@ -113,6 +113,7 @@ func (e *EndProcess) action() {
 	}).Infof(msg)
 }
 
+// Actions returns the action functions for this state
 func (e *EndProcess) Actions() []func() {
 	e.SetLast(true)
 
@@ -121,6 +122,7 @@ func (e *EndProcess) Actions() []func() {
 	}
 }
 
+// Next returns the next state to run
 func (e *EndProcess) Next() statemachine.State {
 	e.Logger.WithField("tray", e.tbc.SN).Trace("statemachine exiting")
 	return nil

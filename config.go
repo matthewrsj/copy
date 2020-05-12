@@ -32,5 +32,9 @@ func LoadConfig(path string) (Configuration, error) {
 
 	var conf Configuration
 
-	return conf, yaml.Unmarshal(contents, &conf)
+	if err = yaml.Unmarshal(contents, &conf); err != nil {
+		return Configuration{}, fmt.Errorf("unmarshal configuration contents: %v", err)
+	}
+
+	return conf, nil
 }

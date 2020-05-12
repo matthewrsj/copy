@@ -12,6 +12,7 @@ import (
 	pb "stash.teslamotors.com/rr/towercontroller/pb"
 )
 
+// InProcess monitors the FXR proto for the state to change
 type InProcess struct {
 	statemachine.Common
 
@@ -28,8 +29,6 @@ type InProcess struct {
 	canErr          error
 }
 
-// action function does a lot of logging
-// nolint:funlen
 func (i *InProcess) action() {
 	var dev socketcan.Interface
 
@@ -45,7 +44,9 @@ func (i *InProcess) action() {
 		return
 	}
 
-	defer dev.Close()
+	defer func() {
+		_ = dev.Close()
+	}()
 
 	for {
 		var data []byte
@@ -123,12 +124,14 @@ func (i *InProcess) action() {
 	}
 }
 
+// Actions returns the action functions for this state
 func (i *InProcess) Actions() []func() {
 	return []func(){
 		i.action,
 	}
 }
 
+// Next returns the next state to run
 func (i *InProcess) Next() statemachine.State {
 	next := &EndProcess{
 		Config:          i.Config,

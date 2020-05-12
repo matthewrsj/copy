@@ -5,6 +5,7 @@ import (
 	"regexp"
 )
 
+// TrayBarcode contains the components of the tray barcode
 type TrayBarcode struct {
 	SN string
 	O  Orientation

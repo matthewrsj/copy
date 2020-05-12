@@ -51,7 +51,9 @@ func Test_loadRecipe(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	defer os.Remove(itf.Name())
+	defer func() {
+		_ = os.Remove(itf.Name())
+	}()
 
 	if _, err = itf.Write([]byte(_ingContents)); err != nil {
 		// don't fatal so the defer will be called
@@ -68,7 +70,9 @@ func Test_loadRecipe(t *testing.T) {
 		return
 	}
 
-	defer os.Remove(rtf.Name())
+	defer func() {
+		_ = os.Remove(rtf.Name())
+	}()
 
 	if _, err = rtf.Write([]byte(_recContents)); err != nil {
 		// don't fatal so the defer will be called
