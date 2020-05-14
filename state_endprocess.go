@@ -92,13 +92,15 @@ func (e *EndProcess) action() {
 		})
 	}
 
-	failMsg := fmt.Sprintf("failed cells: %s", strings.Join(failed, ", "))
-	e.Logger.WithFields(logrus.Fields{
-		"tray":    e.tbc.raw,
-		"fixture": e.fxbc.raw,
-	}).Infof(failMsg)
+	if len(failed) > 0 {
+		failMsg := fmt.Sprintf("failed cells: %s", strings.Join(failed, ", "))
+		e.Logger.WithFields(logrus.Fields{
+			"tray":    e.tbc.raw,
+			"fixture": e.fxbc.raw,
+		}).Infof(failMsg)
 
-	log.Printf("tray %s (fixture %s) %s", e.tbc.SN, e.fxbc.raw, failMsg)
+		log.Printf("tray %s (fixture %s) %s", e.tbc.SN, e.fxbc.raw, failMsg)
+	}
 
 	if err := e.CellAPIClient.SetCellStatuses(cpf); err != nil {
 		e.Logger.Error(err)
