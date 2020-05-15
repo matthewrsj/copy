@@ -8,7 +8,7 @@ func newCellMask(present []bool) []uint32 {
 			continue
 		}
 
-		cm[i/32] |= 1 << i % 32
+		cm[i/32] |= 1 << (i % 32)
 	}
 
 	return cm

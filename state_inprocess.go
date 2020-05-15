@@ -142,6 +142,7 @@ func (i *InProcess) Next() statemachine.State {
 		processStepName: i.processStepName,
 		fixtureFault:    i.fixtureFault,
 		cellResponse:    i.cellResponse,
+		cells:           i.cells,
 	}
 	i.Logger.WithField("tray", i.tbc.SN).Tracef("next state: %s", statemachine.NameOf(next))
 

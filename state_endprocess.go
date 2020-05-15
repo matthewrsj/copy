@@ -34,11 +34,16 @@ func (e *EndProcess) action() {
 		log.Println(err)
 	}
 
-	cpf := make([]cellapi.CellPFData, len(e.cellResponse))
+	var cpf []cellapi.CellPFData
 
 	var failed []string
 
 	for i, cell := range e.cellResponse {
+		// no cell present
+		if cell.GetCellstatus() == pb.CellStatus_CELL_STATUS_NONE_UNSPECIFIED {
+			continue
+		}
+
 		status := "pass"
 		if cell.GetCellstatus() != pb.CellStatus_CELL_STATUS_COMPLETE {
 			status = "fail"
@@ -79,20 +84,22 @@ func (e *EndProcess) action() {
 			continue
 		}
 
-		cpf[i] = cellapi.CellPFData{
+		cpf = append(cpf, cellapi.CellPFData{
 			Serial:  cell.Serial,
 			Process: e.processStepName,
 			Status:  status,
-		}
+		})
 	}
 
-	failMsg := fmt.Sprintf("failed cells: %s", strings.Join(failed, ", "))
-	e.Logger.WithFields(logrus.Fields{
-		"tray":    e.tbc.raw,
-		"fixture": e.fxbc.raw,
-	}).Infof(failMsg)
+	if len(failed) > 0 {
+		failMsg := fmt.Sprintf("failed cells: %s", strings.Join(failed, ", "))
+		e.Logger.WithFields(logrus.Fields{
+			"tray":    e.tbc.raw,
+			"fixture": e.fxbc.raw,
+		}).Infof(failMsg)
 
-	log.Printf("tray %s (fixture %s) %s", e.tbc.SN, e.fxbc.raw, failMsg)
+		log.Printf("tray %s (fixture %s) %s", e.tbc.SN, e.fxbc.raw, failMsg)
+	}
 
 	if err := e.CellAPIClient.SetCellStatuses(cpf); err != nil {
 		e.Logger.Error(err)
