@@ -10,6 +10,7 @@ import (
 	pb "stash.teslamotors.com/rr/towerproto"
 )
 
+// nolint:funlen,gocognit // this is basically just a script
 func main() {
 	// rx
 	readDev, err := socketcan.NewIsotpInterface("vcan0", 0x200, 0x100)
@@ -17,15 +18,20 @@ func main() {
 		log.Fatal("create ISOTP listener", err)
 	}
 
-	defer readDev.Close()
+	defer func() {
+		_ = readDev.Close()
+	}()
 
 	// tx
 	dev, err := socketcan.NewIsotpInterface("vcan0", 0x100, 0x200)
 	if err != nil {
-		log.Fatal("create ISOTP interface:", err)
+		log.Println("create ISOTP interface", err)
+		return // return so the defer is called
 	}
 
-	defer dev.Close()
+	defer func() {
+		_ = dev.Close()
+	}()
 
 	// msgDiag contains the diagnostic messages from the FXR. Ignored by the TC SM
 	msgDiag := &pb.FixtureToTower{
@@ -50,6 +56,7 @@ func main() {
 	}
 
 	var mx sync.Mutex
+
 	go func() {
 		// tx to start so no listeners are blocked
 		for {
@@ -81,12 +88,12 @@ func main() {
 	for {
 		buf, err := readDev.RecvBuf()
 		if err != nil {
-			log.Fatal("RECV BUF", err)
+			log.Println("RECV BUF", err)
+			return // return so the defer is called
 		}
 
 		var msg pb.TowerToFixture
-		err = proto.Unmarshal(buf, &msg)
-		if err != nil {
+		if err = proto.Unmarshal(buf, &msg); err != nil {
 			// just means this isn't the message we are looking for
 			continue
 		}
@@ -97,8 +104,10 @@ func main() {
 		}
 
 		log.Println("RECEIVED MESSAGE FROM TOWER")
+
 		cells := make([]*pb.Cell, 64)
 		cms := msg.Recipe.GetCellMasks()
+
 		for i, cm := range cms {
 			for bit := 0; bit < 32; bit++ {
 				if cm&(1<<bit) != 0 {
@@ -125,6 +134,7 @@ func main() {
 		msgOp.ProcessStep = msg.GetSysinfo().GetProcessStep()
 		msgOp.GetOp().Status = pb.FixtureStatus_FIXTURE_STATUS_IDLE
 		msgOp.GetOp().Cells = cells
+
 		for i := 0; i < 10; i++ {
 			switch {
 			case i > 7:
@@ -138,15 +148,18 @@ func main() {
 			for _, msg := range []proto.Message{msgDiag, msgOp} {
 				pkt, err := proto.Marshal(msg)
 				if err != nil {
-					log.Fatal(err)
+					log.Println(err)
+					return
 				}
 
 				mx.Lock()
 				if err := dev.SendBuf(pkt); err != nil {
-					log.Fatal(err)
+					log.Println(err)
+					return
 				}
 				mx.Unlock()
 			}
+
 			time.Sleep(time.Second)
 		}
 	}
