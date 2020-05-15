@@ -7,7 +7,7 @@ github.com/davecgh/go-spew/spew
 # github.com/fatih/color v1.9.0
 ## explicit
 github.com/fatih/color
-# github.com/golang/protobuf v1.4.1
+# github.com/golang/protobuf v1.4.2
 ## explicit
 github.com/golang/protobuf/proto
 # github.com/juju/ansiterm v0.0.0-20180109212912-720a0952cc2a
@@ -39,7 +39,7 @@ github.com/sirupsen/logrus
 github.com/stretchr/testify/assert
 # golang.org/x/sys v0.0.0-20191026070338-33540a1f6037
 golang.org/x/sys/unix
-# google.golang.org/protobuf v1.22.0
+# google.golang.org/protobuf v1.23.0
 ## explicit
 google.golang.org/protobuf/encoding/prototext
 google.golang.org/protobuf/encoding/protowire
@@ -82,3 +82,6 @@ stash.teslamotors.com/ctet/statemachine/v2
 # stash.teslamotors.com/rr/cellapi v0.0.0-20200511205929-aa88e93224d3
 ## explicit
 stash.teslamotors.com/rr/cellapi
+# stash.teslamotors.com/rr/towerproto v0.0.1
+## explicit
+stash.teslamotors.com/rr/towerproto

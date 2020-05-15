@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 
 	"gopkg.in/yaml.v2"
-	pb "stash.teslamotors.com/rr/towercontroller/pb"
+	pb "stash.teslamotors.com/rr/towerproto"
 )
 
 /*

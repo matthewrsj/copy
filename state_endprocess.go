@@ -8,7 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cellapi"
-	pb "stash.teslamotors.com/rr/towercontroller/pb"
+	pb "stash.teslamotors.com/rr/towerproto"
 )
 
 // EndProcess informs the cell API of process completion. This is the last state.

@@ -23,23 +23,36 @@ syntax = "proto3";
 // -- PCBA / ambient temperature sensors
 // -- tied to controllers in each fixture
 
+message Genealogy {
+  string board_pn      = 1;
+  string board_sn      = 2;
+  string package_pn    = 3;
+  string package_sn    = 4;
+  string subpackage_pn = 5;
+  string subpackage_sn = 6;
+  uint64 pcba_id       = 7;
+  uint64 usage_id      = 8;
+  uint64 assembly_id   = 9;
+}
+
 message FxrSensors {
-  float  bus_voltage          = 1;  // 80V bus
-  bool  cc_enable_input      = 2;  // comms harness digital input
-  float  v_bus_24             = 3;
+  float bus_voltage          = 1; // 80V bus
+  bool  cc_enable_input      = 2; // comms harness digital input
+  float v_bus_24             = 3;
   bool  position_switch_up   = 4;
-  bool  position_siwtch_down = 5;
+  bool  position_switch_down = 5;
 }
 
 message FxrOutputs {
   bool stib_enable_line     = 1;
-  bool fixture_close_enable  = 2;
-  bool cc_enabout_output    = 3;  // comms harness digital output
+  bool fixture_close_enable = 2;
+  bool cc_enable_output     = 3; // comms harness digital output
 }
 
 message Fxr {
-  FxrSensors sensors = 1;
-  FxrOutputs outputs = 2;
+  FxrSensors sensors   = 1;
+  FxrOutputs outputs   = 2;
+  Genealogy  genealogy = 3;
 }
 
 message FibSensors {
@@ -50,7 +63,7 @@ message FibSensors {
   float v_rail_5v    = 5;
   float v_rail_3v3   = 6;
   float micro_temp   = 7;
-  bool tray_present = 8;
+  bool  tray_present = 8;
 }
 
 message FibInternal {
@@ -60,7 +73,7 @@ message FibInternal {
   float cpu_time_1khz_max  = 4;
   float cpu_time_10hz      = 5;
   float cpu_time_10khz_max = 6;
-  float stack_usage_system = 7;  // %
+  float stack_usage_system = 7; // %
   float stack_usage_1khz   = 8;
   float stack_usage_10hz   = 9;
   float stack_usage_uds    = 10;
@@ -78,7 +91,7 @@ message FanMeasurements {
   float speed               = 1;
   float speed_request       = 2;
   float duty                = 3;
-  bool duty_control_active = 4;
+  bool  duty_control_active = 4;
 }
 
 message Fan {
@@ -87,9 +100,10 @@ message Fan {
 }
 
 message Fib {
-  FibSensors    sensors  = 1;
-  FibInternal   internal = 2;
-  repeated Fan  fans     = 3;  // always 9 fans
+  FibSensors   sensors   = 1;
+  FibInternal  internal  = 2;
+  Genealogy    genealogy = 3;
+  repeated Fan fans      = 4; // always 9 fans
 }
 
 message StibSensors {
@@ -109,6 +123,7 @@ message StibStatistics {
 message Stib {
   StibSensors    sensors    = 1;
   StibStatistics statistics = 2;
+  Genealogy      genealogy  = 3;
 }
 
 enum CellStatus {
@@ -121,12 +136,12 @@ enum CellStatus {
 }
 
 message CellMeasurement {
-  float      current              = 1;
-  float      voltage              = 2;
-  float      charge_ah            = 3;
-  float      energy_wh            = 4;
-  float      temperature_estimate = 5;
-  float      pogo_resistance      = 6;
+  float current              = 1;
+  float voltage              = 2;
+  float charge_ah            = 3;
+  float energy_wh            = 4;
+  float temperature_estimate = 5;
+  float pogo_resistance      = 6;
 }
 
 message Cell {
@@ -137,11 +152,11 @@ message Cell {
 enum FixtureStatus {
   FIXTURE_STATUS_UNKNOWN_UNSPECIFIED = 0;
   FIXTURE_STATUS_IDLE                = 1;
-  FIXTURE_STATUS_READY               = 2;  // same as ready but tray present
-  FIXTURE_STATUS_ACTIVE              = 3;  // faulted
+  FIXTURE_STATUS_READY               = 2; // same as ready but tray present
+  FIXTURE_STATUS_ACTIVE              = 3; // faulted
   FIXTURE_STATUS_FAULTED             = 4;
-  FIXTURE_STATUS_COMPLETE            = 5;  // complete, but tray has not been removed yet
-  FIXTURE_STATUS_UPDATING            = 6;  // discuss if we need this
+  FIXTURE_STATUS_COMPLETE            = 5; // complete, tray still in place
+  FIXTURE_STATUS_UPDATING            = 6; // discuss if we need this
 }
 
 enum FixturePosition {
@@ -152,7 +167,6 @@ enum FixturePosition {
   FIXTURE_POSITION_INVALID             = 4;
 }
 
-
 message FixtureOperational {
   FixtureStatus   status   = 1;
   FixturePosition position = 2;
@@ -161,18 +175,18 @@ message FixtureOperational {
 
 message FixtureDiagnostic {
   Fxr           fxr   = 1;
-  Fib           fib    = 2;
-  repeated Stib stibs = 3;  // 4 stibs
+  Fib           fib   = 2;
+  repeated Stib stibs = 3; // 4 stibs
 }
 
 message FixtureToTower {
   oneof content {
-    FixtureOperational op    = 1;
-    FixtureDiagnostic  diag  = 2;
+    FixtureOperational op   = 1;
+    FixtureDiagnostic  diag = 2;
   }
-  string traybarcode         = 3;
-  string fixtureposition      = 4;
-  string process_step        = 5;
+  string traybarcode     = 3;
+  string fixtureposition = 4;
+  string process_step    = 5;
 }
 
 message RecipeStep {
@@ -181,13 +195,13 @@ message RecipeStep {
     FORM_MODE_CC                  = 1;
     FORM_MODE_CV                  = 2;
   }
-  FormMode mode                   = 1;
-  float     charge_current         = 2;
-  float     max_current            = 3;
-  float     cut_off_voltage        = 4;
-  float     cut_off_current        = 5;
-  float     cell_drop_out_v        = 6;
-  float     step_timeout           = 7;
+  FormMode mode            = 1;
+  float    charge_current  = 2;
+  float    max_current     = 3;
+  float    cut_off_voltage = 4;
+  float    cut_off_current = 5;
+  float    cell_drop_out_v = 6;
+  float    step_timeout    = 7;
 }
 
 enum FormRequest {
@@ -198,18 +212,18 @@ enum FormRequest {
 }
 
 message Recipe {
-  repeated        RecipeStep steps = 1;
-  repeated uint32 cell_masks       = 2;
-  FormRequest     formrequest      = 3;
+  repeated RecipeStep steps       = 1;
+  repeated uint32     cell_masks  = 2;
+  FormRequest         formrequest = 3;
 }
 
 message SystemInfo {
-  string traybarcode    = 1;
+  string traybarcode     = 1;
   string fixtureposition = 2;
-  string process_step   = 3;
+  string process_step    = 3;
 }
 
 message TowerToFixture {
-  Recipe recipe      = 1;
+  Recipe     recipe  = 1;
   SystemInfo sysinfo = 2;
 }

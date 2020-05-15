@@ -7,7 +7,7 @@ import (
 
 	"github.com/linklayer/go-socketcan/pkg/socketcan"
 	"google.golang.org/protobuf/proto"
-	pb "stash.teslamotors.com/rr/towercontroller/pb"
+	pb "stash.teslamotors.com/rr/towerproto"
 )
 
 func main() {
@@ -37,12 +37,12 @@ func main() {
 						CcEnableInput:      false,
 						VBus_24:            23.87,
 						PositionSwitchUp:   false,
-						PositionSiwtchDown: false,
+						PositionSwitchDown: false,
 					},
 					Outputs: &pb.FxrOutputs{
 						StibEnableLine:     true,
 						FixtureCloseEnable: true,
-						CcEnaboutOutput:    false,
+						CcEnableOutput:     false,
 					},
 				},
 			},

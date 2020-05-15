@@ -9,7 +9,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cellapi"
-	pb "stash.teslamotors.com/rr/towercontroller/pb"
+	pb "stash.teslamotors.com/rr/towerproto"
 )
 
 // InProcess monitors the FXR proto for the state to change

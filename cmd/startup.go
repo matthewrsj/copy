@@ -8,7 +8,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/towercontroller"
-	pb "stash.teslamotors.com/rr/towercontroller/pb"
+	pb "stash.teslamotors.com/rr/towerproto"
 )
 
 func monitorForInProgress(c towercontroller.Configuration) ([]statemachine.Job, error) {
