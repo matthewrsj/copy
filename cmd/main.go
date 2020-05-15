@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"sync"
 
 	"github.com/sirupsen/logrus"
 	"stash.teslamotors.com/ctet/cmdlineutils"
@@ -50,8 +51,8 @@ func main() {
 
 	s := statemachine.NewScheduler()
 
-	for _, fixture := range conf.Fixtures {
-		s.Register(fixture,
+	for n := range conf.Fixtures {
+		s.Register(n,
 			&towercontroller.ProcessStep{
 				Config:        conf,
 				Logger:        logger,
@@ -64,24 +65,51 @@ func main() {
 	logger.Info(msg)
 	log.Println(msg)
 
-	jobs, err := monitorForInProgress(conf)
-	if err != nil {
-		err = fmt.Errorf("monitor for in-progress trays: %v", err)
-		log.Println(err)
-		logger.Fatal(err)
+	jch := make(chan []statemachine.Job)
+
+	var wg sync.WaitGroup
+
+	wg.Add(len(conf.Fixtures))
+
+	for _, id := range conf.Fixtures {
+		go func(id uint32) {
+			defer wg.Done()
+
+			jobs, err := monitorForInProgress(conf, id)
+			if err != nil {
+				err = fmt.Errorf("monitor for in-progress trays: %v", err)
+				log.Println(err)
+				logger.Error(err)
+
+				return
+			}
+
+			jch <- jobs
+		}(id)
 	}
 
-	for _, job := range jobs {
-		msg := fmt.Sprintf("found in-progress tray in fixture %s", job.Name)
-		logger.Info(msg)
-		log.Println(msg)
+	done := make(chan struct{})
 
-		if err := s.Schedule(job); err != nil {
-			err = fmt.Errorf("schedule in-progress trays: %v", err)
-			log.Println(err)
-			logger.Fatal(err)
+	go func() {
+		for jobs := range jch {
+			for _, job := range jobs {
+				msg := fmt.Sprintf("found in-progress tray in fixture %s", job.Name)
+				logger.Info(msg)
+				log.Println(msg)
+
+				if err := s.Schedule(job); err != nil {
+					err = fmt.Errorf("schedule in-progress trays: %v", err)
+					log.Println(err)
+					logger.Fatal(err)
+				}
+			}
 		}
-	}
+
+		close(done)
+	}()
+	wg.Wait()
+	close(jch)
+	<-done // wait for all jobs to be read
 
 	logger.Info("starting state machine scheduler")
 

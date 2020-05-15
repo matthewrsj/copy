@@ -34,6 +34,7 @@ func (e *EndProcess) action() {
 		log.Println(err)
 	}
 
+	// nolint:prealloc // we don't know how long this will be, depends on what the FXR Cells' content is
 	var cpf []cellapi.CellPFData
 
 	var failed []string

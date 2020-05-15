@@ -30,13 +30,19 @@ type InProcess struct {
 }
 
 func (i *InProcess) action() {
+	fxrID, ok := i.Config.Fixtures[i.fxbc.Fxn]
+	if !ok {
+		err := fmt.Errorf("fixture %s not configured for tower controller", i.fxbc.Fxn)
+		i.Logger.Error(err)
+		log.Println(err)
+		i.SetLast(true)
+
+		return
+	}
+
 	var dev socketcan.Interface
 
-	if dev, i.canErr = socketcan.NewIsotpInterface(
-		i.Config.CAN.Device,
-		i.Config.CAN.RXID,
-		i.Config.CAN.TXID,
-	); i.canErr != nil {
+	if dev, i.canErr = socketcan.NewIsotpInterface(i.Config.CAN.Device, fxrID, i.Config.CAN.TXID); i.canErr != nil {
 		i.Logger.Error(i.canErr)
 		log.Println(i.canErr)
 		i.SetLast(true)

@@ -11,12 +11,16 @@ import (
 	pb "stash.teslamotors.com/rr/towerproto"
 )
 
-func monitorForInProgress(c towercontroller.Configuration) ([]statemachine.Job, error) {
+func monitorForInProgress(c towercontroller.Configuration, fxID uint32) ([]statemachine.Job, error) {
 	const waitForMessagesSecs = 5
 
-	dev, err := socketcan.NewIsotpInterface(c.CAN.Device, c.CAN.RXID, c.CAN.TXID)
+	dev, err := socketcan.NewIsotpInterface(c.CAN.Device, fxID, c.CAN.TXID)
 	if err != nil {
 		return nil, fmt.Errorf("create CAN ISOTP interface: %v", err)
+	}
+
+	if err = dev.SetRecvTimeout(time.Second); err != nil {
+		return nil, fmt.Errorf("set receive timeout: %v", err)
 	}
 
 	var jobs []statemachine.Job
@@ -25,7 +29,8 @@ func monitorForInProgress(c towercontroller.Configuration) ([]statemachine.Job, 
 	for time.Since(now) < time.Second*waitForMessagesSecs {
 		buf, err := dev.RecvBuf()
 		if err != nil {
-			return nil, fmt.Errorf("receive buffer: %v", err)
+			// timeout returns an error, try again
+			continue
 		}
 
 		var msg pb.FixtureToTower

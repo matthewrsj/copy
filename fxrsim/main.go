@@ -1,37 +1,68 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"sync"
 	"time"
 
 	"github.com/linklayer/go-socketcan/pkg/socketcan"
 	"google.golang.org/protobuf/proto"
+	"stash.teslamotors.com/rr/towercontroller"
 	pb "stash.teslamotors.com/rr/towerproto"
 )
 
+const _confFileDef = "../configuration/statemachine/statemachine.yaml"
+
 // nolint:funlen,gocognit // this is basically just a script
 func main() {
-	// rx
-	readDev, err := socketcan.NewIsotpInterface("vcan0", 0x200, 0x100)
+	configFile := flag.String("conf", _confFileDef, "path to the configuration file")
+
+	flag.Parse()
+
+	conf, err := towercontroller.LoadConfig(*configFile)
 	if err != nil {
-		log.Fatal("create ISOTP listener", err)
+		log.Fatal(err)
 	}
 
-	defer func() {
-		_ = readDev.Close()
-	}()
-
-	// tx
-	dev, err := socketcan.NewIsotpInterface("vcan0", 0x100, 0x200)
-	if err != nil {
-		log.Println("create ISOTP interface", err)
-		return // return so the defer is called
+	type rwDevs struct {
+		reader, writer socketcan.Interface
+		mx             *sync.Mutex
 	}
 
-	defer func() {
-		_ = dev.Close()
-	}()
+	fxDevs := make(map[string]rwDevs)
+
+	for n, id := range conf.Fixtures {
+		// rx
+		log.Printf("LISTENING ON %d", id)
+		log.Printf("WRITING TO %d", conf.CAN.TXID)
+
+		readDev, err := socketcan.NewIsotpInterface(conf.CAN.Device, id, conf.CAN.TXID)
+		if err != nil {
+			log.Fatal("create ISOTP listener", err)
+		}
+
+		defer func() {
+			_ = readDev.Close()
+		}()
+
+		// tx
+		dev, err := socketcan.NewIsotpInterface(conf.CAN.Device, conf.CAN.TXID, id)
+		if err != nil {
+			log.Println("create ISOTP interface", err)
+			return // return so the defer is called
+		}
+
+		fxDevs[n] = rwDevs{
+			reader: readDev,
+			writer: dev,
+			mx:     &sync.Mutex{},
+		}
+
+		defer func() {
+			_ = dev.Close()
+		}()
+	}
 
 	// msgDiag contains the diagnostic messages from the FXR. Ignored by the TC SM
 	msgDiag := &pb.FixtureToTower{
@@ -55,26 +86,6 @@ func main() {
 		},
 	}
 
-	var mx sync.Mutex
-
-	go func() {
-		// tx to start so no listeners are blocked
-		for {
-			// send a couple to unblock any listeners
-			pkt, err := proto.Marshal(msgDiag)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			mx.Lock()
-			if err = dev.SendBuf(pkt); err != nil {
-				log.Fatal(err)
-			}
-			mx.Unlock()
-			time.Sleep(time.Second)
-		}
-	}()
-
 	// msgOp contains the status of the fixture. This what the TC state machine relies on
 	msgOp := &pb.FixtureToTower{
 		Content: &pb.FixtureToTower_Op{
@@ -85,82 +96,96 @@ func main() {
 		},
 	}
 
-	for {
-		buf, err := readDev.RecvBuf()
-		if err != nil {
-			log.Println("RECV BUF", err)
-			return // return so the defer is called
-		}
+	for _, devices := range fxDevs {
+		go func(devices rwDevs) {
+			log.Println("FIXTURE WAITING FOR MESSAGE FROM TOWER")
 
-		var msg pb.TowerToFixture
-		if err = proto.Unmarshal(buf, &msg); err != nil {
-			// just means this isn't the message we are looking for
-			continue
-		}
+			for {
+				buf, err := devices.reader.RecvBuf()
+				if err != nil {
+					log.Println("RECV BUF", err)
 
-		if msg.GetSysinfo().GetProcessStep() == "" {
-			// not what we are looking for
-			continue
-		}
+					return // return so the defer is called
+				}
 
-		log.Println("RECEIVED MESSAGE FROM TOWER")
+				var msg pb.TowerToFixture
+				if err = proto.Unmarshal(buf, &msg); err != nil {
+					// just means this isn't the message we are looking for
+					time.Sleep(time.Second)
+					continue
+				}
 
-		cells := make([]*pb.Cell, 64)
-		cms := msg.Recipe.GetCellMasks()
+				if msg.GetSysinfo().GetProcessStep() == "" {
+					// not what we are looking for
+					time.Sleep(time.Second)
+					continue
+				}
 
-		for i, cm := range cms {
-			for bit := 0; bit < 32; bit++ {
-				if cm&(1<<bit) != 0 {
-					cells[i+bit] = &pb.Cell{
-						Cellstatus: pb.CellStatus_CELL_STATUS_COMPLETE,
-						Cellmeasurement: &pb.CellMeasurement{
-							Current:             1.23,
-							Voltage:             3.47,
-							ChargeAh:            94,
-							EnergyWh:            74,
-							TemperatureEstimate: 28.9,
-							PogoResistance:      199,
-						},
+				log.Println("RECEIVED MESSAGE FROM TOWER")
+
+				cells := make([]*pb.Cell, 64)
+				cms := msg.Recipe.GetCellMasks()
+
+				for i, cm := range cms {
+					for bit := 0; bit < 32; bit++ {
+						if cm&(1<<bit) != 0 {
+							cells[i+bit] = &pb.Cell{
+								Cellstatus: pb.CellStatus_CELL_STATUS_COMPLETE,
+								Cellmeasurement: &pb.CellMeasurement{
+									Current:             1.23,
+									Voltage:             3.47,
+									ChargeAh:            94,
+									EnergyWh:            74,
+									TemperatureEstimate: 28.9,
+									PogoResistance:      199,
+								},
+							}
+						}
 					}
 				}
-			}
-		}
 
-		msgDiag.Fixtureposition = msg.GetSysinfo().GetFixtureposition()
-		msgDiag.Traybarcode = msg.GetSysinfo().GetTraybarcode()
-		msgDiag.ProcessStep = msg.GetSysinfo().GetProcessStep()
-		msgOp.Fixtureposition = msg.GetSysinfo().GetFixtureposition()
-		msgOp.Traybarcode = msg.GetSysinfo().GetTraybarcode()
-		msgOp.ProcessStep = msg.GetSysinfo().GetProcessStep()
-		msgOp.GetOp().Status = pb.FixtureStatus_FIXTURE_STATUS_IDLE
-		msgOp.GetOp().Cells = cells
+				msgDiag.Fixtureposition = msg.GetSysinfo().GetFixtureposition()
+				msgDiag.Traybarcode = msg.GetSysinfo().GetTraybarcode()
+				msgDiag.ProcessStep = msg.GetSysinfo().GetProcessStep()
+				msgOp.Fixtureposition = msg.GetSysinfo().GetFixtureposition()
+				msgOp.Traybarcode = msg.GetSysinfo().GetTraybarcode()
+				msgOp.ProcessStep = msg.GetSysinfo().GetProcessStep()
+				msgOp.GetOp().Status = pb.FixtureStatus_FIXTURE_STATUS_IDLE
+				msgOp.GetOp().Cells = cells
 
-		for i := 0; i < 10; i++ {
-			switch {
-			case i > 7:
-				msgOp.GetOp().Status = pb.FixtureStatus_FIXTURE_STATUS_COMPLETE
-			case i > 2:
-				msgOp.GetOp().Status = pb.FixtureStatus_FIXTURE_STATUS_ACTIVE
-			}
+				for i := 0; i < 10; i++ {
+					switch {
+					case i > 7:
+						msgOp.GetOp().Status = pb.FixtureStatus_FIXTURE_STATUS_COMPLETE
+					case i > 2:
+						msgOp.GetOp().Status = pb.FixtureStatus_FIXTURE_STATUS_ACTIVE
+					}
 
-			log.Println(msgOp.GetOp().Status.String())
+					log.Println(msgOp.GetOp().Status.String())
 
-			for _, msg := range []proto.Message{msgDiag, msgOp} {
-				pkt, err := proto.Marshal(msg)
-				if err != nil {
-					log.Println(err)
-					return
+					for _, msg := range []proto.Message{msgDiag, msgOp} {
+						pkt, err := proto.Marshal(msg)
+						if err != nil {
+							log.Println(err)
+							return
+						}
+
+						devices.mx.Lock()
+						if err := devices.writer.SendBuf(pkt); err != nil {
+							log.Println(err)
+							devices.mx.Unlock()
+
+							return
+						}
+						devices.mx.Unlock()
+					}
+
+					time.Sleep(time.Second)
 				}
-
-				mx.Lock()
-				if err := dev.SendBuf(pkt); err != nil {
-					log.Println(err)
-					return
-				}
-				mx.Unlock()
 			}
-
-			time.Sleep(time.Second)
-		}
+		}(devices)
 	}
+
+	// allow the above routines to loop forever
+	select {}
 }

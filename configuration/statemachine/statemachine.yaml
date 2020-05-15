@@ -9,11 +9,11 @@ cell_api:
     next_process_step: /trays/%s/formation # tray_serial
     cell_status: /cells/set_cell_status
 
-fixtures:
-  - 01
-  - 02
-  - 03
-  - 04
+fixture_ids:
+  01: 512
+  02: 522
+  03: 532
+  04: 542
 
 can:
   dev: vcan0

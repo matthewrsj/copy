@@ -78,16 +78,27 @@ func (s *StartProcess) action() {
 	present := make([]bool, len(cellMapConf))
 
 	for i, cell := range cellMapConf {
-		_, ok := s.cells[cell]
+		_, ok = s.cells[cell]
 		present[i] = ok
 	}
 
 	twr2Fxr.Recipe.CellMasks = newCellMask(present)
 
+	var fxrID uint32
+
+	if fxrID, ok = s.Config.Fixtures[s.fxbc.Fxn]; !ok {
+		err := fmt.Errorf("fixture %s not configured for tower controller", s.fxbc.Fxn)
+		s.Logger.Error(err)
+		log.Println(err)
+		s.SetLast(true)
+
+		return
+	}
+
 	var dev socketcan.Interface
 
 	if dev, s.canErr = socketcan.NewIsotpInterface(
-		s.Config.CAN.Device, s.Config.CAN.TXID, s.Config.CAN.RXID,
+		s.Config.CAN.Device, s.Config.CAN.TXID, fxrID,
 	); s.canErr != nil {
 		s.Logger.Error(s.canErr)
 		log.Println(s.canErr)
@@ -127,9 +138,10 @@ func (s *StartProcess) action() {
 	}
 
 	s.Logger.WithFields(logrus.Fields{
-		"tray":         s.tbc.SN,
-		"fixture_num":  s.fxbc.raw,
-		"process_step": s.processStepName,
+		"tray":           s.tbc.SN,
+		"fixture_num":    s.fxbc.raw,
+		"fixture_can_id": fxrID,
+		"process_step":   s.processStepName,
 	}).Trace("sent recipe and other information to FXR")
 }
 

@@ -12,8 +12,8 @@ type Configuration struct {
 	RecipeFile      string              `yaml:"recipefile"`
 	IngredientsFile string              `yaml:"ingredientsfile"`
 	CellAPI         cellAPIConf         `yaml:"cell_api"`
-	Fixtures        []string            `yaml:"fixtures"`
 	CAN             canConf             `yaml:"can"`
+	Fixtures        map[string]uint32   `yaml:"fixture_ids"`
 	CellMap         map[string][]string `yaml:"cell_map"`
 }
 
