@@ -12,7 +12,7 @@ import (
 	pb "stash.teslamotors.com/rr/towerproto"
 )
 
-const _confFileDef = "../configuration/statemachine/statemachine.yaml"
+const _confFileDef = "../../configuration/statemachine/statemachine.yaml"
 
 // nolint:funlen,gocognit // this is basically just a script
 func main() {

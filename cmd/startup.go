@@ -11,19 +11,17 @@ import (
 	pb "stash.teslamotors.com/rr/towerproto"
 )
 
-func monitorForInProgress(c towercontroller.Configuration, fxID uint32) ([]statemachine.Job, error) {
+func monitorForInProgress(c towercontroller.Configuration, fxID uint32) (statemachine.Job, error) {
 	const waitForMessagesSecs = 5
 
 	dev, err := socketcan.NewIsotpInterface(c.CAN.Device, fxID, c.CAN.TXID)
 	if err != nil {
-		return nil, fmt.Errorf("create CAN ISOTP interface: %v", err)
+		return statemachine.Job{}, fmt.Errorf("create CAN ISOTP interface: %v", err)
 	}
 
 	if err = dev.SetRecvTimeout(time.Second); err != nil {
-		return nil, fmt.Errorf("set receive timeout: %v", err)
+		return statemachine.Job{}, fmt.Errorf("set receive timeout: %v", err)
 	}
-
-	var jobs []statemachine.Job
 
 	now := time.Now()
 	for time.Since(now) < time.Second*waitForMessagesSecs {
@@ -36,7 +34,7 @@ func monitorForInProgress(c towercontroller.Configuration, fxID uint32) ([]state
 		var msg pb.FixtureToTower
 
 		if err := proto.Unmarshal(buf, &msg); err != nil {
-			return nil, fmt.Errorf("unmarshal buffer: %v", err)
+			return statemachine.Job{}, fmt.Errorf("unmarshal buffer: %v", err)
 		}
 
 		op := msg.GetOp()
@@ -49,28 +47,25 @@ func monitorForInProgress(c towercontroller.Configuration, fxID uint32) ([]state
 
 			fxBC, err := towercontroller.NewFixtureBarcode(fxPos)
 			if err != nil {
-				return nil, fmt.Errorf("parse fixture position: %v", err)
+				return statemachine.Job{}, fmt.Errorf("parse fixture position: %v", err)
 			}
 
 			trayBC, err := towercontroller.NewTrayBarcode(msg.GetTraybarcode())
 			if err != nil {
-				return nil, fmt.Errorf("parse tray barcode: %v", err)
+				return statemachine.Job{}, fmt.Errorf("parse tray barcode: %v", err)
 			}
 
-			jobs = append(
-				jobs,
-				statemachine.Job{
-					Name: fxPos,
-					Work: towercontroller.Barcodes{
-						Fixture:         fxBC,
-						Tray:            trayBC,
-						ProcessStepName: msg.GetProcessStep(),
-						InProgress:      true,
-					},
+			return statemachine.Job{
+				Name: fxBC.Fxn,
+				Work: towercontroller.Barcodes{
+					Fixture:         fxBC,
+					Tray:            trayBC,
+					ProcessStepName: msg.GetProcessStep(),
+					InProgress:      true,
 				},
-			)
+			}, nil
 		}
 	}
 
-	return jobs, nil
+	return statemachine.Job{}, nil
 }

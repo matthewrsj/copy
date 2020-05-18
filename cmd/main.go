@@ -65,7 +65,7 @@ func main() {
 	logger.Info(msg)
 	log.Println(msg)
 
-	jch := make(chan []statemachine.Job)
+	jch := make(chan statemachine.Job)
 
 	var wg sync.WaitGroup
 
@@ -75,7 +75,7 @@ func main() {
 		go func(id uint32) {
 			defer wg.Done()
 
-			jobs, err := monitorForInProgress(conf, id)
+			job, err := monitorForInProgress(conf, id)
 			if err != nil {
 				err = fmt.Errorf("monitor for in-progress trays: %v", err)
 				log.Println(err)
@@ -84,24 +84,27 @@ func main() {
 				return
 			}
 
-			jch <- jobs
+			if job.Name == "" {
+				// no job found within timeout
+				return
+			}
+
+			jch <- job
 		}(id)
 	}
 
 	done := make(chan struct{})
 
 	go func() {
-		for jobs := range jch {
-			for _, job := range jobs {
-				msg := fmt.Sprintf("found in-progress tray in fixture %s", job.Name)
-				logger.Info(msg)
-				log.Println(msg)
+		for job := range jch {
+			msg := fmt.Sprintf("found in-progress tray in fixture %s", job.Name)
+			logger.Info(msg)
+			log.Println(msg)
 
-				if err := s.Schedule(job); err != nil {
-					err = fmt.Errorf("schedule in-progress trays: %v", err)
-					log.Println(err)
-					logger.Fatal(err)
-				}
+			if err := s.Schedule(job); err != nil {
+				err = fmt.Errorf("schedule in-progress trays: %v", err)
+				log.Println(err)
+				logger.Fatal(err)
 			}
 		}
 
