@@ -19,7 +19,7 @@ func Test_newCellMask(t *testing.T) {
 				false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
 				false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true,
 			},
-			exp: []uint32{0x1b, 0x0},
+			exp: []uint32{0x1b, 0x80000000},
 		},
 		{
 			cps: []bool{},

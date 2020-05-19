@@ -61,7 +61,7 @@ func (e *EndProcess) action() {
 			return
 		}
 
-		if i > len(m) {
+		if i > len(m) || len(m) == 0 {
 			err := fmt.Errorf("invalid cell position index, cell list too large: %d > %d", i, len(m))
 			e.Logger.Warn(err)
 			log.Println("WARNING:", err)

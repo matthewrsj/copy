@@ -3,9 +3,9 @@ module stash.teslamotors.com/rr/towercontroller
 go 1.14
 
 require (
+	bou.ke/monkey v1.0.2
 	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/fatih/color v1.9.0
-	github.com/golang/protobuf v1.4.2
 	github.com/linklayer/go-socketcan v0.0.0-20190403144728-e9fc2da5204c
 	github.com/manifoldco/promptui v0.7.0
 	github.com/sirupsen/logrus v1.5.0

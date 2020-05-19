@@ -1,6 +1,10 @@
 package towercontroller
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
 
 // nolint:scopelint // over-reports on test table usage
 func Test_newFixtureBarcode(t *testing.T) {
@@ -89,6 +93,27 @@ func Test_newFixtureBarcode(t *testing.T) {
 				actual.raw != tc.out.raw {
 				t.Errorf("got %#v; expect %#v", actual, tc.out)
 			}
+		})
+	}
+}
+
+func Test_isValidFixtureBarcode(t *testing.T) {
+	testCases := []struct {
+		in    string
+		valid bool
+	}{
+		{"SWIFT-01-A-02", true},
+		{"01-01-02-02", true},
+		{"01-02-02", false},
+		{"02-02", false},
+		{"02", false},
+		{"", false},
+		{"---", false},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.in, func(t *testing.T) {
+			assert.Equal(t, tc.valid, isValidFixtureBarcode(tc.in) == nil)
 		})
 	}
 }

@@ -2,7 +2,6 @@ package towercontroller
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/sirupsen/logrus"
 	"stash.teslamotors.com/ctet/statemachine/v2"
@@ -22,7 +21,6 @@ type ProcessStep struct {
 	tbc             TrayBarcode
 	fxbc            FixtureBarcode
 	inProgress      bool
-	apiErr          error
 }
 
 func (p *ProcessStep) action() {
@@ -30,11 +28,7 @@ func (p *ProcessStep) action() {
 
 	bc, ok := p.Context().(Barcodes)
 	if !ok {
-		p.apiErr = fmt.Errorf("state context %v (%T) was not correct type (Barcodes)", p.Context(), p.Context())
-		p.Logger.Error(p.apiErr)
-		log.Println(p.apiErr)
-		p.SetLast(true)
-
+		fatalError(p, p.Logger, fmt.Errorf("state context %v (%T) was not correct type (Barcodes)", p.Context(), p.Context()))
 		return
 	}
 

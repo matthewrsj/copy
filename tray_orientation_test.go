@@ -2,6 +2,8 @@ package towercontroller
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 // nolint:scopelint // over-reports on test table usage
@@ -71,6 +73,25 @@ func Test_newOrientation(t *testing.T) {
 			if actual != tc.out {
 				t.Errorf("expected %v got %v", tc.out, actual)
 			}
+		})
+	}
+}
+
+func TestOrientation_String(t *testing.T) {
+	testCases := []struct {
+		o   Orientation
+		exp string
+	}{
+		{_orientA, "A"},
+		{_orientB, "B"},
+		{_orientC, "C"},
+		{_orientD, "D"},
+		{0, "0"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.exp, func(t *testing.T) {
+			assert.Equal(t, tc.exp, tc.o.String())
 		})
 	}
 }

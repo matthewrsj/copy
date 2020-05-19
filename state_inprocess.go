@@ -59,20 +59,14 @@ func (i *InProcess) action() {
 
 		data, i.canErr = dev.RecvBuf()
 		if i.canErr != nil {
-			i.Logger.Error(i.canErr)
-			log.Println(i.canErr)
-			i.SetLast(true)
-
+			fatalError(i, i.Logger, i.canErr)
 			return
 		}
 
 		msg := &pb.FixtureToTower{}
 
 		if i.canErr = proto.Unmarshal(data, msg); i.canErr != nil {
-			i.Logger.Error(i.canErr)
-			log.Println(i.canErr)
-			i.SetLast(true)
-
+			fatalError(i, i.Logger, i.canErr)
 			return
 		}
 

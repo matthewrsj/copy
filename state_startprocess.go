@@ -3,7 +3,6 @@ package towercontroller
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/linklayer/go-socketcan/pkg/socketcan"
 	"github.com/sirupsen/logrus"
@@ -58,20 +57,13 @@ func (s *StartProcess) action() {
 	}
 
 	if s.cells, s.apiErr = s.CellAPIClient.GetCellMap(s.tbc.SN); s.apiErr != nil {
-		s.Logger.Error(s.apiErr)
-		log.Println(s.apiErr)
-		s.SetLast(true)
-
+		fatalError(s, s.Logger, s.apiErr)
 		return
 	}
 
 	cellMapConf, ok := s.Config.CellMap[s.tbc.O.String()]
 	if !ok {
-		err := fmt.Errorf("could not find orientation %s in configuration", s.tbc.O)
-		s.Logger.Error(err)
-		log.Println(err)
-		s.SetLast(true)
-
+		fatalError(s, s.Logger, fmt.Errorf("could not find orientation %s in configuration", s.tbc.O))
 		return
 	}
 
@@ -87,11 +79,7 @@ func (s *StartProcess) action() {
 	var fxrID uint32
 
 	if fxrID, ok = s.Config.Fixtures[s.fxbc.Fxn]; !ok {
-		err := fmt.Errorf("fixture %s not configured for tower controller", s.fxbc.Fxn)
-		s.Logger.Error(err)
-		log.Println(err)
-		s.SetLast(true)
-
+		fatalError(s, s.Logger, fmt.Errorf("fixture %s not configured for tower controller", s.fxbc.Fxn))
 		return
 	}
 
@@ -100,10 +88,7 @@ func (s *StartProcess) action() {
 	if dev, s.canErr = socketcan.NewIsotpInterface(
 		s.Config.CAN.Device, s.Config.CAN.TXID, fxrID,
 	); s.canErr != nil {
-		s.Logger.Error(s.canErr)
-		log.Println(s.canErr)
-		s.SetLast(true)
-
+		fatalError(s, s.Logger, s.canErr)
 		return
 	}
 
@@ -114,26 +99,17 @@ func (s *StartProcess) action() {
 	var data []byte
 
 	if data, s.canErr = proto.Marshal(&twr2Fxr); s.canErr != nil {
-		s.Logger.Error(s.canErr)
-		log.Println(s.canErr)
-		s.SetLast(true)
-
+		fatalError(s, s.Logger, s.canErr)
 		return
 	}
 
 	if s.canErr = dev.SendBuf(data); s.canErr != nil {
-		s.Logger.Error(s.canErr)
-		log.Println(s.canErr)
-		s.SetLast(true)
-
+		fatalError(s, s.Logger, s.canErr)
 		return
 	}
 
 	if err := s.CellAPIClient.UpdateProcessStatus(s.tbc.SN, s.processStepName, cellapi.StatusStart); err != nil {
-		s.Logger.Error(err)
-		log.Println(err)
-		s.SetLast(true)
-
+		fatalError(s, s.Logger, err)
 		return
 	}
 

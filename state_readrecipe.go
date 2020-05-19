@@ -31,9 +31,7 @@ func (r *ReadRecipe) action() {
 	}).Info("loading recipe for process step")
 
 	if r.rcpe, r.rcpErr = loadRecipe(r.Config.RecipeFile, r.Config.IngredientsFile, r.processStepName); r.rcpErr != nil {
-		r.Logger.Error(r.rcpErr)
-		r.SetLast(true)
-
+		fatalError(r, r.Logger, r.rcpErr)
 		return
 	}
 

@@ -4,6 +4,10 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
+
+	"bou.ke/monkey"
+	"github.com/stretchr/testify/assert"
+	pb "stash.teslamotors.com/rr/towerproto"
 )
 
 const (
@@ -102,5 +106,80 @@ func Test_loadRecipe(t *testing.T) {
 		if ing.Mode != expIngFormReqs[i] {
 			t.Errorf("step %d Mode got %s, expect %s", i, ing.Mode, expIngFormReqs[i])
 		}
+	}
+}
+
+func Test_loadIngredientsNoFile(t *testing.T) {
+	rf := monkey.Patch(ioutil.ReadFile, func(string) ([]byte, error) {
+		return nil, assert.AnError
+	})
+	defer rf.Unpatch()
+
+	_, err := loadIngredients("")
+	assert.NotNil(t, err)
+}
+
+func Test_loadIngredientsBadYAML(t *testing.T) {
+	rf := monkey.Patch(ioutil.ReadFile, func(string) ([]byte, error) {
+		return []byte("not yaml;;;"), nil
+	})
+	defer rf.Unpatch()
+
+	_, err := loadIngredients("")
+	assert.NotNil(t, err)
+}
+
+func Test_loadRecipesBadYAML(t *testing.T) {
+	rf := monkey.Patch(ioutil.ReadFile, func(string) ([]byte, error) {
+		return []byte("not yaml;;;"), nil
+	})
+	defer rf.Unpatch()
+
+	_, err := loadRecipes("", "")
+	assert.NotNil(t, err)
+}
+
+func Test_loadRecipesBadIngredients(t *testing.T) {
+	rf := monkey.Patch(ioutil.ReadFile, func(string) ([]byte, error) {
+		return []byte(_recContents), nil
+	})
+	defer rf.Unpatch()
+
+	li := monkey.Patch(loadIngredients, func(string) (ingredientsbook, error) {
+		return ingredientsbook{}, assert.AnError
+	})
+	defer li.Unpatch()
+
+	_, err := loadRecipes("", "")
+	assert.NotNil(t, err)
+}
+
+func Test_loadRecipeNoRecipe(t *testing.T) {
+	rf := monkey.Patch(loadRecipes, func(string, string) (cookbook, error) {
+		return cookbook{
+			"bar": []ingredients{},
+		}, nil
+	})
+	defer rf.Unpatch()
+
+	_, err := loadRecipe("", "", "foo")
+	assert.NotNil(t, err)
+}
+
+func Test_modeStringToEnum(t *testing.T) {
+	testCases := []struct {
+		in  string
+		exp pb.RecipeStep_FormMode
+	}{
+		{"FORM_REQ_CC", pb.RecipeStep_FORM_MODE_CC},
+		{"FORM_REQ_CV", pb.RecipeStep_FORM_MODE_CV},
+		{"FORM_REQ", pb.RecipeStep_FORM_MODE_UNKNOWN_UNSPECIFIED},
+		{"", pb.RecipeStep_FORM_MODE_UNKNOWN_UNSPECIFIED},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.in, func(t *testing.T) {
+			assert.Equal(t, tc.exp, modeStringToEnum(tc.in))
+		})
 	}
 }
