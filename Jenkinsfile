@@ -32,7 +32,10 @@ pipeline {
             steps {
                 deleteDir()
                 checkout scm
-                sh 'go test -gcflags=-l -mod vendor -cover ./...'
+                sh 'go test -gcflags=-l -mod vendor -cover -coverprofile=cover.out ./...'
+                sh '''
+                    [ $(gocov convert cover.out | gocov report | tail -1 | grep -o -E '[0-9]+' | head -1) -ge 50 ]
+                '''
             }
         }
     }
