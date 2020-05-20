@@ -41,12 +41,6 @@ func (p *ProcessStep) action() {
 		"tray":         p.tbc.SN,
 		"fixture_num":  p.fxbc.raw,
 		"process_step": p.processStepName,
-	}).Info("querying Cell API for process step")
-
-	p.Logger.WithFields(logrus.Fields{
-		"tray":         p.tbc.SN,
-		"fixture_num":  p.fxbc.raw,
-		"process_step": p.processStepName,
 	}).Info("running process step")
 }
 
