@@ -70,7 +70,7 @@ func (i *InProcess) action() {
 			return
 		}
 
-		fxbcBroadcast, err := NewFixtureBarcode(msg.GetFixtureposition())
+		fxbcBroadcast, err := NewFixtureBarcode(msg.GetFixturebarcode())
 		if err != nil {
 			err = fmt.Errorf("parse fixture position: %v", err)
 			i.Logger.Warn(err)

@@ -88,8 +88,8 @@ func TestInProcess_Action(t *testing.T) {
 					},
 				},
 			},
-			Traybarcode:     "",
-			Fixtureposition: ipState.fxbc.raw,
+			Traybarcode:    "",
+			Fixturebarcode: ipState.fxbc.raw,
 		}),
 	)
 	defer rbp.Unpatch()

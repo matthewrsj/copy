@@ -65,9 +65,9 @@ func main() {
 						Position: pb.FixturePosition_FIXTURE_POSITION_OPEN,
 					},
 				},
-				Fixtureposition: ctx.fxbc,
-				Traybarcode:     ctx.tbc,
-				ProcessStep:     ctx.pstep,
+				Fixturebarcode: ctx.fxbc,
+				Traybarcode:    ctx.tbc,
+				ProcessStep:    ctx.pstep,
 			}
 
 			pkt, err := proto.Marshal(msgOp)

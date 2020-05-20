@@ -43,7 +43,7 @@ func monitorForInProgress(c towercontroller.Configuration, fxID uint32) (statema
 		}
 
 		if op.GetStatus() == pb.FixtureStatus_FIXTURE_STATUS_ACTIVE {
-			fxPos := msg.GetFixtureposition()
+			fxPos := msg.GetFixturebarcode()
 
 			fxBC, err := towercontroller.NewFixtureBarcode(fxPos)
 			if err != nil {

@@ -38,9 +38,9 @@ func (s *StartProcess) action() {
 	twr2Fxr := pb.TowerToFixture{
 		Recipe: &pb.Recipe{Formrequest: pb.FormRequest_FORM_REQUEST_START},
 		Sysinfo: &pb.SystemInfo{
-			Traybarcode:     s.tbc.raw,
-			Fixtureposition: s.fxbc.raw,
-			ProcessStep:     s.processStepName,
+			Traybarcode:    s.tbc.raw,
+			Fixturebarcode: s.fxbc.raw,
+			ProcessStep:    s.processStepName,
 		},
 	}
 

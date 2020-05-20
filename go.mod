@@ -15,5 +15,5 @@ require (
 	stash.teslamotors.com/ctet/cmdlineutils v0.0.0-20200330213028-f688d30e1a61
 	stash.teslamotors.com/ctet/statemachine/v2 v2.0.1
 	stash.teslamotors.com/rr/cellapi v0.0.0-20200511205929-aa88e93224d3
-	stash.teslamotors.com/rr/towerproto v0.0.1
+	stash.teslamotors.com/rr/towerproto v0.0.3
 )

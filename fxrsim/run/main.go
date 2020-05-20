@@ -144,10 +144,10 @@ func main() {
 					}
 				}
 
-				msgDiag.Fixtureposition = msg.GetSysinfo().GetFixtureposition()
+				msgDiag.Fixturebarcode = msg.GetSysinfo().GetFixturebarcode()
 				msgDiag.Traybarcode = msg.GetSysinfo().GetTraybarcode()
 				msgDiag.ProcessStep = msg.GetSysinfo().GetProcessStep()
-				msgOp.Fixtureposition = msg.GetSysinfo().GetFixtureposition()
+				msgOp.Fixturebarcode = msg.GetSysinfo().GetFixturebarcode()
 				msgOp.Traybarcode = msg.GetSysinfo().GetTraybarcode()
 				msgOp.ProcessStep = msg.GetSysinfo().GetProcessStep()
 				msgOp.GetOp().Status = pb.FixtureStatus_FIXTURE_STATUS_IDLE
