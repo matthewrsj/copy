@@ -1,4 +1,4 @@
-package towercontroller
+package traycontrollers
 
 import (
 	"fmt"
@@ -7,15 +7,16 @@ import (
 
 // TrayBarcode contains the components of the tray barcode
 type TrayBarcode struct {
-	SN string
-	O  Orientation
-
-	raw string
+	SN  string
+	O   Orientation
+	Raw string
 }
 
 const _trayRegex = `^[0-9]{7,}[A-Da-d]$`
 
-func isValidTrayBarcode(input string) error {
+// IsValidTrayBarcode returns an error if the input string is not a valid
+// barcode for a tray.
+func IsValidTrayBarcode(input string) error {
 	r := regexp.MustCompile(_trayRegex)
 	if !r.MatchString(input) {
 		return fmt.Errorf("invalid tray barcode %s does not follow pattern \"%s\"", input, _trayRegex)
@@ -26,7 +27,7 @@ func isValidTrayBarcode(input string) error {
 
 // NewTrayBarcode creates a new TrayBarcode from the input string.
 func NewTrayBarcode(input string) (TrayBarcode, error) {
-	if err := isValidTrayBarcode(input); err != nil {
+	if err := IsValidTrayBarcode(input); err != nil {
 		return TrayBarcode{}, fmt.Errorf("validate tray barcode: %v", err)
 	}
 
@@ -38,12 +39,12 @@ func NewTrayBarcode(input string) (TrayBarcode, error) {
 		err error
 	)
 
-	if tbc.O, err = newOrientation(input[len(input)-1]); err != nil {
+	if tbc.O, err = NewOrientation(input[len(input)-1]); err != nil {
 		return tbc, fmt.Errorf("parse orientation: %v", err)
 	}
 
 	tbc.SN = input[:len(input)-1]
-	tbc.raw = input
+	tbc.Raw = input
 
 	return tbc, nil
 }

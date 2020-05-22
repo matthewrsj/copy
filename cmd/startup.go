@@ -9,9 +9,10 @@ import (
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/towercontroller"
 	pb "stash.teslamotors.com/rr/towerproto"
+	"stash.teslamotors.com/rr/traycontrollers"
 )
 
-func monitorForInProgress(c towercontroller.Configuration, fxID uint32) (statemachine.Job, error) {
+func monitorForInProgress(c traycontrollers.Configuration, fxID uint32) (statemachine.Job, error) {
 	const waitForMessagesSecs = 5
 
 	dev, err := socketcan.NewIsotpInterface(c.CAN.Device, fxID, c.CAN.TXID)
@@ -45,12 +46,12 @@ func monitorForInProgress(c towercontroller.Configuration, fxID uint32) (statema
 		if op.GetStatus() == pb.FixtureStatus_FIXTURE_STATUS_ACTIVE {
 			fxPos := msg.GetFixturebarcode()
 
-			fxBC, err := towercontroller.NewFixtureBarcode(fxPos)
+			fxBC, err := traycontrollers.NewFixtureBarcode(fxPos)
 			if err != nil {
 				return statemachine.Job{}, fmt.Errorf("parse fixture position: %v", err)
 			}
 
-			trayBC, err := towercontroller.NewTrayBarcode(msg.GetTraybarcode())
+			trayBC, err := traycontrollers.NewTrayBarcode(msg.GetTraybarcode())
 			if err != nil {
 				return statemachine.Job{}, fmt.Errorf("parse tray barcode: %v", err)
 			}

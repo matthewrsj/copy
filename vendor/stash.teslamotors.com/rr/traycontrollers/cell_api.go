@@ -1,4 +1,4 @@
-package towercontroller
+package traycontrollers
 
 type cellAPIConf struct {
 	Base      string       `yaml:"base"`

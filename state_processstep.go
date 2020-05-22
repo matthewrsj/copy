@@ -6,6 +6,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cellapi"
+	"stash.teslamotors.com/rr/traycontrollers"
 )
 
 // ProcessStep exists entirely to type assert the Context() into
@@ -13,13 +14,13 @@ import (
 type ProcessStep struct {
 	statemachine.Common
 
-	Config        Configuration
+	Config        traycontrollers.Configuration
 	Logger        *logrus.Logger
 	CellAPIClient *cellapi.Client
 
 	processStepName string
-	tbc             TrayBarcode
-	fxbc            FixtureBarcode
+	tbc             traycontrollers.TrayBarcode
+	fxbc            traycontrollers.FixtureBarcode
 	inProgress      bool
 }
 
@@ -39,7 +40,7 @@ func (p *ProcessStep) action() {
 
 	p.Logger.WithFields(logrus.Fields{
 		"tray":         p.tbc.SN,
-		"fixture_num":  p.fxbc.raw,
+		"fixture_num":  p.fxbc.Raw,
 		"process_step": p.processStepName,
 	}).Info("running process step")
 }

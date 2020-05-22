@@ -10,18 +10,19 @@ import (
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cellapi"
 	pb "stash.teslamotors.com/rr/towerproto"
+	"stash.teslamotors.com/rr/traycontrollers"
 )
 
 // InProcess monitors the FXR proto for the state to change
 type InProcess struct {
 	statemachine.Common
 
-	Config        Configuration
+	Config        traycontrollers.Configuration
 	Logger        *logrus.Logger
 	CellAPIClient *cellapi.Client
 
-	tbc             TrayBarcode
-	fxbc            FixtureBarcode
+	tbc             traycontrollers.TrayBarcode
+	fxbc            traycontrollers.FixtureBarcode
 	processStepName string
 	fixtureFault    bool
 	cells           map[string]cellapi.CellData
@@ -70,7 +71,7 @@ func (i *InProcess) action() {
 			return
 		}
 
-		fxbcBroadcast, err := NewFixtureBarcode(msg.GetFixturebarcode())
+		fxbcBroadcast, err := traycontrollers.NewFixtureBarcode(msg.GetFixturebarcode())
 		if err != nil {
 			err = fmt.Errorf("parse fixture position: %v", err)
 			i.Logger.Warn(err)
@@ -82,7 +83,7 @@ func (i *InProcess) action() {
 		if fxbcBroadcast.Fxn != i.fxbc.Fxn {
 			i.Logger.WithFields(logrus.Fields{
 				"tray":        i.tbc.SN,
-				"fixture_num": i.fxbc.raw,
+				"fixture_num": i.fxbc.Raw,
 			}).Tracef("got fixture status for different fixture %s", fxbcBroadcast.Fxn)
 
 			continue
@@ -92,7 +93,7 @@ func (i *InProcess) action() {
 		if !ok {
 			i.Logger.WithFields(logrus.Fields{
 				"tray":        i.tbc.SN,
-				"fixture_num": i.fxbc.raw,
+				"fixture_num": i.fxbc.Raw,
 			}).Tracef("got different message than we are looking for (%T)", msg.GetContent())
 
 			continue
@@ -108,7 +109,7 @@ func (i *InProcess) action() {
 
 			i.Logger.WithFields(logrus.Fields{
 				"tray":        i.tbc.SN,
-				"fixture_num": i.fxbc.raw,
+				"fixture_num": i.fxbc.Raw,
 			}).Info(msg)
 
 			i.cellResponse = op.Op.GetCells()
@@ -117,7 +118,7 @@ func (i *InProcess) action() {
 		default:
 			i.Logger.WithFields(logrus.Fields{
 				"tray":           i.tbc.SN,
-				"fixture_num":    i.fxbc.raw,
+				"fixture_num":    i.fxbc.Raw,
 				"fixture_status": s.String(),
 			}).Trace("received fixture_status update")
 		}

@@ -4,13 +4,12 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/linklayer/go-socketcan/pkg/socketcan"
-
 	"bou.ke/monkey"
-
+	"github.com/linklayer/go-socketcan/pkg/socketcan"
 	"github.com/sirupsen/logrus"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cellapi"
+	"stash.teslamotors.com/rr/traycontrollers"
 )
 
 func TestStartProcess_Action(t *testing.T) {
@@ -18,7 +17,7 @@ func TestStartProcess_Action(t *testing.T) {
 	cmc[0] = "A01"
 	cmc[1] = "A02"
 	spState := StartProcess{
-		Config: Configuration{
+		Config: traycontrollers.Configuration{
 			CellMap: map[string][]string{
 				"A": cmc,
 			},
@@ -29,12 +28,12 @@ func TestStartProcess_Action(t *testing.T) {
 		Logger:          logrus.New(),
 		CellAPIClient:   &cellapi.Client{},
 		processStepName: "",
-		tbc: TrayBarcode{
+		tbc: traycontrollers.TrayBarcode{
 			SN:  "11223344",
-			O:   _orientA,
-			raw: "11223344A",
+			O:   traycontrollers.OrientationA,
+			Raw: "11223344A",
 		},
-		fxbc: FixtureBarcode{
+		fxbc: traycontrollers.FixtureBarcode{
 			Fxn: "01",
 		},
 		rcpe: []ingredients{{Mode: "test"}},

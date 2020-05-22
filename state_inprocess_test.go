@@ -4,16 +4,14 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
-	"google.golang.org/protobuf/proto"
-	pb "stash.teslamotors.com/rr/towerproto"
-
 	"bou.ke/monkey"
 	"github.com/linklayer/go-socketcan/pkg/socketcan"
-
 	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
+	"google.golang.org/protobuf/proto"
 	"stash.teslamotors.com/ctet/statemachine/v2"
+	pb "stash.teslamotors.com/rr/towerproto"
+	"stash.teslamotors.com/rr/traycontrollers"
 )
 
 func patchNewIsotpInterface(dev string, rxid, txid uint32) (socketcan.Interface, error) {
@@ -37,23 +35,23 @@ func patchRecvBuffFunc(msg proto.Message) func(socketcan.Interface) ([]byte, err
 func TestInProcess_Action(t *testing.T) {
 	exp := 1
 	ipState := &InProcess{
-		Config: Configuration{
+		Config: traycontrollers.Configuration{
 			Fixtures: map[string]uint32{
 				"01": 1,
 			},
 		},
 		Logger: logrus.New(),
-		tbc: TrayBarcode{
+		tbc: traycontrollers.TrayBarcode{
 			SN:  "11223344",
-			O:   _orientA,
-			raw: "11223344A",
+			O:   traycontrollers.OrientationA,
+			Raw: "11223344A",
 		},
-		fxbc: FixtureBarcode{
+		fxbc: traycontrollers.FixtureBarcode{
 			Location: "SWIFT",
 			Aisle:    "01",
 			Tower:    "A",
 			Fxn:      "01",
-			raw:      "SWIFT-01-A-01",
+			Raw:      "SWIFT-01-A-01",
 		},
 	}
 	as := ipState.Actions()
@@ -89,7 +87,7 @@ func TestInProcess_Action(t *testing.T) {
 				},
 			},
 			Traybarcode:    "",
-			Fixturebarcode: ipState.fxbc.raw,
+			Fixturebarcode: ipState.fxbc.Raw,
 		}),
 	)
 	defer rbp.Unpatch()
@@ -120,18 +118,18 @@ func TestInProcess_ActionNoFixture(t *testing.T) {
 
 func TestInProcess_ActionNoIface(t *testing.T) {
 	ipState := InProcess{
-		Config: Configuration{
+		Config: traycontrollers.Configuration{
 			Fixtures: map[string]uint32{
 				"01": 1,
 			},
 		},
 		Logger: logrus.New(),
-		fxbc: FixtureBarcode{
+		fxbc: traycontrollers.FixtureBarcode{
 			Location: "SWIFT",
 			Aisle:    "01",
 			Tower:    "A",
 			Fxn:      "01",
-			raw:      "SWIFT-01-A-01",
+			Raw:      "SWIFT-01-A-01",
 		},
 	}
 
@@ -151,18 +149,18 @@ func TestInProcess_ActionNoIface(t *testing.T) {
 
 func TestInProcess_ActionRecvBufErr(t *testing.T) {
 	ipState := InProcess{
-		Config: Configuration{
+		Config: traycontrollers.Configuration{
 			Fixtures: map[string]uint32{
 				"01": 1,
 			},
 		},
 		Logger: logrus.New(),
-		fxbc: FixtureBarcode{
+		fxbc: traycontrollers.FixtureBarcode{
 			Location: "SWIFT",
 			Aisle:    "01",
 			Tower:    "A",
 			Fxn:      "01",
-			raw:      "SWIFT-01-A-01",
+			Raw:      "SWIFT-01-A-01",
 		},
 	}
 
@@ -189,18 +187,18 @@ func TestInProcess_ActionRecvBufErr(t *testing.T) {
 
 func TestInProcess_ActionBadBuffer(t *testing.T) {
 	ipState := InProcess{
-		Config: Configuration{
+		Config: traycontrollers.Configuration{
 			Fixtures: map[string]uint32{
 				"01": 1,
 			},
 		},
 		Logger: logrus.New(),
-		fxbc: FixtureBarcode{
+		fxbc: traycontrollers.FixtureBarcode{
 			Location: "SWIFT",
 			Aisle:    "01",
 			Tower:    "A",
 			Fxn:      "01",
-			raw:      "SWIFT-01-A-01",
+			Raw:      "SWIFT-01-A-01",
 		},
 	}
 

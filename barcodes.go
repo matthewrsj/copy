@@ -5,13 +5,14 @@ import (
 	"fmt"
 
 	"stash.teslamotors.com/rr/cellapi"
+	"stash.teslamotors.com/rr/traycontrollers"
 )
 
 // Barcodes contains the Fixture and Tray barcodes
 // that initiate a towercontroller state machine.
 type Barcodes struct {
-	Fixture         FixtureBarcode
-	Tray            TrayBarcode
+	Fixture         traycontrollers.FixtureBarcode
+	Tray            traycontrollers.TrayBarcode
 	ProcessStepName string
 	InProgress      bool
 }
@@ -24,22 +25,22 @@ func ScanBarcodes(caClient *cellapi.Client) (Barcodes, error) {
 		err error
 	)
 
-	p, err := prompt("scan tray barcode", isValidTrayBarcode)
+	p, err := prompt("scan tray barcode", traycontrollers.IsValidTrayBarcode)
 	if err != nil {
 		return bcs, err
 	}
 
-	bcs.Tray, err = NewTrayBarcode(p)
+	bcs.Tray, err = traycontrollers.NewTrayBarcode(p)
 	if err != nil {
 		return bcs, fmt.Errorf("parse tray barcode: %v", err)
 	}
 
-	input, err := prompt("scan fixture barcode", isValidFixtureBarcode)
+	input, err := prompt("scan fixture barcode", traycontrollers.IsValidFixtureBarcode)
 	if err != nil {
 		return bcs, err
 	}
 
-	bcs.Fixture, err = NewFixtureBarcode(input)
+	bcs.Fixture, err = traycontrollers.NewFixtureBarcode(input)
 	if err != nil {
 		return bcs, fmt.Errorf("scan fixture barcode: %v", err)
 	}

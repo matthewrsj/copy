@@ -9,18 +9,19 @@ import (
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cellapi"
 	pb "stash.teslamotors.com/rr/towerproto"
+	"stash.teslamotors.com/rr/traycontrollers"
 )
 
 // EndProcess informs the cell API of process completion. This is the last state.
 type EndProcess struct {
 	statemachine.Common
 
-	Config        Configuration
+	Config        traycontrollers.Configuration
 	Logger        *logrus.Logger
 	CellAPIClient *cellapi.Client
 
-	tbc             TrayBarcode
-	fxbc            FixtureBarcode
+	tbc             traycontrollers.TrayBarcode
+	fxbc            traycontrollers.FixtureBarcode
 	cells           map[string]cellapi.CellData
 	cellResponse    []*pb.Cell
 	processStepName string
@@ -95,11 +96,11 @@ func (e *EndProcess) action() {
 	if len(failed) > 0 {
 		failMsg := fmt.Sprintf("failed cells: %s", strings.Join(failed, ", "))
 		e.Logger.WithFields(logrus.Fields{
-			"tray":    e.tbc.raw,
-			"fixture": e.fxbc.raw,
+			"tray":    e.tbc.Raw,
+			"fixture": e.fxbc.Raw,
 		}).Infof(failMsg)
 
-		log.Printf("tray %s (fixture %s) %s", e.tbc.SN, e.fxbc.raw, failMsg)
+		log.Printf("tray %s (fixture %s) %s", e.tbc.SN, e.fxbc.Raw, failMsg)
 	}
 
 	if err := e.CellAPIClient.SetCellStatuses(cpf); err != nil {
@@ -116,8 +117,8 @@ func (e *EndProcess) action() {
 	}
 
 	e.Logger.WithFields(logrus.Fields{
-		"tray":    e.tbc.raw,
-		"fixture": e.fxbc.raw,
+		"tray":    e.tbc.Raw,
+		"fixture": e.fxbc.Raw,
 	}).Infof(msg)
 }
 

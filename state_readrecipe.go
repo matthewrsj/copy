@@ -6,19 +6,20 @@ import (
 	"github.com/sirupsen/logrus"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cellapi"
+	"stash.teslamotors.com/rr/traycontrollers"
 )
 
 // ReadRecipe reads the recipe from configuration files
 type ReadRecipe struct {
 	statemachine.Common
 
-	Config        Configuration
+	Config        traycontrollers.Configuration
 	Logger        *logrus.Logger
 	CellAPIClient *cellapi.Client
 
 	processStepName string
-	tbc             TrayBarcode
-	fxbc            FixtureBarcode
+	tbc             traycontrollers.TrayBarcode
+	fxbc            traycontrollers.FixtureBarcode
 	rcpe            []ingredients
 	rcpErr          error
 }
@@ -26,7 +27,7 @@ type ReadRecipe struct {
 func (r *ReadRecipe) action() {
 	r.Logger.WithFields(logrus.Fields{
 		"tray":         r.tbc.SN,
-		"fixture_num":  r.fxbc.raw,
+		"fixture_num":  r.fxbc.Raw,
 		"process_step": r.processStepName,
 	}).Info("loading recipe for process step")
 
@@ -37,7 +38,7 @@ func (r *ReadRecipe) action() {
 
 	r.Logger.WithFields(logrus.Fields{
 		"tray":         r.tbc.SN,
-		"fixture_num":  r.fxbc.raw,
+		"fixture_num":  r.fxbc.Raw,
 		"process_step": r.processStepName,
 		"recipe":       fmt.Sprintf("%#v", r.rcpe),
 	}).Debug("loaded recipe")

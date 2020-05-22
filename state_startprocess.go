@@ -10,19 +10,20 @@ import (
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cellapi"
 	pb "stash.teslamotors.com/rr/towerproto"
+	"stash.teslamotors.com/rr/traycontrollers"
 )
 
 // StartProcess sends the recipe information to the FXR
 type StartProcess struct {
 	statemachine.Common
 
-	Config        Configuration
+	Config        traycontrollers.Configuration
 	Logger        *logrus.Logger
 	CellAPIClient *cellapi.Client
 
 	processStepName string
-	tbc             TrayBarcode
-	fxbc            FixtureBarcode
+	tbc             traycontrollers.TrayBarcode
+	fxbc            traycontrollers.FixtureBarcode
 	rcpe            []ingredients
 	cells           map[string]cellapi.CellData
 	canErr, apiErr  error
@@ -31,15 +32,15 @@ type StartProcess struct {
 func (s *StartProcess) action() {
 	s.Logger.WithFields(logrus.Fields{
 		"tray":         s.tbc.SN,
-		"fixture_num":  s.fxbc.raw,
+		"fixture_num":  s.fxbc.Raw,
 		"process_step": s.processStepName,
 	}).Info("sending recipe and other information to FXR")
 
 	twr2Fxr := pb.TowerToFixture{
 		Recipe: &pb.Recipe{Formrequest: pb.FormRequest_FORM_REQUEST_START},
 		Sysinfo: &pb.SystemInfo{
-			Traybarcode:    s.tbc.raw,
-			Fixturebarcode: s.fxbc.raw,
+			Traybarcode:    s.tbc.Raw,
+			Fixturebarcode: s.fxbc.Raw,
 			ProcessStep:    s.processStepName,
 		},
 	}
@@ -115,7 +116,7 @@ func (s *StartProcess) action() {
 
 	s.Logger.WithFields(logrus.Fields{
 		"tray":           s.tbc.SN,
-		"fixture_num":    s.fxbc.raw,
+		"fixture_num":    s.fxbc.Raw,
 		"fixture_can_id": fxrID,
 		"process_step":   s.processStepName,
 	}).Trace("sent recipe and other information to FXR")

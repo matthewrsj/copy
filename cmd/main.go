@@ -1,3 +1,5 @@
+//+build !test
+
 // main runs the tower controller application.
 package main
 
@@ -12,6 +14,7 @@ import (
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cellapi"
 	"stash.teslamotors.com/rr/towercontroller"
+	"stash.teslamotors.com/rr/traycontrollers"
 )
 
 const (
@@ -37,7 +40,7 @@ func main() {
 		log.Fatalf("setup logger: %v", err)
 	}
 
-	conf, err := towercontroller.LoadConfig(*configFile)
+	conf, err := traycontrollers.LoadConfig(*configFile)
 	if err != nil {
 		log.Fatalf("load configuration: %v", err)
 	}

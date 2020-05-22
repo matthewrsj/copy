@@ -39,6 +39,6 @@ func TestScanBarcodes(t *testing.T) {
 	assert.Nil(t, err)
 	assert.False(t, bcs.InProgress)
 	assert.Equal(t, "FORM_CYCLE", bcs.ProcessStepName)
-	assert.Equal(t, "SWIFT-01-A-01", bcs.Fixture.raw)
-	assert.Equal(t, "11223344A", bcs.Tray.raw)
+	assert.Equal(t, "SWIFT-01-A-01", bcs.Fixture.Raw)
+	assert.Equal(t, "11223344A", bcs.Tray.Raw)
 }

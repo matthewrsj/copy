@@ -10,13 +10,14 @@ import (
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cellapi"
 	pb "stash.teslamotors.com/rr/towerproto"
+	"stash.teslamotors.com/rr/traycontrollers"
 )
 
 func TestEndProcess_Action(t *testing.T) {
 	exp := 1
 	as := (&EndProcess{
 		Logger: logrus.New(),
-		Config: Configuration{
+		Config: traycontrollers.Configuration{
 			CellMap: map[string][]string{
 				"A": {"A01", "A02"},
 			},
@@ -50,10 +51,10 @@ func TestEndProcess_Action(t *testing.T) {
 				IsEmpty:  false,
 			},
 		},
-		tbc: TrayBarcode{
+		tbc: traycontrollers.TrayBarcode{
 			SN:  "11223344",
-			O:   _orientA,
-			raw: "11223344A",
+			O:   traycontrollers.OrientationA,
+			Raw: "11223344A",
 		},
 		fixtureFault: true,
 	}).Actions()
@@ -94,7 +95,7 @@ func TestEndProcess_Action(t *testing.T) {
 func TestEndProcess_ActionBadOrientation(t *testing.T) {
 	as := (&EndProcess{
 		Logger: logrus.New(),
-		Config: Configuration{
+		Config: traycontrollers.Configuration{
 			CellMap: map[string][]string{
 				"A": {"A01", "A02"},
 			},
@@ -128,10 +129,10 @@ func TestEndProcess_ActionBadOrientation(t *testing.T) {
 				IsEmpty:  false,
 			},
 		},
-		tbc: TrayBarcode{
+		tbc: traycontrollers.TrayBarcode{
 			SN:  "11223344",
-			O:   _orientB,
-			raw: "11223344A",
+			O:   traycontrollers.OrientationB,
+			Raw: "11223344A",
 		},
 		fixtureFault: true,
 	}).Actions()
@@ -159,7 +160,7 @@ func TestEndProcess_ActionBadOrientation(t *testing.T) {
 func TestEndProcess_ActionShortMap(t *testing.T) {
 	as := (&EndProcess{
 		Logger: logrus.New(),
-		Config: Configuration{
+		Config: traycontrollers.Configuration{
 			CellMap: map[string][]string{
 				"A": {},
 			},
@@ -193,10 +194,10 @@ func TestEndProcess_ActionShortMap(t *testing.T) {
 				IsEmpty:  false,
 			},
 		},
-		tbc: TrayBarcode{
+		tbc: traycontrollers.TrayBarcode{
 			SN:  "11223344",
-			O:   _orientA,
-			raw: "11223344A",
+			O:   traycontrollers.OrientationA,
+			Raw: "11223344A",
 		},
 		fixtureFault: true,
 	}).Actions()
@@ -225,7 +226,7 @@ func TestEndProcess_ActionBadSetCellStatus(t *testing.T) {
 	exp := 1
 	as := (&EndProcess{
 		Logger: logrus.New(),
-		Config: Configuration{
+		Config: traycontrollers.Configuration{
 			CellMap: map[string][]string{
 				"A": {"A01", "A02"},
 			},
@@ -259,10 +260,10 @@ func TestEndProcess_ActionBadSetCellStatus(t *testing.T) {
 				IsEmpty:  false,
 			},
 		},
-		tbc: TrayBarcode{
+		tbc: traycontrollers.TrayBarcode{
 			SN:  "11223344",
-			O:   _orientA,
-			raw: "11223344A",
+			O:   traycontrollers.OrientationA,
+			Raw: "11223344A",
 		},
 		fixtureFault: true,
 	}).Actions()

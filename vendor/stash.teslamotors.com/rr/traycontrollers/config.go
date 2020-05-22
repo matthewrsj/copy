@@ -1,4 +1,5 @@
-package towercontroller
+// Package traycontrollers provides reuse code for tower and C/D controllers.
+package traycontrollers
 
 import (
 	"fmt"

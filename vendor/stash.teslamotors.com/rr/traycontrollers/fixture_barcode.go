@@ -1,4 +1,4 @@
-package towercontroller
+package traycontrollers
 
 import (
 	"fmt"
@@ -9,15 +9,16 @@ const _fixtureRegex = `^([A-Za-z0-9]+)-([A-Za-z0-9]+)-([A-Za-z0-9]+)-([A-Za-z0-9
 
 // FixtureBarcode is the barcode of the fixture
 type FixtureBarcode struct {
-	Location, Aisle, Tower, Fxn string
-	raw                         string
+	Location, Aisle, Tower, Fxn, Raw string
 }
 
-func isValidFixtureBarcode(input string) error {
+// IsValidFixtureBarcode returns an error if the input string is not a valid
+// fixture barcode.
+func IsValidFixtureBarcode(input string) error {
 	r := regexp.MustCompile(_fixtureRegex)
 	match := r.FindStringSubmatch(input)
 
-	// first contains entire raw input
+	// first contains entire Raw input
 	if len(match) != 5 {
 		return fmt.Errorf("invalid fixture barcode %s does not follow pattern \"%s\"", input, _fixtureRegex)
 	}
@@ -30,7 +31,7 @@ func NewFixtureBarcode(input string) (FixtureBarcode, error) {
 	r := regexp.MustCompile(_fixtureRegex)
 	match := r.FindStringSubmatch(input)
 
-	// first contains entire raw input
+	// first contains entire Raw input
 	if len(match) != 5 {
 		return FixtureBarcode{}, fmt.Errorf("invalid fixture barcode %s does not follow pattern \"%s\"", input, _fixtureRegex)
 	}
@@ -40,6 +41,6 @@ func NewFixtureBarcode(input string) (FixtureBarcode, error) {
 		Aisle:    match[2],
 		Tower:    match[3],
 		Fxn:      match[4],
-		raw:      input,
+		Raw:      input,
 	}, nil
 }

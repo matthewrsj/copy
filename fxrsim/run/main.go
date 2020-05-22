@@ -1,3 +1,5 @@
+//+build !test
+
 package main
 
 import (
@@ -8,8 +10,8 @@ import (
 
 	"github.com/linklayer/go-socketcan/pkg/socketcan"
 	"google.golang.org/protobuf/proto"
-	"stash.teslamotors.com/rr/towercontroller"
 	pb "stash.teslamotors.com/rr/towerproto"
+	"stash.teslamotors.com/rr/traycontrollers"
 )
 
 const _confFileDef = "../../configuration/statemachine/statemachine.yaml"
@@ -20,7 +22,7 @@ func main() {
 
 	flag.Parse()
 
-	conf, err := towercontroller.LoadConfig(*configFile)
+	conf, err := traycontrollers.LoadConfig(*configFile)
 	if err != nil {
 		log.Fatal(err)
 	}

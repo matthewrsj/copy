@@ -72,7 +72,7 @@ google.golang.org/protobuf/runtime/protoiface
 google.golang.org/protobuf/runtime/protoimpl
 # gopkg.in/natefinch/lumberjack.v2 v2.0.0
 gopkg.in/natefinch/lumberjack.v2
-# gopkg.in/yaml.v2 v2.2.8
+# gopkg.in/yaml.v2 v2.3.0
 ## explicit
 gopkg.in/yaml.v2
 # stash.teslamotors.com/ctet/cmdlineutils v0.0.0-20200330213028-f688d30e1a61
@@ -87,3 +87,6 @@ stash.teslamotors.com/rr/cellapi
 # stash.teslamotors.com/rr/towerproto v0.0.3
 ## explicit
 stash.teslamotors.com/rr/towerproto
+# stash.teslamotors.com/rr/traycontrollers v0.0.2
+## explicit
+stash.teslamotors.com/rr/traycontrollers

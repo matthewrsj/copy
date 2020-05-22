@@ -1,4 +1,4 @@
-package towercontroller
+package traycontrollers
 
 import (
 	"fmt"
@@ -9,23 +9,25 @@ import (
 // for a tray. A, B, C, or D.
 type Orientation int
 
+// There are four default orientations
 const (
-	_orientA = iota + 1
-	_orientB
-	_orientC
-	_orientD
+	OrientationA = iota + 1
+	OrientationB
+	OrientationC
+	OrientationD
 )
 
-func newOrientation(input byte) (Orientation, error) {
+// NewOrientation returns a new Orientation based on the byte passed in
+func NewOrientation(input byte) (Orientation, error) {
 	switch input {
 	case 'a', 'A':
-		return _orientA, nil
+		return OrientationA, nil
 	case 'b', 'B':
-		return _orientB, nil
+		return OrientationB, nil
 	case 'c', 'C':
-		return _orientC, nil
+		return OrientationC, nil
 	case 'd', 'D':
-		return _orientD, nil
+		return OrientationD, nil
 	default:
 		return 0, fmt.Errorf("orientation \"%v\" invalid", input)
 	}
@@ -33,13 +35,13 @@ func newOrientation(input byte) (Orientation, error) {
 
 func (o Orientation) String() string {
 	switch o {
-	case _orientA:
+	case OrientationA:
 		return "A"
-	case _orientB:
+	case OrientationB:
 		return "B"
-	case _orientC:
+	case OrientationC:
 		return "C"
-	case _orientD:
+	case OrientationD:
 		return "D"
 	default:
 		return strconv.Itoa(int(o))

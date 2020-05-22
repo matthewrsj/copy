@@ -78,6 +78,8 @@ gopkg.in/natefinch/lumberjack.v2 v2.0.0/go.mod h1:l0ndWWf7gzL7RNwBG7wST/UCcT4T24
 gopkg.in/yaml.v2 v2.2.2/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
 gopkg.in/yaml.v2 v2.2.8 h1:obN1ZagJSUGI0Ek/LBmuj4SNLPfIny3KsKFopxRdj10=
 gopkg.in/yaml.v2 v2.2.8/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
+gopkg.in/yaml.v2 v2.3.0 h1:clyUAQHOM3G0M3f5vQj7LuJrETvjVot3Z5el9nffUtU=
+gopkg.in/yaml.v2 v2.3.0/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
 stash.teslamotors.com/ctet/cmdlineutils v0.0.0-20200330213028-f688d30e1a61 h1:LgNdpr7e5oYqiPieLqcoFHHnEJwDK/sL9p4WTLUNn/Y=
 stash.teslamotors.com/ctet/cmdlineutils v0.0.0-20200330213028-f688d30e1a61/go.mod h1:jSEJpzv39/TzJlsGaHe+AslT47P9HDcSkXHljWSyavY=
 stash.teslamotors.com/ctet/statemachine/v2 v2.0.1 h1:ridx0bqo3kRfYNowvFoo5X+KQ16JSTSu8PfpZzWAM3c=
@@ -86,3 +88,7 @@ stash.teslamotors.com/rr/cellapi v0.0.0-20200511205929-aa88e93224d3 h1:vAiPgHSae
 stash.teslamotors.com/rr/cellapi v0.0.0-20200511205929-aa88e93224d3/go.mod h1:ew9szdkYauU5DsA2AjqBLShLuZK+5EohBMRszCF1xfI=
 stash.teslamotors.com/rr/towerproto v0.0.3 h1:t7S5R6WsE6KRRC5RUYrdtQ/5EeUmr4UbXraDaEklE5k=
 stash.teslamotors.com/rr/towerproto v0.0.3/go.mod h1:FDbAtKBEKCStkYKJSOamESQ6NjyN7zmV9HAqydiJQs4=
+stash.teslamotors.com/rr/traycontrollers v0.0.1 h1:Kjjh0sZdagNQ6scyOQg5HAAiPnJvETRi/qdK6n4jO24=
+stash.teslamotors.com/rr/traycontrollers v0.0.1/go.mod h1:utrt54XEUQEMdXL9d+jYaWN0mlBWK0YZJnoh+RCIVoU=
+stash.teslamotors.com/rr/traycontrollers v0.0.2 h1:j87SaNm8nDS8PaT+h4HLueEJ6c9p3aat69aLoteBs70=
+stash.teslamotors.com/rr/traycontrollers v0.0.2/go.mod h1:utrt54XEUQEMdXL9d+jYaWN0mlBWK0YZJnoh+RCIVoU=
