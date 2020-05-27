@@ -24,7 +24,7 @@ type StartProcess struct {
 	processStepName string
 	tbc             traycontrollers.TrayBarcode
 	fxbc            traycontrollers.FixtureBarcode
-	rcpe            []ingredients
+	rcpe            []Ingredients
 	cells           map[string]cellapi.CellData
 	canErr, apiErr  error
 }

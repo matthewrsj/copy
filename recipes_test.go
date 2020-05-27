@@ -88,7 +88,7 @@ func Test_loadRecipe(t *testing.T) {
 
 	rName := "FORM_FIRST_CHARGE"
 
-	ings, err := loadRecipe(rtf.Name(), itf.Name(), rName)
+	ings, err := LoadRecipe(rtf.Name(), itf.Name(), rName)
 	if err != nil {
 		// don't fatal so the defer will be called
 		t.Error(err)
@@ -155,14 +155,14 @@ func Test_loadRecipesBadIngredients(t *testing.T) {
 }
 
 func Test_loadRecipeNoRecipe(t *testing.T) {
-	rf := monkey.Patch(loadRecipes, func(string, string) (cookbook, error) {
-		return cookbook{
-			"bar": []ingredients{},
+	rf := monkey.Patch(loadRecipes, func(string, string) (Cookbook, error) {
+		return Cookbook{
+			"bar": []Ingredients{},
 		}, nil
 	})
 	defer rf.Unpatch()
 
-	_, err := loadRecipe("", "", "foo")
+	_, err := LoadRecipe("", "", "foo")
 	assert.NotNil(t, err)
 }
 

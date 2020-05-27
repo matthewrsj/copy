@@ -9,7 +9,7 @@ import (
 )
 
 /*
-ingredients contains all the parameters for a specific step in a recipe
+Ingredients contains all the parameters for a specific step in a recipe
 
 	PRECHARGE:
 	  mode: FORM_REQ_CC
@@ -20,7 +20,7 @@ ingredients contains all the parameters for a specific step in a recipe
 	  cell_drop_out_v: 0   # NA
 	  step_timeout: 3600   # 1 hour - Seconds before step timeout
 */
-type ingredients struct {
+type Ingredients struct {
 	Mode               string  `yaml:"mode"`
 	ChargeCurrentAmps  float32 `yaml:"charge_current"`
 	MaxCurrentAmps     float32 `yaml:"max_current"` // amps limited to this value charge/discharge
@@ -30,8 +30,10 @@ type ingredients struct {
 	StepTimeoutSeconds float32 `yaml:"step_timeout"`
 }
 
-type cookbook map[string][]ingredients
-type ingredientsbook map[string]ingredients
+// Cookbook maps recipe names to steps (Ingredients)
+type Cookbook map[string][]Ingredients
+
+type ingredientsbook map[string]Ingredients
 type stepsbook map[string][]string
 
 func loadIngredients(path string) (ingredientsbook, error) {
@@ -49,7 +51,7 @@ func loadIngredients(path string) (ingredientsbook, error) {
 	return ingredientsBook, nil
 }
 
-func loadRecipes(recipePath, ingredientsPath string) (cookbook, error) {
+func loadRecipes(recipePath, ingredientsPath string) (Cookbook, error) {
 	content, err := ioutil.ReadFile(recipePath)
 	if err != nil {
 		return nil, fmt.Errorf("read recipe file %s: %v", recipePath, err)
@@ -71,7 +73,7 @@ func loadRecipes(recipePath, ingredientsPath string) (cookbook, error) {
 
 	// cookBook contains all the recipes mapped to their respective lists of ingredient
 	// steps to run.
-	cookBook := make(cookbook)
+	cookBook := make(Cookbook)
 
 	for name, steps := range stepsBook {
 		for _, step := range steps {
@@ -88,7 +90,8 @@ func loadRecipes(recipePath, ingredientsPath string) (cookbook, error) {
 	return cookBook, nil
 }
 
-func loadRecipe(recipePath, ingredientsPath, recipe string) ([]ingredients, error) {
+// LoadRecipe loads the recipe from recipePath and ingredientsPath
+func LoadRecipe(recipePath, ingredientsPath, recipe string) ([]Ingredients, error) {
 	cookBook, err := loadRecipes(recipePath, ingredientsPath)
 	if err != nil {
 		return nil, fmt.Errorf("load recipes from %s and %s: %v", recipePath, ingredientsPath, err)

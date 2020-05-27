@@ -16,8 +16,8 @@ func TestRecipe_Action(t *testing.T) {
 		t.Errorf("expected %d actions, got %d", exp, l)
 	}
 
-	lr := monkey.Patch(loadRecipe, func(string, string, string) ([]ingredients, error) {
-		return []ingredients{}, nil
+	lr := monkey.Patch(LoadRecipe, func(string, string, string) ([]Ingredients, error) {
+		return []Ingredients{}, nil
 	})
 	defer lr.Unpatch()
 

@@ -20,7 +20,7 @@ type ReadRecipe struct {
 	processStepName string
 	tbc             traycontrollers.TrayBarcode
 	fxbc            traycontrollers.FixtureBarcode
-	rcpe            []ingredients
+	rcpe            []Ingredients
 	rcpErr          error
 }
 
@@ -31,7 +31,7 @@ func (r *ReadRecipe) action() {
 		"process_step": r.processStepName,
 	}).Info("loading recipe for process step")
 
-	if r.rcpe, r.rcpErr = loadRecipe(r.Config.RecipeFile, r.Config.IngredientsFile, r.processStepName); r.rcpErr != nil {
+	if r.rcpe, r.rcpErr = LoadRecipe(r.Config.RecipeFile, r.Config.IngredientsFile, r.processStepName); r.rcpErr != nil {
 		fatalError(r, r.Logger, r.rcpErr)
 		return
 	}
