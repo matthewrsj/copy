@@ -1,0 +1,13 @@
+version: '3.7'
+
+services:
+  towercontroller:
+    image: towercontrollerapp
+    build:
+      context: .
+      dockerfile: Dockerfile.app
+    network_mode: host
+    volumes:
+      - ./logs:/var/log
+    stdin_open: true
+    tty: true
