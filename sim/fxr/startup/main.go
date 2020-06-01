@@ -18,8 +18,22 @@ const _confFileDef = "../../configuration/statemachine/statemachine.yaml"
 
 func main() {
 	configFile := flag.String("conf", _confFileDef, "path to the configuration file")
+	statName := flag.String("status", "idle", "fixture status to report")
 
 	flag.Parse()
+
+	var status pb.FixtureStatus
+
+	switch *statName {
+	case "active":
+		status = pb.FixtureStatus_FIXTURE_STATUS_ACTIVE
+	case "complete":
+		status = pb.FixtureStatus_FIXTURE_STATUS_COMPLETE
+	case "idle":
+		status = pb.FixtureStatus_FIXTURE_STATUS_IDLE
+	default:
+		log.Fatal("unknown status", *statName)
+	}
 
 	conf, err := traycontrollers.LoadConfig(*configFile)
 	if err != nil {
@@ -63,8 +77,7 @@ func main() {
 			msgOp := &pb.FixtureToTower{
 				Content: &pb.FixtureToTower_Op{
 					Op: &pb.FixtureOperational{
-						Status:   pb.FixtureStatus_FIXTURE_STATUS_ACTIVE,
-						Position: pb.FixturePosition_FIXTURE_POSITION_OPEN,
+						Status: status,
 					},
 				},
 				Fixturebarcode: ctx.fxbc,
