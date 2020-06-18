@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/linklayer/go-socketcan/pkg/socketcan"
 	"google.golang.org/protobuf/proto"
+	"stash.teslamotors.com/ctet/go-socketcan/pkg/socketcan"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/towercontroller"
 	pb "stash.teslamotors.com/rr/towerproto"
@@ -22,6 +22,10 @@ func monitorForInProgress(c traycontrollers.Configuration, fxID uint32) (statema
 
 	if err = dev.SetRecvTimeout(time.Second); err != nil {
 		return statemachine.Job{}, fmt.Errorf("set receive timeout: %v", err)
+	}
+
+	if err = dev.SetCANFD(); err != nil {
+		return statemachine.Job{}, fmt.Errorf("set CANFD: %v", err)
 	}
 
 	now := time.Now()

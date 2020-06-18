@@ -1,3 +1,4 @@
+// Package socketcan provides a CAN interface for sending RAW or ISOTP CAN frames on a CAN bus.
 package socketcan
 
 import (
@@ -9,6 +10,7 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+// nolint:stylecheck // keep all caps and underscores to match kernel documentation
 const (
 	CAN_RAW   = 1
 	CAN_ISOTP = 6
@@ -17,11 +19,13 @@ const (
 	SOL_CAN_RAW           = 101
 )
 
+// nolint:stylecheck // keep all caps and underscores to match kernel documentation
 const (
 	IF_TYPE_RAW   = 0
 	IF_TYPE_ISOTP = 1
 )
 
+// Interface is the type that exposes the send and receive and other operations on the CAN socket
 type Interface struct {
 	IfName   string
 	SocketFd int
@@ -33,6 +37,7 @@ func getIfIndex(fd int, ifName string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
+
 	if len(ifNameRaw) > 16 {
 		return 0, errors.New("maximum ifname length is 16 characters")
 	}
@@ -40,6 +45,7 @@ func getIfIndex(fd int, ifName string) (int, error) {
 	ifReq := ifreqIndex{}
 	copy(ifReq.Name[:], ifNameRaw)
 	err = ioctlIfreq(fd, &ifReq)
+
 	return ifReq.Index, err
 }
 
@@ -58,30 +64,34 @@ func ioctlIfreq(fd int, ifreq *ifreqIndex) (err error) {
 	if errno != 0 {
 		err = fmt.Errorf("ioctl: %v", errno)
 	}
+
 	return
 }
 
+// SetLoopback sets the underlying socket to loopback its own messages
 func (i Interface) SetLoopback(enable bool) error {
-	value := 0
+	var value int
 	if enable {
 		value = 1
 	}
-	err := unix.SetsockoptInt(i.SocketFd, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS, value)
-	return err
+
+	return unix.SetsockoptInt(i.SocketFd, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS, value)
 }
 
+// SetRecvTimeout sets a timeout on receives from the underlying socket
+// a timeout will return an error stating the resource is temporarily unavailable
 func (i Interface) SetRecvTimeout(timeout time.Duration) error {
 	tv := unix.NsecToTimeval(timeout.Nanoseconds())
-	err := unix.SetsockoptTimeval(i.SocketFd, unix.SOL_SOCKET, unix.SO_RCVTIMEO, &tv)
-	return err
+	return unix.SetsockoptTimeval(i.SocketFd, unix.SOL_SOCKET, unix.SO_RCVTIMEO, &tv)
 }
 
+// SetSendTimeout sets a timeout on sends on the underlying socket
 func (i Interface) SetSendTimeout(timeout time.Duration) error {
 	tv := unix.NsecToTimeval(timeout.Nanoseconds())
-	err := unix.SetsockoptTimeval(i.SocketFd, unix.SOL_SOCKET, unix.SO_SNDTIMEO, &tv)
-	return err
+	return unix.SetsockoptTimeval(i.SocketFd, unix.SOL_SOCKET, unix.SO_SNDTIMEO, &tv)
 }
 
+// Close the underlying socket
 func (i Interface) Close() error {
 	return unix.Close(i.SocketFd)
 }

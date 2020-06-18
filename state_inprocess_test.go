@@ -5,10 +5,10 @@ import (
 	"testing"
 
 	"bou.ke/monkey"
-	"github.com/linklayer/go-socketcan/pkg/socketcan"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/proto"
+	"stash.teslamotors.com/ctet/go-socketcan/pkg/socketcan"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	pb "stash.teslamotors.com/rr/towerproto"
 	"stash.teslamotors.com/rr/traycontrollers"
@@ -62,6 +62,9 @@ func TestInProcess_Action(t *testing.T) {
 
 	ifp := monkey.Patch(socketcan.NewIsotpInterface, patchNewIsotpInterface)
 	defer ifp.Unpatch()
+
+	fdp := monkey.PatchInstanceMethod(reflect.TypeOf(socketcan.Interface{}), "SetCANFD", func(p socketcan.Interface) error { return nil })
+	defer fdp.Unpatch()
 
 	rbp := monkey.PatchInstanceMethod(
 		reflect.TypeOf(socketcan.Interface{}),

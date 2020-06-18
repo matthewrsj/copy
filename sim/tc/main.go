@@ -7,8 +7,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/linklayer/go-socketcan/pkg/socketcan"
 	"google.golang.org/protobuf/proto"
+	"stash.teslamotors.com/ctet/go-socketcan/pkg/socketcan"
 	"stash.teslamotors.com/rr/towercontroller"
 	pb "stash.teslamotors.com/rr/towerproto"
 	"stash.teslamotors.com/rr/traycontrollers"
@@ -35,6 +35,11 @@ func main() {
 	defer func() {
 		_ = tcDev.Close()
 	}()
+
+	if err = tcDev.SetCANFD(); err != nil {
+		log.Println("set CANFD", err)
+		return
+	}
 
 	if err = tcDev.SetRecvTimeout(time.Second * 2); err != nil {
 		log.Println("set recv timeout:", err)

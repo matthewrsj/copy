@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/linklayer/go-socketcan/pkg/socketcan"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/proto"
+	"stash.teslamotors.com/ctet/go-socketcan/pkg/socketcan"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cellapi"
 	pb "stash.teslamotors.com/rr/towerproto"
@@ -54,6 +54,11 @@ func (i *InProcess) action() {
 	defer func() {
 		_ = dev.Close()
 	}()
+
+	if err := dev.SetCANFD(); err != nil {
+		fatalError(i, i.Logger, err)
+		return
+	}
 
 	for {
 		var data []byte

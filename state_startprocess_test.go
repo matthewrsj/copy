@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"bou.ke/monkey"
-	"github.com/linklayer/go-socketcan/pkg/socketcan"
 	"github.com/sirupsen/logrus"
+	"stash.teslamotors.com/ctet/go-socketcan/pkg/socketcan"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cellapi"
 	"stash.teslamotors.com/rr/traycontrollers"
@@ -72,6 +72,9 @@ func TestStartProcess_Action(t *testing.T) {
 
 	ip := monkey.Patch(socketcan.NewIsotpInterface, patchNewIsotpInterface)
 	defer ip.Unpatch()
+
+	fdp := monkey.PatchInstanceMethod(reflect.TypeOf(socketcan.Interface{}), "SetCANFD", func(socketcan.Interface) error { return nil })
+	defer fdp.Unpatch()
 
 	sb := monkey.PatchInstanceMethod(
 		reflect.TypeOf(socketcan.Interface{}),

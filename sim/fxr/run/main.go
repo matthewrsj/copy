@@ -8,15 +8,15 @@ import (
 	"sync"
 	"time"
 
-	"github.com/linklayer/go-socketcan/pkg/socketcan"
 	"google.golang.org/protobuf/proto"
+	"stash.teslamotors.com/ctet/go-socketcan/pkg/socketcan"
 	pb "stash.teslamotors.com/rr/towerproto"
 	"stash.teslamotors.com/rr/traycontrollers"
 )
 
 const _confFileDef = "../../configuration/statemachine/statemachine.yaml"
 
-// nolint:funlen,gocognit // this is basically just a script
+// nolint:funlen,gocognit,gocyclo // this is basically just a script
 func main() {
 	configFile := flag.String("conf", _confFileDef, "path to the configuration file")
 
@@ -48,11 +48,21 @@ func main() {
 			_ = readDev.Close()
 		}()
 
+		if err = readDev.SetCANFD(); err != nil {
+			log.Println("set CANFD", err)
+			return
+		}
+
 		// tx
 		dev, err := socketcan.NewIsotpInterface(conf.CAN.Device, conf.CAN.TXID, id)
 		if err != nil {
 			log.Println("create ISOTP interface", err)
 			return // return so the defer is called
+		}
+
+		if err = dev.SetCANFD(); err != nil {
+			log.Println("set CANFD", err)
+			return
 		}
 
 		fxDevs[n] = rwDevs{

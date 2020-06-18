@@ -7,6 +7,7 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+// NewRawInterface creates a new CAN_RAW interface
 func NewRawInterface(ifName string) (Interface, error) {
 	canIf := Interface{}
 	canIf.ifType = IF_TYPE_RAW
@@ -32,6 +33,7 @@ func NewRawInterface(ifName string) (Interface, error) {
 	return canIf, nil
 }
 
+// SendFrame sends a CanFrame to the interface
 func (i Interface) SendFrame(f CanFrame) error {
 	if i.ifType != IF_TYPE_RAW {
 		return fmt.Errorf("interface is not raw type")
@@ -40,24 +42,26 @@ func (i Interface) SendFrame(f CanFrame) error {
 	// assemble a SocketCAN frame
 	frameBytes := make([]byte, 16)
 	// bytes 0-3: arbitration ID
-	if f.ArbId < 0x800 {
+	if f.ArbID < 0x800 {
 		// standard ID
-		binary.LittleEndian.PutUint32(frameBytes[0:4], f.ArbId)
+		binary.LittleEndian.PutUint32(frameBytes[0:4], f.ArbID)
 	} else {
 		// extended ID
 		// set bit 31 (frame format flag (0 = standard 11 bit, 1 = extended 29 bit)
-		binary.LittleEndian.PutUint32(frameBytes[0:4], f.ArbId|1<<31)
+		binary.LittleEndian.PutUint32(frameBytes[0:4], f.ArbID|1<<31)
 	}
 
 	// byte 4: data length code
-	frameBytes[4] = f.Dlc
+	frameBytes[4] = f.DLC
 	// data
 	copy(frameBytes[8:], f.Data)
 
 	_, err := unix.Write(i.SocketFd, frameBytes)
+
 	return err
 }
 
+// RecvFrame reads a frame from the interface
 func (i Interface) RecvFrame() (CanFrame, error) {
 	f := CanFrame{}
 
@@ -67,17 +71,18 @@ func (i Interface) RecvFrame() (CanFrame, error) {
 
 	// read SocketCAN frame from device
 	frameBytes := make([]byte, 16)
+
 	_, err := unix.Read(i.SocketFd, frameBytes)
 	if err != nil {
 		return f, err
 	}
 
 	// bytes 0-3: arbitration ID
-	f.ArbId = uint32(binary.LittleEndian.Uint32(frameBytes[0:4]))
+	f.ArbID = binary.LittleEndian.Uint32(frameBytes[0:4])
 	// remove bit 31: extended ID flag
-	f.ArbId = f.ArbId & 0x7FFFFFFF
+	f.ArbID &= 0x7FFFFFFF
 	// byte 4: data length code
-	f.Dlc = frameBytes[4]
+	f.DLC = frameBytes[4]
 	// data
 	f.Data = make([]byte, 8)
 	copy(f.Data, frameBytes[8:])

@@ -4,9 +4,9 @@ package towercontroller
 import (
 	"fmt"
 
-	"github.com/linklayer/go-socketcan/pkg/socketcan"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/proto"
+	"stash.teslamotors.com/ctet/go-socketcan/pkg/socketcan"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cellapi"
 	pb "stash.teslamotors.com/rr/towerproto"
@@ -96,6 +96,11 @@ func (s *StartProcess) action() {
 	defer func() {
 		_ = dev.Close()
 	}()
+
+	if err := dev.SetCANFD(); err != nil {
+		fatalError(s, s.Logger, err)
+		return
+	}
 
 	var data []byte
 

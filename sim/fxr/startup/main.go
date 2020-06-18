@@ -8,8 +8,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/linklayer/go-socketcan/pkg/socketcan"
 	"google.golang.org/protobuf/proto"
+	"stash.teslamotors.com/ctet/go-socketcan/pkg/socketcan"
 	pb "stash.teslamotors.com/rr/towerproto"
 	"stash.teslamotors.com/rr/traycontrollers"
 )
@@ -61,6 +61,11 @@ func main() {
 		defer func() {
 			_ = dev.Close()
 		}()
+
+		if err = dev.SetCANFD(); err != nil {
+			log.Println("set CANFD", err)
+			return
+		}
 
 		fxDevs[n] = devCtx{
 			writer: dev,
