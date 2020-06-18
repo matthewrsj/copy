@@ -3,7 +3,7 @@ package towercontroller
 import (
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cellapi"
 	"stash.teslamotors.com/rr/traycontrollers"
@@ -14,18 +14,20 @@ import (
 type ProcessStep struct {
 	statemachine.Common
 
-	Config        traycontrollers.Configuration
-	Logger        *logrus.Logger
+	Config        Configuration
+	Logger        *zap.SugaredLogger
 	CellAPIClient *cellapi.Client
 
 	processStepName string
 	tbc             traycontrollers.TrayBarcode
 	fxbc            traycontrollers.FixtureBarcode
 	inProgress      bool
+	manual          bool
+	mockCellAPI     bool
 }
 
 func (p *ProcessStep) action() {
-	p.Logger.Trace("setting tbc and fxbc from context")
+	p.Logger.Debug("setting tbc and fxbc from context")
 
 	bc, ok := p.Context().(Barcodes)
 	if !ok {
@@ -33,16 +35,35 @@ func (p *ProcessStep) action() {
 		return
 	}
 
+	p.manual = bc.ManualMode
+	p.mockCellAPI = bc.MockCellAPI
+
+	if !p.manual {
+		// in manual mode this is handled in the barcode scan step so the operator can confirm
+		// the correct process step name
+		if !p.mockCellAPI {
+			var err error
+			if bc.ProcessStepName, err = p.CellAPIClient.GetNextProcessStep(bc.Tray.SN); err != nil {
+				fatalError(p, p.Logger, fmt.Errorf("GetNextProcessStep for %s: %v", bc.Tray.SN, err))
+				return
+			}
+		} else {
+			p.Logger.Warnf("cell API mocked, skipping GetNextProcessStep and using %s", _mockedFormRequest)
+			bc.ProcessStepName = _mockedFormRequest
+		}
+	}
+
 	p.tbc = bc.Tray
 	p.fxbc = bc.Fixture
 	p.processStepName = bc.ProcessStepName
 	p.inProgress = bc.InProgress
 
-	p.Logger.WithFields(logrus.Fields{
-		"tray":         p.tbc.SN,
-		"fixture_num":  p.fxbc.Raw,
-		"process_step": p.processStepName,
-	}).Info("running process step")
+	p.Logger = p.Logger.With(
+		"tray", p.tbc.SN,
+		"fixture", p.fxbc.Raw,
+		"process_step", p.processStepName,
+	)
+	p.Logger.Info("running process step")
 }
 
 // Actions returns the action functions for this state
@@ -65,6 +86,8 @@ func (p *ProcessStep) Next() statemachine.State {
 			processStepName: p.processStepName,
 			tbc:             p.tbc,
 			fxbc:            p.fxbc,
+			manual:          p.manual,
+			mockCellAPI:     p.mockCellAPI,
 		}
 	} else {
 		next = &ReadRecipe{
@@ -74,10 +97,12 @@ func (p *ProcessStep) Next() statemachine.State {
 			processStepName: p.processStepName,
 			tbc:             p.tbc,
 			fxbc:            p.fxbc,
+			manual:          p.manual,
+			mockCellAPI:     p.mockCellAPI,
 		}
 	}
 
-	p.Logger.WithField("tray", p.tbc.SN).Tracef("next state: %s", statemachine.NameOf(next))
+	p.Logger.Debugw("transitioning to next state", "next", statemachine.NameOf(next))
 
 	return next
 }

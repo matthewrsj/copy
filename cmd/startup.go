@@ -12,7 +12,7 @@ import (
 	"stash.teslamotors.com/rr/traycontrollers"
 )
 
-func monitorForInProgress(c traycontrollers.Configuration, fxID uint32) (statemachine.Job, error) {
+func monitorForInProgress(c towercontroller.Configuration, fxID uint32, manual, mockCellAPI bool) (statemachine.Job, error) {
 	const waitForMessagesSecs = 5
 
 	dev, err := socketcan.NewIsotpInterface(c.CAN.Device, fxID, c.CAN.TXID)
@@ -23,6 +23,10 @@ func monitorForInProgress(c traycontrollers.Configuration, fxID uint32) (statema
 	if err = dev.SetRecvTimeout(time.Second); err != nil {
 		return statemachine.Job{}, fmt.Errorf("set receive timeout: %v", err)
 	}
+
+	defer func() {
+		_ = dev.Close()
+	}()
 
 	if err = dev.SetCANFD(); err != nil {
 		return statemachine.Job{}, fmt.Errorf("set CANFD: %v", err)
@@ -67,6 +71,8 @@ func monitorForInProgress(c traycontrollers.Configuration, fxID uint32) (statema
 					Tray:            trayBC,
 					ProcessStepName: msg.GetProcessStep(),
 					InProgress:      true,
+					ManualMode:      manual,
+					MockCellAPI:     mockCellAPI,
 				},
 			}, nil
 		}

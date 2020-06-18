@@ -5,42 +5,44 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
+	"net/http"
 	"sync"
 
-	"github.com/sirupsen/logrus"
-	"stash.teslamotors.com/ctet/cmdlineutils"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cellapi"
 	"stash.teslamotors.com/rr/towercontroller"
-	"stash.teslamotors.com/rr/traycontrollers"
 )
 
 const (
-	_logLvlDef   = logrus.InfoLevel
+	_logLvlDef   = zapcore.InfoLevel
 	_logFileDef  = "logs/towercontroller/statemachine.log"
 	_confFileDef = "../configuration/statemachine/statemachine.yaml"
+	_localDef    = ":13167"
 )
 
 func main() {
-	logLvl := cmdlineutils.LogLevelFlag()
+	logLvl := zap.LevelFlag("loglvl", _logLvlDef, "log level for zap logger")
 	logFile := flag.String("logf", _logFileDef, "path to the log file")
 	configFile := flag.String("conf", _confFileDef, "path to the configuration file")
+	localAddr := flag.String("local", _localDef, "local address")
+	manual := flag.Bool("manual", false, "turn on manual mode (i.e. for SWIFT line)")
+	mockCellAPI := flag.Bool("mockapi", false, "mock Cell API interactions")
 
 	flag.Parse()
 
-	lvl, err := cmdlineutils.ParseLogLevelWithDefault(*logLvl, _logLvlDef)
+	logConfig := newLogger(*logFile, *logLvl)
+
+	logger, err := logConfig.Build()
 	if err != nil {
-		log.Printf("%v; setting log level to default %s", err, _logLvlDef.String())
+		log.Fatalf("build log configuration: %v", err)
 	}
 
-	logger, err := newLogger(*logFile, lvl)
-	if err != nil {
-		log.Fatalf("setup logger: %v", err)
-	}
+	sugar := logger.Sugar()
 
-	conf, err := traycontrollers.LoadConfig(*configFile)
+	conf, err := towercontroller.LoadConfig(*configFile)
 	if err != nil {
 		log.Fatalf("load configuration: %v", err)
 	}
@@ -55,18 +57,17 @@ func main() {
 	s := statemachine.NewScheduler()
 
 	for n := range conf.Fixtures {
+		sugar.Infow("registering", "fixture", n)
 		s.Register(n,
 			&towercontroller.ProcessStep{
 				Config:        conf,
-				Logger:        logger,
+				Logger:        sugar,
 				CellAPIClient: caClient,
 			}, nil, // runner (default)
 		)
 	}
 
-	msg := "monitoring for in-progress trays"
-	logger.Info(msg)
-	log.Println(msg)
+	sugar.Info("monitoring for in-progress trays")
 
 	jch := make(chan statemachine.Job)
 
@@ -78,12 +79,9 @@ func main() {
 		go func(id uint32) {
 			defer wg.Done()
 
-			job, err := monitorForInProgress(conf, id)
+			job, err := monitorForInProgress(conf, id, *manual, *mockCellAPI)
 			if err != nil {
-				err = fmt.Errorf("monitor for in-progress trays: %v", err)
-				log.Println(err)
-				logger.Error(err)
-
+				sugar.Errorw("monitor for in-progress trays", "error", err)
 				return
 			}
 
@@ -100,14 +98,10 @@ func main() {
 
 	go func() {
 		for job := range jch {
-			msg := fmt.Sprintf("found in-progress tray in fixture %s", job.Name)
-			logger.Info(msg)
-			log.Println(msg)
+			sugar.Infow("found in-progress tray", "fixture", job.Name)
 
 			if err := s.Schedule(job); err != nil {
-				err = fmt.Errorf("schedule in-progress trays: %v", err)
-				log.Println(err)
-				logger.Fatal(err)
+				sugar.Fatalw("schedule in-progress tray", "error", err)
 			}
 		}
 
@@ -117,41 +111,34 @@ func main() {
 	close(jch)
 	<-done // wait for all jobs to be read
 
-	logger.Info("starting state machine scheduler")
+	if *manual {
+		handleManualOperation(s, sugar, caClient, *mockCellAPI)
+		return
+	} // end of manual operation
 
-	for {
-		logger.Info("waiting for tray barcode scan")
+	// handle incoming requests on availability
+	towercontroller.HandleAvailable(conf, sugar)
 
-		barcodes, err := towercontroller.ScanBarcodes(caClient)
-		if err != nil {
-			if towercontroller.IsInterrupt(err) {
-				log.Fatal("received CTRL-C, exiting...")
-			}
+	// handle incoming posts to load
+	load := make(chan statemachine.Job)
+	towercontroller.HandleLoad(conf, load, sugar, *mockCellAPI)
 
-			err = fmt.Errorf("scan barcodes: %v", err)
-			logger.Error(err)
-			log.Println(err)
+	go func() {
+		if err := http.ListenAndServe(*localAddr, nil); err != nil {
+			sugar.Errorw("http.ListenAndServe", "error", err)
+		}
+	}()
 
+	sugar.Info("starting state machine scheduler")
+
+	for job := range load {
+		sugar.Infow("got tray load", "fixture", job.Name, "tray_info", job.Work)
+
+		if err := s.Schedule(job); err != nil {
+			sugar.Errorw("schedule tray job on fixture", "error", err)
 			continue
 		}
 
-		logger.WithFields(logrus.Fields{
-			"tray_sn":          barcodes.Tray.SN,
-			"tray_orientation": barcodes.Tray.O,
-			"fixture_location": barcodes.Fixture.Location,
-			"fixture_aisle":    barcodes.Fixture.Aisle,
-			"fixture_tower":    barcodes.Fixture.Tower,
-			"fixture_num":      barcodes.Fixture.Fxn,
-		}).Info("starting state machine")
-
-		if err := s.Schedule(statemachine.Job{Name: barcodes.Fixture.Fxn, Work: barcodes}); err != nil {
-			err = fmt.Errorf("schedule tray job on fixture: %v", err)
-			logger.Error(err)
-			log.Println(err)
-
-			continue
-		}
-
-		log.Println("starting tray state machine")
+		sugar.Info("starting tray state machine", "fixture", job.Name)
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"bou.ke/monkey"
 	"github.com/manifoldco/promptui"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 	"stash.teslamotors.com/rr/cellapi"
 )
 
@@ -35,7 +36,7 @@ func TestScanBarcodes(t *testing.T) {
 	)
 	defer gnps.Unpatch()
 
-	bcs, err := ScanBarcodes(cellapi.NewClient("baseurl"))
+	bcs, err := ScanBarcodes(cellapi.NewClient("baseurl"), false, zap.NewExample().Sugar())
 	assert.Nil(t, err)
 	assert.False(t, bcs.InProgress)
 	assert.Equal(t, "FORM_CYCLE", bcs.ProcessStepName)

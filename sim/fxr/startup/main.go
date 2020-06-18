@@ -14,7 +14,7 @@ import (
 	"stash.teslamotors.com/rr/traycontrollers"
 )
 
-const _confFileDef = "../../configuration/statemachine/statemachine.yaml"
+const _confFileDef = "../../../configuration/statemachine/statemachine.yaml"
 
 func main() {
 	configFile := flag.String("conf", _confFileDef, "path to the configuration file")
@@ -31,6 +31,8 @@ func main() {
 		status = pb.FixtureStatus_FIXTURE_STATUS_COMPLETE
 	case "idle":
 		status = pb.FixtureStatus_FIXTURE_STATUS_IDLE
+	case "fault":
+		status = pb.FixtureStatus_FIXTURE_STATUS_FAULTED
 	default:
 		log.Fatal("unknown status", *statName)
 	}
@@ -50,7 +52,7 @@ func main() {
 	var i int
 
 	for n, id := range conf.Fixtures {
-		log.Printf("%d WRITING TO %d", id, conf.CAN.TXID)
+		log.Printf("%x WRITING TO %x", conf.CAN.TXID, id)
 
 		dev, err := socketcan.NewIsotpInterface(conf.CAN.Device, conf.CAN.TXID, id)
 		if err != nil {
@@ -69,7 +71,7 @@ func main() {
 
 		fxDevs[n] = devCtx{
 			writer: dev,
-			fxbc:   fmt.Sprintf("SWIFT-01-A-%s", n),
+			fxbc:   fmt.Sprintf("CM2-63010-%s", n),
 			tbc:    "11223344" + []string{"A", "B", "C", "D"}[i%4],
 			pstep:  "FORM_CYCLE",
 		}
@@ -78,6 +80,8 @@ func main() {
 	}
 
 	for {
+		log.Println("writing", status.String())
+
 		for _, ctx := range fxDevs {
 			msgOp := &pb.FixtureToTower{
 				Content: &pb.FixtureToTower_Op{

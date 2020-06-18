@@ -1,27 +1,23 @@
 package main
 
 import (
-	"os"
-	"path/filepath"
-
-	"github.com/sirupsen/logrus"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
-func newLogger(path string, lvl logrus.Level) (*logrus.Logger, error) {
-	logger := logrus.New()
-	logger.SetLevel(lvl)
-	logger.SetFormatter(&logrus.TextFormatter{FullTimestamp: true})
-
-	if err := os.MkdirAll(filepath.Dir(path), os.ModePerm); err != nil {
-		return nil, err
+func newLogger(lFile string, lvl zapcore.Level) zap.Config {
+	lcfg := zap.NewProductionConfig()
+	lcfg.Encoding = "console"
+	lcfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	lcfg.DisableStacktrace = false
+	lcfg.DisableCaller = true
+	lcfg.Sampling = nil
+	lcfg.OutputPaths = []string{
+		"stdout",
+		lFile,
 	}
 
-	lf, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, os.ModePerm)
-	if err != nil {
-		return nil, err
-	}
+	lcfg.Level.SetLevel(lvl)
 
-	logger.SetOutput(lf)
-
-	return logger, nil
+	return lcfg
 }

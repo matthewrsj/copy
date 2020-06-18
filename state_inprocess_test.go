@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"bou.ke/monkey"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 	"stash.teslamotors.com/ctet/go-socketcan/pkg/socketcan"
 	"stash.teslamotors.com/ctet/statemachine/v2"
@@ -35,23 +35,23 @@ func patchRecvBuffFunc(msg proto.Message) func(socketcan.Interface) ([]byte, err
 func TestInProcess_Action(t *testing.T) {
 	exp := 1
 	ipState := &InProcess{
-		Config: traycontrollers.Configuration{
+		Config: Configuration{
 			Fixtures: map[string]uint32{
-				"01": 1,
+				"01-01": 1,
 			},
 		},
-		Logger: logrus.New(),
+		Logger: zap.NewExample().Sugar(),
 		tbc: traycontrollers.TrayBarcode{
 			SN:  "11223344",
 			O:   traycontrollers.OrientationA,
 			Raw: "11223344A",
 		},
 		fxbc: traycontrollers.FixtureBarcode{
-			Location: "SWIFT",
-			Aisle:    "01",
-			Tower:    "A",
+			Location: "CM2",
+			Aisle:    "63010",
+			Tower:    "01",
 			Fxn:      "01",
-			Raw:      "SWIFT-01-A-01",
+			Raw:      "CM2-63010-01-01",
 		},
 	}
 	as := ipState.Actions()
@@ -108,7 +108,7 @@ func TestInProcess_Action(t *testing.T) {
 
 func TestInProcess_ActionNoFixture(t *testing.T) {
 	ipState := InProcess{
-		Logger: logrus.New(),
+		Logger: zap.NewExample().Sugar(),
 	}
 	as := ipState.Actions()
 
@@ -121,12 +121,12 @@ func TestInProcess_ActionNoFixture(t *testing.T) {
 
 func TestInProcess_ActionNoIface(t *testing.T) {
 	ipState := InProcess{
-		Config: traycontrollers.Configuration{
+		Config: Configuration{
 			Fixtures: map[string]uint32{
 				"01": 1,
 			},
 		},
-		Logger: logrus.New(),
+		Logger: zap.NewExample().Sugar(),
 		fxbc: traycontrollers.FixtureBarcode{
 			Location: "SWIFT",
 			Aisle:    "01",
@@ -152,12 +152,12 @@ func TestInProcess_ActionNoIface(t *testing.T) {
 
 func TestInProcess_ActionRecvBufErr(t *testing.T) {
 	ipState := InProcess{
-		Config: traycontrollers.Configuration{
+		Config: Configuration{
 			Fixtures: map[string]uint32{
 				"01": 1,
 			},
 		},
-		Logger: logrus.New(),
+		Logger: zap.NewExample().Sugar(),
 		fxbc: traycontrollers.FixtureBarcode{
 			Location: "SWIFT",
 			Aisle:    "01",
@@ -190,12 +190,12 @@ func TestInProcess_ActionRecvBufErr(t *testing.T) {
 
 func TestInProcess_ActionBadBuffer(t *testing.T) {
 	ipState := InProcess{
-		Config: traycontrollers.Configuration{
+		Config: Configuration{
 			Fixtures: map[string]uint32{
 				"01": 1,
 			},
 		},
-		Logger: logrus.New(),
+		Logger: zap.NewExample().Sugar(),
 		fxbc: traycontrollers.FixtureBarcode{
 			Location: "SWIFT",
 			Aisle:    "01",
@@ -228,7 +228,7 @@ func TestInProcess_ActionBadBuffer(t *testing.T) {
 
 func TestInProcess_Next(t *testing.T) {
 	exp := "EndProcess"
-	if n := statemachine.NameOf((&InProcess{Logger: logrus.New()}).Next()); n != exp {
+	if n := statemachine.NameOf((&InProcess{Logger: zap.NewExample().Sugar()}).Next()); n != exp {
 		t.Errorf("expected next state name to be %s, got %s", exp, n)
 	}
 }

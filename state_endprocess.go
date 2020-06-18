@@ -1,23 +1,28 @@
 package towercontroller
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"strings"
 
-	"github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cellapi"
 	pb "stash.teslamotors.com/rr/towerproto"
 	"stash.teslamotors.com/rr/traycontrollers"
 )
 
+const _unloadEndpoint = "/unload"
+
 // EndProcess informs the cell API of process completion. This is the last state.
 type EndProcess struct {
 	statemachine.Common
 
-	Config        traycontrollers.Configuration
-	Logger        *logrus.Logger
+	Config        Configuration
+	Logger        *zap.SugaredLogger
 	CellAPIClient *cellapi.Client
 
 	tbc             traycontrollers.TrayBarcode
@@ -26,13 +31,18 @@ type EndProcess struct {
 	cellResponse    []*pb.Cell
 	processStepName string
 	fixtureFault    bool
+	manual          bool
+	mockCellAPI     bool
 }
 
 func (e *EndProcess) action() {
-	if err := e.CellAPIClient.UpdateProcessStatus(e.tbc.SN, e.processStepName, cellapi.StatusEnd); err != nil {
-		// keep trying the other transactions
-		e.Logger.Error(err)
-		log.Println(err)
+	if !e.mockCellAPI {
+		if err := e.CellAPIClient.UpdateProcessStatus(e.tbc.SN, e.processStepName, cellapi.StatusEnd); err != nil {
+			// keep trying the other transactions
+			e.Logger.Warn(err)
+		}
+	} else {
+		e.Logger.Warn("cell API mocked, skipping UpdateProcessStatus")
 	}
 
 	// nolint:prealloc // we don't know how long this will be, depends on what the FXR Cells' content is
@@ -94,20 +104,16 @@ func (e *EndProcess) action() {
 	}
 
 	if len(failed) > 0 {
-		failMsg := fmt.Sprintf("failed cells: %s", strings.Join(failed, ", "))
-		e.Logger.WithFields(logrus.Fields{
-			"tray":    e.tbc.Raw,
-			"fixture": e.fxbc.Raw,
-		}).Infof(failMsg)
-
-		log.Printf("tray %s (fixture %s) %s", e.tbc.SN, e.fxbc.Raw, failMsg)
+		e.Logger.Info(fmt.Sprintf("failed cells: %s", strings.Join(failed, ", ")))
 	}
 
-	if err := e.CellAPIClient.SetCellStatuses(cpf); err != nil {
-		e.Logger.Error(err)
-		log.Println(err)
-
-		return
+	if !e.mockCellAPI {
+		if err := e.CellAPIClient.SetCellStatuses(cpf); err != nil {
+			e.Logger.Errorw("SetCellStatuses", "error", err)
+			return
+		}
+	} else {
+		e.Logger.Warn("cell API mocked, skipping SetCellStatuses")
 	}
 
 	// TODO: determine how to inform cell API of fault
@@ -116,10 +122,43 @@ func (e *EndProcess) action() {
 		msg += "; fixture faulted"
 	}
 
-	e.Logger.WithFields(logrus.Fields{
-		"tray":    e.tbc.Raw,
-		"fixture": e.fxbc.Raw,
-	}).Infof(msg)
+	e.Logger.Info(msg)
+
+	// if this is manual we are done
+	if e.manual {
+		e.Logger.Info("done with tray")
+		return
+	}
+
+	tc := trayComplete{
+		ID:     e.tbc.Raw,
+		Aisle:  e.Config.Loc.Aisle,
+		Column: e.fxbc.Tower,
+		Level:  e.fxbc.Fxn,
+	}
+
+	b, err := json.Marshal(tc)
+	if err != nil {
+		fatalError(e, e.Logger, err)
+		return
+	}
+
+	resp, err := http.Post(e.Config.Remote+_unloadEndpoint, "application/json", bytes.NewReader(b))
+	if err != nil {
+		fatalError(e, e.Logger, err)
+		return
+	}
+
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode != 200 {
+		fatalError(e, e.Logger, fmt.Errorf("response NOT OK: %v, %v", resp.StatusCode, resp.Status))
+		return
+	}
+
+	e.Logger.Info("done with tray")
 }
 
 // Actions returns the action functions for this state
@@ -133,6 +172,13 @@ func (e *EndProcess) Actions() []func() {
 
 // Next returns the next state to run
 func (e *EndProcess) Next() statemachine.State {
-	e.Logger.WithField("tray", e.tbc.SN).Trace("statemachine exiting")
+	e.Logger.Debug("statemachine exiting")
 	return nil
+}
+
+type trayComplete struct {
+	ID     string `json:"id"`
+	Aisle  string `json:"aisle"`
+	Column string `json:"column"`
+	Level  string `json:"level"`
 }

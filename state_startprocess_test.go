@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"bou.ke/monkey"
-	"github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 	"stash.teslamotors.com/ctet/go-socketcan/pkg/socketcan"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cellapi"
@@ -17,7 +17,7 @@ func TestStartProcess_Action(t *testing.T) {
 	cmc[0] = "A01"
 	cmc[1] = "A02"
 	spState := StartProcess{
-		Config: traycontrollers.Configuration{
+		Config: Configuration{
 			CellMap: map[string][]string{
 				"A": cmc,
 			},
@@ -25,7 +25,7 @@ func TestStartProcess_Action(t *testing.T) {
 				"01": 1,
 			},
 		},
-		Logger:          logrus.New(),
+		Logger:          zap.NewExample().Sugar(),
 		CellAPIClient:   &cellapi.Client{},
 		processStepName: "",
 		tbc: traycontrollers.TrayBarcode{
@@ -96,7 +96,7 @@ func TestStartProcess_Action(t *testing.T) {
 
 func TestStartProcess_Next(t *testing.T) {
 	exp := "InProcess"
-	if n := statemachine.NameOf((&StartProcess{Logger: logrus.New()}).Next()); n != exp {
+	if n := statemachine.NameOf((&StartProcess{Logger: zap.NewExample().Sugar()}).Next()); n != exp {
 		t.Errorf("expected next state name to be %s, got %s", exp, n)
 	}
 }

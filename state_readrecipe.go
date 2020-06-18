@@ -1,9 +1,7 @@
 package towercontroller
 
 import (
-	"fmt"
-
-	"github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cellapi"
 	"stash.teslamotors.com/rr/traycontrollers"
@@ -13,8 +11,8 @@ import (
 type ReadRecipe struct {
 	statemachine.Common
 
-	Config        traycontrollers.Configuration
-	Logger        *logrus.Logger
+	Config        Configuration
+	Logger        *zap.SugaredLogger
 	CellAPIClient *cellapi.Client
 
 	processStepName string
@@ -22,26 +20,19 @@ type ReadRecipe struct {
 	fxbc            traycontrollers.FixtureBarcode
 	rcpe            []Ingredients
 	rcpErr          error
+	manual          bool
+	mockCellAPI     bool
 }
 
 func (r *ReadRecipe) action() {
-	r.Logger.WithFields(logrus.Fields{
-		"tray":         r.tbc.SN,
-		"fixture_num":  r.fxbc.Raw,
-		"process_step": r.processStepName,
-	}).Info("loading recipe for process step")
+	r.Logger.Info("loading recipe for process step")
 
 	if r.rcpe, r.rcpErr = LoadRecipe(r.Config.RecipeFile, r.Config.IngredientsFile, r.processStepName); r.rcpErr != nil {
 		fatalError(r, r.Logger, r.rcpErr)
 		return
 	}
 
-	r.Logger.WithFields(logrus.Fields{
-		"tray":         r.tbc.SN,
-		"fixture_num":  r.fxbc.Raw,
-		"process_step": r.processStepName,
-		"recipe":       fmt.Sprintf("%#v", r.rcpe),
-	}).Debug("loaded recipe")
+	r.Logger.Debug("loaded recipe")
 }
 
 // Actions returns the action functions for this state
@@ -61,8 +52,10 @@ func (r *ReadRecipe) Next() statemachine.State {
 		fxbc:            r.fxbc,
 		tbc:             r.tbc,
 		rcpe:            r.rcpe,
+		manual:          r.manual,
+		mockCellAPI:     r.mockCellAPI,
 	}
-	r.Logger.WithField("tray", r.tbc.SN).Tracef("next state: %s", statemachine.NameOf(next))
+	r.Logger.Debugw("transitioning to next state", "next", statemachine.NameOf(next))
 
 	return next
 }

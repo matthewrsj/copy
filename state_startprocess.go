@@ -4,7 +4,7 @@ package towercontroller
 import (
 	"fmt"
 
-	"github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 	"stash.teslamotors.com/ctet/go-socketcan/pkg/socketcan"
 	"stash.teslamotors.com/ctet/statemachine/v2"
@@ -17,8 +17,8 @@ import (
 type StartProcess struct {
 	statemachine.Common
 
-	Config        traycontrollers.Configuration
-	Logger        *logrus.Logger
+	Config        Configuration
+	Logger        *zap.SugaredLogger
 	CellAPIClient *cellapi.Client
 
 	processStepName string
@@ -27,14 +27,12 @@ type StartProcess struct {
 	rcpe            []Ingredients
 	cells           map[string]cellapi.CellData
 	canErr, apiErr  error
+	manual          bool
+	mockCellAPI     bool
 }
 
 func (s *StartProcess) action() {
-	s.Logger.WithFields(logrus.Fields{
-		"tray":         s.tbc.SN,
-		"fixture_num":  s.fxbc.Raw,
-		"process_step": s.processStepName,
-	}).Info("sending recipe and other information to FXR")
+	s.Logger.Info("sending recipe and other information to FXR")
 
 	twr2Fxr := pb.TowerToFixture{
 		Recipe: &pb.Recipe{Formrequest: pb.FormRequest_FORM_REQUEST_START},
@@ -57,9 +55,35 @@ func (s *StartProcess) action() {
 		})
 	}
 
-	if s.cells, s.apiErr = s.CellAPIClient.GetCellMap(s.tbc.SN); s.apiErr != nil {
-		fatalError(s, s.Logger, s.apiErr)
-		return
+	if !s.mockCellAPI {
+		if s.cells, s.apiErr = s.CellAPIClient.GetCellMap(s.tbc.SN); s.apiErr != nil {
+			fatalError(s, s.Logger, s.apiErr)
+			return
+		}
+	} else {
+		s.Logger.Warn("cell API mocked, skipping GetCellMap and populating a few cells")
+		s.cells = map[string]cellapi.CellData{
+			"A01": {
+				Position: "A01",
+				Serial:   "TESTA01",
+				IsEmpty:  false,
+			},
+			"A02": {
+				Position: "A02",
+				Serial:   "TESTA02",
+				IsEmpty:  false,
+			},
+			"A03": {
+				Position: "A03",
+				Serial:   "TESTA03",
+				IsEmpty:  false,
+			},
+			"A04": {
+				Position: "A04",
+				Serial:   "TESTA04",
+				IsEmpty:  false,
+			},
+		}
 	}
 
 	cellMapConf, ok := s.Config.CellMap[s.tbc.O.String()]
@@ -79,8 +103,8 @@ func (s *StartProcess) action() {
 
 	var fxrID uint32
 
-	if fxrID, ok = s.Config.Fixtures[s.fxbc.Fxn]; !ok {
-		fatalError(s, s.Logger, fmt.Errorf("fixture %s not configured for tower controller", s.fxbc.Fxn))
+	if fxrID, ok = s.Config.Fixtures[IDFromFXR(s.fxbc)]; !ok {
+		fatalError(s, s.Logger, fmt.Errorf("fixture %s not configured for tower controller", IDFromFXR(s.fxbc)))
 		return
 	}
 
@@ -114,17 +138,16 @@ func (s *StartProcess) action() {
 		return
 	}
 
-	if err := s.CellAPIClient.UpdateProcessStatus(s.tbc.SN, s.processStepName, cellapi.StatusStart); err != nil {
-		fatalError(s, s.Logger, err)
-		return
+	if !s.mockCellAPI {
+		if err := s.CellAPIClient.UpdateProcessStatus(s.tbc.SN, s.processStepName, cellapi.StatusStart); err != nil {
+			fatalError(s, s.Logger, fmt.Errorf("UpdateProcessStatus: %v", err))
+			return
+		}
+	} else {
+		s.Logger.Warn("cell API mocked, skipping UpdateProcessStatus")
 	}
 
-	s.Logger.WithFields(logrus.Fields{
-		"tray":           s.tbc.SN,
-		"fixture_num":    s.fxbc.Raw,
-		"fixture_can_id": fxrID,
-		"process_step":   s.processStepName,
-	}).Trace("sent recipe and other information to FXR")
+	s.Logger.Debug("sent recipe and other information to FXR")
 }
 
 // Actions returns the action functions for this state
@@ -144,8 +167,10 @@ func (s *StartProcess) Next() statemachine.State {
 		fxbc:            s.fxbc,
 		cells:           s.cells,
 		processStepName: s.processStepName,
+		manual:          s.manual,
+		mockCellAPI:     s.mockCellAPI,
 	}
-	s.Logger.WithField("tray", s.tbc.SN).Tracef("next state: %s", statemachine.NameOf(next))
+	s.Logger.Debugw("transitioning to next state", "next", statemachine.NameOf(next))
 
 	return next
 }

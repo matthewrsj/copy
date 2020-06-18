@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"bou.ke/monkey"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cellapi"
 	pb "stash.teslamotors.com/rr/towerproto"
@@ -16,8 +16,8 @@ import (
 func TestEndProcess_Action(t *testing.T) {
 	exp := 1
 	as := (&EndProcess{
-		Logger: logrus.New(),
-		Config: traycontrollers.Configuration{
+		Logger: zap.NewExample().Sugar(),
+		Config: Configuration{
 			CellMap: map[string][]string{
 				"A": {"A01", "A02"},
 			},
@@ -94,8 +94,8 @@ func TestEndProcess_Action(t *testing.T) {
 
 func TestEndProcess_ActionBadOrientation(t *testing.T) {
 	as := (&EndProcess{
-		Logger: logrus.New(),
-		Config: traycontrollers.Configuration{
+		Logger: zap.NewExample().Sugar(),
+		Config: Configuration{
 			CellMap: map[string][]string{
 				"A": {"A01", "A02"},
 			},
@@ -159,8 +159,8 @@ func TestEndProcess_ActionBadOrientation(t *testing.T) {
 
 func TestEndProcess_ActionShortMap(t *testing.T) {
 	as := (&EndProcess{
-		Logger: logrus.New(),
-		Config: traycontrollers.Configuration{
+		Logger: zap.NewExample().Sugar(),
+		Config: Configuration{
 			CellMap: map[string][]string{
 				"A": {},
 			},
@@ -225,8 +225,8 @@ func TestEndProcess_ActionShortMap(t *testing.T) {
 func TestEndProcess_ActionBadSetCellStatus(t *testing.T) {
 	exp := 1
 	as := (&EndProcess{
-		Logger: logrus.New(),
-		Config: traycontrollers.Configuration{
+		Logger: zap.NewExample().Sugar(),
+		Config: Configuration{
 			CellMap: map[string][]string{
 				"A": {"A01", "A02"},
 			},
@@ -300,8 +300,9 @@ func TestEndProcess_ActionBadSetCellStatus(t *testing.T) {
 		a() // if a panic occurs it will be caught by the deferred func
 	}
 }
+
 func TestEndProcess_Next(t *testing.T) {
-	if n := (&EndProcess{Logger: logrus.New()}).Next(); n != nil {
+	if n := (&EndProcess{Logger: zap.NewExample().Sugar()}).Next(); n != nil {
 		t.Errorf("expected next state nil, got %s", statemachine.NameOf(n))
 	}
 }

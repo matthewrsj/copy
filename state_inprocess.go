@@ -2,9 +2,8 @@ package towercontroller
 
 import (
 	"fmt"
-	"log"
 
-	"github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 	"stash.teslamotors.com/ctet/go-socketcan/pkg/socketcan"
 	"stash.teslamotors.com/ctet/statemachine/v2"
@@ -17,37 +16,34 @@ import (
 type InProcess struct {
 	statemachine.Common
 
-	Config        traycontrollers.Configuration
-	Logger        *logrus.Logger
+	Config        Configuration
+	Logger        *zap.SugaredLogger
 	CellAPIClient *cellapi.Client
 
 	tbc             traycontrollers.TrayBarcode
 	fxbc            traycontrollers.FixtureBarcode
 	processStepName string
 	fixtureFault    bool
+	manual          bool
+	mockCellAPI     bool
 	cells           map[string]cellapi.CellData
 	cellResponse    []*pb.Cell
 	canErr          error
 }
 
 func (i *InProcess) action() {
-	fxrID, ok := i.Config.Fixtures[i.fxbc.Fxn]
+	fxrID, ok := i.Config.Fixtures[IDFromFXR(i.fxbc)]
 	if !ok {
-		err := fmt.Errorf("fixture %s not configured for tower controller", i.fxbc.Fxn)
-		i.Logger.Error(err)
-		log.Println(err)
-		i.SetLast(true)
-
+		fatalError(i, i.Logger, fmt.Errorf("fixture %s not configured for tower controller", IDFromFXR(i.fxbc)))
 		return
 	}
+
+	i.Logger.Info("creating ISOTP interface to monitor fixture")
 
 	var dev socketcan.Interface
 
 	if dev, i.canErr = socketcan.NewIsotpInterface(i.Config.CAN.Device, fxrID, i.Config.CAN.TXID); i.canErr != nil {
-		i.Logger.Error(i.canErr)
-		log.Println(i.canErr)
-		i.SetLast(true)
-
+		fatalError(i, i.Logger, i.canErr)
 		return
 	}
 
@@ -59,6 +55,8 @@ func (i *InProcess) action() {
 		fatalError(i, i.Logger, err)
 		return
 	}
+
+	i.Logger.Info("monitoring fixture to go to complete or fault")
 
 	for {
 		var data []byte
@@ -76,31 +74,22 @@ func (i *InProcess) action() {
 			return
 		}
 
+		i.Logger.Debug("got FixtureToTower message")
+
 		fxbcBroadcast, err := traycontrollers.NewFixtureBarcode(msg.GetFixturebarcode())
 		if err != nil {
-			err = fmt.Errorf("parse fixture position: %v", err)
-			i.Logger.Warn(err)
-			log.Println("WARNING:", err)
-
+			i.Logger.Warn(fmt.Errorf("parse fixture position: %v", err))
 			continue
 		}
 
 		if fxbcBroadcast.Fxn != i.fxbc.Fxn {
-			i.Logger.WithFields(logrus.Fields{
-				"tray":        i.tbc.SN,
-				"fixture_num": i.fxbc.Raw,
-			}).Tracef("got fixture status for different fixture %s", fxbcBroadcast.Fxn)
-
+			i.Logger.Warnf("got fixture status for different fixture %s", fxbcBroadcast.Fxn)
 			continue
 		}
 
 		op, ok := msg.GetContent().(*pb.FixtureToTower_Op)
 		if !ok {
-			i.Logger.WithFields(logrus.Fields{
-				"tray":        i.tbc.SN,
-				"fixture_num": i.fxbc.Raw,
-			}).Tracef("got different message than we are looking for (%T)", msg.GetContent())
-
+			i.Logger.Debugf("got different message than we are looking for (%T)", msg.GetContent())
 			continue
 		}
 
@@ -112,20 +101,13 @@ func (i *InProcess) action() {
 				msg += "; fixture faulted"
 			}
 
-			i.Logger.WithFields(logrus.Fields{
-				"tray":        i.tbc.SN,
-				"fixture_num": i.fxbc.Raw,
-			}).Info(msg)
+			i.Logger.Info(msg)
 
 			i.cellResponse = op.Op.GetCells()
 
 			return
 		default:
-			i.Logger.WithFields(logrus.Fields{
-				"tray":           i.tbc.SN,
-				"fixture_num":    i.fxbc.Raw,
-				"fixture_status": s.String(),
-			}).Trace("received fixture_status update")
+			i.Logger.Debugw("received fixture_status update", "status", s.String())
 		}
 	}
 }
@@ -149,8 +131,10 @@ func (i *InProcess) Next() statemachine.State {
 		fixtureFault:    i.fixtureFault,
 		cellResponse:    i.cellResponse,
 		cells:           i.cells,
+		manual:          i.manual,
+		mockCellAPI:     i.mockCellAPI,
 	}
-	i.Logger.WithField("tray", i.tbc.SN).Tracef("next state: %s", statemachine.NameOf(next))
+	i.Logger.Debugw("transitioning to next state", "next", statemachine.NameOf(next))
 
 	return next
 }

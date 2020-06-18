@@ -2,3 +2,5 @@
 cmd/cmd
 cmd/logs
 cover.out
+sim/fxr/run/run
+sim/fxr/startup/startup

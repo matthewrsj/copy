@@ -1,5 +1,11 @@
-recipefile: /home/mfgtest/projects/towercontroller/configuration/recipes/recipes.yaml
-ingredientsfile: /home/mfgtest/projects/towercontroller/configuration/recipes/ingredients.yaml
+recipefile: /home/parallels/projects/towercontroller/configuration/recipes/recipes.yaml
+ingredientsfile: /home/parallels/projects/towercontroller/configuration/recipes/ingredients.yaml
+cdcontroller_remote: "http://localhost:8080"
+
+location:
+  line: CM2
+  process: 63
+  aisle: 010
 
 cell_api:
   base: https://celltest-kato.mo.tesla.services/module/api/v0.1
@@ -10,15 +16,12 @@ cell_api:
     cell_status: /cells/set_cell_status
 
 fixture_ids:
-  01: 512
-  02: 522
-  03: 532
-  04: 542
+  01-04: 0x241
+  02-04: 0x242
 
 can:
   dev: vcan0
-  txid: 256
-  rxid: 512
+  txid: 0x1c1
 
 cell_map:
   A: [

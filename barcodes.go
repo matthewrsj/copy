@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"go.uber.org/zap"
 	"stash.teslamotors.com/rr/cellapi"
 	"stash.teslamotors.com/rr/traycontrollers"
 )
@@ -15,11 +16,15 @@ type Barcodes struct {
 	Tray            traycontrollers.TrayBarcode
 	ProcessStepName string
 	InProgress      bool
+	ManualMode      bool
+	MockCellAPI     bool
 }
+
+const _mockedFormRequest = "FORM_CYCLE"
 
 // ScanBarcodes prompts to scan the barcodes for tray and fixture and
 // packages them into a Barcodes object.
-func ScanBarcodes(caClient *cellapi.Client) (Barcodes, error) {
+func ScanBarcodes(caClient *cellapi.Client, mockCellAPI bool, logger *zap.SugaredLogger) (Barcodes, error) {
 	var (
 		bcs Barcodes
 		err error
@@ -45,14 +50,21 @@ func ScanBarcodes(caClient *cellapi.Client) (Barcodes, error) {
 		return bcs, fmt.Errorf("scan fixture barcode: %v", err)
 	}
 
-	bcs.ProcessStepName, err = caClient.GetNextProcessStep(bcs.Tray.SN)
-	if err != nil {
-		return bcs, fmt.Errorf("get next process step: %v", err)
+	if !mockCellAPI {
+		bcs.ProcessStepName, err = caClient.GetNextProcessStep(bcs.Tray.SN)
+		if err != nil {
+			return bcs, fmt.Errorf("get next process step: %v", err)
+		}
+	} else {
+		logger.Warnf("cell API mocked, skipping GetNextProcessStep and using %s", _mockedFormRequest)
+		bcs.ProcessStepName = _mockedFormRequest
 	}
 
 	if !promptConfirm(fmt.Sprintf("next process step %s", bcs.ProcessStepName)) {
 		return bcs, errors.New("process step canceled")
 	}
+
+	bcs.MockCellAPI = mockCellAPI
 
 	return bcs, nil
 }
