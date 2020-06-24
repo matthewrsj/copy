@@ -111,7 +111,7 @@ func (s *StartProcess) action() {
 	var dev socketcan.Interface
 
 	if dev, s.canErr = socketcan.NewIsotpInterface(
-		s.Config.CAN.Device, s.Config.CAN.TXID, fxrID,
+		s.Config.CAN.Device, fxrID, s.Config.CAN.TXID,
 	); s.canErr != nil {
 		fatalError(s, s.Logger, s.canErr)
 		return

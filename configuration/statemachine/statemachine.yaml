@@ -16,12 +16,12 @@ cell_api:
     cell_status: /cells/set_cell_status
 
 fixture_ids:
-  01-04: 0x241
-  02-04: 0x242
+  01-04: 0x1c0
+  02-04: 0x1c1
 
 can:
   dev: vcan0
-  txid: 0x1c1
+  txid: 0x241
 
 cell_map:
   A: [

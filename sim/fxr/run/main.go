@@ -5,16 +5,15 @@ package main
 import (
 	"flag"
 	"log"
-	"sync"
 	"time"
 
 	"google.golang.org/protobuf/proto"
 	"stash.teslamotors.com/ctet/go-socketcan/pkg/socketcan"
+	"stash.teslamotors.com/rr/towercontroller"
 	pb "stash.teslamotors.com/rr/towerproto"
-	"stash.teslamotors.com/rr/traycontrollers"
 )
 
-const _confFileDef = "../../configuration/statemachine/statemachine.yaml"
+const _confFileDef = "../../../configuration/statemachine/statemachine.yaml"
 
 // nolint:funlen,gocognit,gocyclo // this is basically just a script
 func main() {
@@ -22,37 +21,16 @@ func main() {
 
 	flag.Parse()
 
-	conf, err := traycontrollers.LoadConfig(*configFile)
+	conf, err := towercontroller.LoadConfig(*configFile)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	type rwDevs struct {
-		reader, writer socketcan.Interface
-		mx             *sync.Mutex
-	}
+	fxrDevs := make([]socketcan.Interface, len(conf.Fixtures))
 
-	fxDevs := make(map[string]rwDevs)
+	var i int
 
-	for n, id := range conf.Fixtures {
-		// rx
-		log.Printf("LISTENING ON %d", id)
-		log.Printf("WRITING TO %d", conf.CAN.TXID)
-
-		readDev, err := socketcan.NewIsotpInterface(conf.CAN.Device, id, conf.CAN.TXID)
-		if err != nil {
-			log.Fatal("create ISOTP listener", err)
-		}
-
-		defer func() {
-			_ = readDev.Close()
-		}()
-
-		if err = readDev.SetCANFD(); err != nil {
-			log.Println("set CANFD", err)
-			return
-		}
-
+	for _, id := range conf.Fixtures {
 		// tx
 		dev, err := socketcan.NewIsotpInterface(conf.CAN.Device, conf.CAN.TXID, id)
 		if err != nil {
@@ -65,12 +43,10 @@ func main() {
 			return
 		}
 
-		fxDevs[n] = rwDevs{
-			reader: readDev,
-			writer: dev,
-			mx:     &sync.Mutex{},
-		}
+		fxrDevs[i] = dev
+		i++
 
+		//nolint:gocritic // they are wrong
 		defer func() {
 			_ = dev.Close()
 		}()
@@ -102,18 +78,17 @@ func main() {
 	msgOp := &pb.FixtureToTower{
 		Content: &pb.FixtureToTower_Op{
 			Op: &pb.FixtureOperational{
-				Status:   pb.FixtureStatus_FIXTURE_STATUS_IDLE,
 				Position: pb.FixturePosition_FIXTURE_POSITION_OPEN,
 			},
 		},
 	}
 
-	for _, devices := range fxDevs {
-		go func(devices rwDevs) {
+	for _, devices := range fxrDevs {
+		go func(dev socketcan.Interface) {
 			log.Println("FIXTURE WAITING FOR MESSAGE FROM TOWER")
 
 			for {
-				buf, err := devices.reader.RecvBuf()
+				buf, err := dev.RecvBuf()
 				if err != nil {
 					log.Println("RECV BUF", err)
 
@@ -162,7 +137,7 @@ func main() {
 				msgOp.Fixturebarcode = msg.GetSysinfo().GetFixturebarcode()
 				msgOp.Traybarcode = msg.GetSysinfo().GetTraybarcode()
 				msgOp.ProcessStep = msg.GetSysinfo().GetProcessStep()
-				msgOp.GetOp().Status = pb.FixtureStatus_FIXTURE_STATUS_IDLE
+				msgOp.GetOp().Status = pb.FixtureStatus_FIXTURE_STATUS_READY
 				msgOp.GetOp().Cells = cells
 
 				for i := 0; i < 10; i++ {
@@ -182,14 +157,10 @@ func main() {
 							return
 						}
 
-						devices.mx.Lock()
-						if err := devices.writer.SendBuf(pkt); err != nil {
+						if err := dev.SendBuf(pkt); err != nil {
 							log.Println(err)
-							devices.mx.Unlock()
-
 							return
 						}
-						devices.mx.Unlock()
 					}
 
 					time.Sleep(time.Second)
