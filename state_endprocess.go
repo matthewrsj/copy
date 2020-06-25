@@ -32,10 +32,12 @@ type EndProcess struct {
 	fixtureFault    bool
 	manual          bool
 	mockCellAPI     bool
+	recipeVersion   int
 }
 
 func (e *EndProcess) action() {
-	if !e.mockCellAPI {
+	// only update cell API on SWIFT. On C Tower and beyond this is done by CND
+	if e.manual && !e.mockCellAPI {
 		e.Logger.Debugw("UpdateProcessStatus", "process_name", e.processStepName)
 
 		if err := e.CellAPIClient.UpdateProcessStatus(e.tbc.SN, e.processStepName, cellapi.StatusEnd); err != nil {
@@ -46,7 +48,11 @@ func (e *EndProcess) action() {
 		e.Logger.Warn("cell API mocked, skipping UpdateProcessStatus")
 	}
 
-	e.setCellStatuses()
+	if e.manual {
+		e.setCellStatusesSWIFT()
+	} else {
+		e.setCellStatuses()
+	}
 
 	// TODO: determine how to inform cell API of fault
 	msg := "tray complete"
@@ -115,9 +121,9 @@ type trayComplete struct {
 	Level  string `json:"level"`
 }
 
-func (e *EndProcess) setCellStatuses() {
+func (e *EndProcess) setCellStatusesSWIFT() {
 	// nolint:prealloc // we don't know how long this will be, depends on what the FXR Cells' content is
-	var cpf []cellapi.CellPFData
+	var cpf []cellapi.CellPFDataSWIFT
 
 	var failed []string
 
@@ -127,9 +133,9 @@ func (e *EndProcess) setCellStatuses() {
 			continue
 		}
 
-		status := "pass"
+		status := cellapi.StatusPassed
 		if cell.GetCellstatus() != pb.CellStatus_CELL_STATUS_COMPLETE {
-			status = "fail"
+			status = cellapi.StatusFailed
 		}
 
 		m, ok := e.Config.CellMap[e.tbc.O.String()]
@@ -145,7 +151,74 @@ func (e *EndProcess) setCellStatuses() {
 
 		position := m[i]
 
-		if status == "fail" {
+		if status == cellapi.StatusFailed {
+			failed = append(failed, position)
+		}
+
+		cell, ok := e.cells[position]
+		if !ok {
+			e.Logger.Warn(fmt.Errorf("invalid cell position %s, unable to find cell serial", position))
+			continue
+		}
+
+		psn, err := cellapi.RecipeToProcess(e.processStepName)
+		if err != nil {
+			e.Logger.Warn(fmt.Errorf("invalid recipe name %s, unable to find process name", e.processStepName))
+			continue
+		}
+
+		cpf = append(cpf, cellapi.CellPFDataSWIFT{
+			Serial:  cell.Serial,
+			Status:  status,
+			Process: psn,
+		})
+	}
+
+	if len(failed) > 0 {
+		e.Logger.Info(fmt.Sprintf("failed cells: %s", strings.Join(failed, ", ")))
+	}
+
+	if !e.mockCellAPI {
+		if err := e.CellAPIClient.SetCellStatusesSWIFT(cpf); err != nil {
+			e.Logger.Errorw("SetCellStatuses", "error", err)
+			return
+		}
+	} else {
+		e.Logger.Warn("cell API mocked, skipping SetCellStatuses")
+	}
+}
+
+func (e *EndProcess) setCellStatuses() {
+	// nolint:prealloc // we don't know how long this will be, depends on what the FXR Cells' content is
+	var cpf []cellapi.CellPFData
+
+	var failed []string
+
+	for i, cell := range e.cellResponse {
+		// no cell present
+		if cell.GetCellstatus() == pb.CellStatus_CELL_STATUS_NONE_UNSPECIFIED {
+			continue
+		}
+
+		status := cellapi.StatusPassed
+		if cell.GetCellstatus() != pb.CellStatus_CELL_STATUS_COMPLETE {
+			status = cellapi.StatusFailed
+		}
+
+		m, ok := e.Config.CellMap[e.tbc.O.String()]
+		if !ok {
+			e.Logger.Error(fmt.Errorf("invalid tray position: %s", e.tbc.O.String()))
+			return
+		}
+
+		if i > len(m) || len(m) == 0 {
+			e.Logger.Error(fmt.Errorf("invalid cell position index, cell list too large: %d > %d", i, len(m)))
+			return
+		}
+
+		position := m[i]
+
+		if status == cellapi.StatusFailed {
 			failed = append(failed, position)
 		}
 
@@ -163,8 +236,9 @@ func (e *EndProcess) setCellStatuses() {
 
 		cpf = append(cpf, cellapi.CellPFData{
 			Serial:  cell.Serial,
-			Process: psn,
 			Status:  status,
+			Recipe:  psn,
+			Version: e.recipeVersion,
 		})
 	}
 

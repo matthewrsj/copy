@@ -8,7 +8,8 @@ location:
   aisle: 010
 
 cell_api:
-  base: https://celltest-kato.mo.tesla.services/module/api/v0.1
+  base_swift: https://celltest-kato.mo.tesla.services/module/api/v0.1
+  base: http://10.179.219.11:8618/module/api/v0.1
   endpoints:
     cell_map: /trays/%s/cells                        # tray_serial
     process_status: /trays/%s/%s/%s                  # tray_serial|process|status

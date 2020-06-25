@@ -36,7 +36,7 @@ func TestStartProcess_Action(t *testing.T) {
 		fxbc: traycontrollers.FixtureBarcode{
 			Fxn: "01",
 		},
-		rcpe: []Ingredients{{Mode: "test"}},
+		steps: traycontrollers.StepConfiguration{{Mode: "test"}},
 	}
 	as := (&spState).Actions()
 

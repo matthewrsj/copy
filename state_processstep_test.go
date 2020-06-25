@@ -83,7 +83,7 @@ func TestProcessStep_ActionBadContext(t *testing.T) {
 }
 
 func TestProcessStep_Next(t *testing.T) {
-	exp := "ReadRecipe"
+	exp := "StartProcess"
 	if n := statemachine.NameOf((&ProcessStep{Logger: zap.NewExample().Sugar()}).Next()); n != exp {
 		t.Errorf("expected next state name to be %s, got %s", exp, n)
 	}

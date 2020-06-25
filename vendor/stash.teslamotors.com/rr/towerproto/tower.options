@@ -1,0 +1,23 @@
+Genealogy.board_pn max_size:20
+Genealogy.board_sn max_size:14
+Genealogy.package_pn max_size:20
+Genealogy.package_sn max_size:14
+Genealogy.subpackage_pn max_size:20
+Genealogy.subpackage_sn max_size:14
+
+SystemInfo.traybarcode max_size:30
+SystemInfo.fixturebarcode max_size:60
+SystemInfo.process_step max_size:60
+
+FixtureToTower.traybarcode max_size:30
+FixtureToTower.fixturebarcode max_size:60
+FixtureToTower.process_step max_size:60
+
+Recipe.steps max_count:20
+Recipe.cell_masks max_count:2
+
+Fib.fans max_count:9
+
+FixtureDiagnostic.stibs max_count:4
+FixtureOperational.cells max_count:64
+

@@ -6,6 +6,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 	pb "stash.teslamotors.com/rr/towerproto"
+	"stash.teslamotors.com/rr/traycontrollers"
 )
 
 /*
@@ -31,9 +32,9 @@ type Ingredients struct {
 }
 
 // Cookbook maps recipe names to steps (Ingredients)
-type Cookbook map[string][]Ingredients
+type Cookbook map[string]traycontrollers.StepConfiguration
 
-type ingredientsbook map[string]Ingredients
+type ingredientsbook map[string]traycontrollers.Step
 type stepsbook map[string][]string
 
 func loadIngredients(path string) (ingredientsbook, error) {
@@ -91,7 +92,7 @@ func loadRecipes(recipePath, ingredientsPath string) (Cookbook, error) {
 }
 
 // LoadRecipe loads the recipe from recipePath and ingredientsPath
-func LoadRecipe(recipePath, ingredientsPath, recipe string) ([]Ingredients, error) {
+func LoadRecipe(recipePath, ingredientsPath, recipe string) (traycontrollers.StepConfiguration, error) {
 	cookBook, err := loadRecipes(recipePath, ingredientsPath)
 	if err != nil {
 		return nil, fmt.Errorf("load recipes from %s and %s: %v", recipePath, ingredientsPath, err)

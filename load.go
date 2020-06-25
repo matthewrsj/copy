@@ -13,13 +13,6 @@ import (
 
 const _loadEndpoint = "/load"
 
-// FXRLoad is used to post to the TC that a tray is loaded
-type FXRLoad struct {
-	Column int    `json:"column"`
-	Level  int    `json:"level"`
-	TrayID string `json:"tray"`
-}
-
 // HandleLoad handles requests the the load endpoint
 func HandleLoad(conf Configuration, load chan statemachine.Job, logger *zap.SugaredLogger, mockCellAPI bool) {
 	http.HandleFunc(_loadEndpoint, func(w http.ResponseWriter, r *http.Request) {
@@ -33,7 +26,7 @@ func HandleLoad(conf Configuration, load chan statemachine.Job, logger *zap.Suga
 			return
 		}
 
-		var loadRequest FXRLoad
+		var loadRequest traycontrollers.FXRLoad
 		if err = json.Unmarshal(b, &loadRequest); err != nil {
 			logger.Errorw("unmarshal request body", "error", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -62,9 +55,12 @@ func HandleLoad(conf Configuration, load chan statemachine.Job, logger *zap.Suga
 		load <- statemachine.Job{
 			Name: IDFromFXR(fxr),
 			Work: Barcodes{
-				Fixture:     fxr,
-				Tray:        tbc,
-				MockCellAPI: mockCellAPI,
+				Fixture:       fxr,
+				Tray:          tbc,
+				MockCellAPI:   mockCellAPI,
+				RecipeName:    loadRequest.RecipeName,
+				RecipeVersion: loadRequest.RecipeVersion,
+				StepConf:      loadRequest.Steps,
 			},
 		}
 

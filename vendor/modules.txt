@@ -26,7 +26,7 @@ github.com/mattn/go-colorable
 github.com/mattn/go-isatty
 # github.com/pmezard/go-difflib v1.0.0
 github.com/pmezard/go-difflib/difflib
-# github.com/stretchr/testify v1.5.1
+# github.com/stretchr/testify v1.6.1
 ## explicit
 github.com/stretchr/testify/assert
 # go.uber.org/atomic v1.6.0
@@ -76,18 +76,20 @@ google.golang.org/protobuf/runtime/protoimpl
 # gopkg.in/yaml.v2 v2.3.0
 ## explicit
 gopkg.in/yaml.v2
+# gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
+gopkg.in/yaml.v3
 # stash.teslamotors.com/ctet/go-socketcan v0.0.2
 ## explicit
 stash.teslamotors.com/ctet/go-socketcan/pkg/socketcan
 # stash.teslamotors.com/ctet/statemachine/v2 v2.0.1
 ## explicit
 stash.teslamotors.com/ctet/statemachine/v2
-# stash.teslamotors.com/rr/cellapi v0.0.1
+# stash.teslamotors.com/rr/cellapi v0.0.2
 ## explicit
 stash.teslamotors.com/rr/cellapi
-# stash.teslamotors.com/rr/towerproto v0.0.3
+# stash.teslamotors.com/rr/towerproto v0.0.5
 ## explicit
 stash.teslamotors.com/rr/towerproto
-# stash.teslamotors.com/rr/traycontrollers v0.0.2
+# stash.teslamotors.com/rr/traycontrollers v0.0.3
 ## explicit
 stash.teslamotors.com/rr/traycontrollers

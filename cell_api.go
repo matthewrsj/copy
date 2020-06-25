@@ -2,6 +2,7 @@ package towercontroller
 
 type cellAPIConf struct {
 	Base      string       `yaml:"base"`
+	BaseSWIFT string       `yaml:"base_swift"`
 	Endpoints endpointConf `yaml:"endpoints"`
 }
 

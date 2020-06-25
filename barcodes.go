@@ -18,6 +18,10 @@ type Barcodes struct {
 	InProgress      bool
 	ManualMode      bool
 	MockCellAPI     bool
+
+	RecipeName    string
+	RecipeVersion int
+	StepConf      traycontrollers.StepConfiguration
 }
 
 const _mockedFormRequest = "FORM_CYCLE"

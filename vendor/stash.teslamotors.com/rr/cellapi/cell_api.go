@@ -19,11 +19,24 @@ type CellData struct {
 	IsEmpty  bool   `json:"is_empty"`
 }
 
+type CellPFDataSWIFT struct {
+	Serial  string `json:"cell_serial"`
+	Status  string `json:"status"`
+	Process string `json:"process"`
+}
+
 type CellPFData struct {
 	Serial  string `json:"cell_serial"`
-	Process string `json:"process"`
 	Status  string `json:"status"`
+	Recipe  string `json:"recipe"`
+	Version int    `json:"version"`
 }
+
+// Status strings for cell PF data status
+const (
+	StatusPassed = "pass"
+	StatusFailed = "fail"
+)
 
 type Client struct {
 	baseURL string
@@ -204,6 +217,36 @@ func (c *Client) UpdateProcessStatus(sn, rcpeName string, s TrayStatus) error {
 func (c *Client) SetCellStatuses(cpf []CellPFData) error {
 	type request struct {
 		Cells []CellPFData `json:"cells"`
+	}
+
+	b, err := json.Marshal(request{Cells: cpf})
+	if err != nil {
+		return fmt.Errorf("marshal request json: %v", err)
+	}
+
+	url := urlJoin(c.baseURL, c.eps.cellStatus)
+
+	// of course the URL has to be variable. We need to construct it.
+	// nolint:gosec
+	resp, err := http.Post(url, "application/json", bytes.NewReader(b))
+	if err != nil {
+		return fmt.Errorf("POST to %s: %v", url, err)
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		// ignore error here, it's just for enhancing the error string
+		b, _ := ioutil.ReadAll(resp.Body)
+		return fmt.Errorf("POST response NOT OK: %v; %v", resp.StatusCode, string(b))
+	}
+
+	return nil
+}
+
+func (c *Client) SetCellStatusesSWIFT(cpf []CellPFDataSWIFT) error {
+	type request struct {
+		Cells []CellPFDataSWIFT `json:"cells"`
 	}
 
 	b, err := json.Marshal(request{Cells: cpf})

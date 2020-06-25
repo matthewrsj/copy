@@ -3,6 +3,8 @@ package towercontroller
 import (
 	"testing"
 
+	"stash.teslamotors.com/rr/traycontrollers"
+
 	"bou.ke/monkey"
 	"go.uber.org/zap"
 	"stash.teslamotors.com/ctet/statemachine/v2"
@@ -16,8 +18,8 @@ func TestRecipe_Action(t *testing.T) {
 		t.Errorf("expected %d actions, got %d", exp, l)
 	}
 
-	lr := monkey.Patch(LoadRecipe, func(string, string, string) ([]Ingredients, error) {
-		return []Ingredients{}, nil
+	lr := monkey.Patch(LoadRecipe, func(string, string, string) (traycontrollers.StepConfiguration, error) {
+		return traycontrollers.StepConfiguration{}, nil
 	})
 	defer lr.Unpatch()
 

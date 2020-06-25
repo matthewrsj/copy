@@ -21,6 +21,8 @@ type ProcessStep struct {
 	processStepName string
 	tbc             traycontrollers.TrayBarcode
 	fxbc            traycontrollers.FixtureBarcode
+	steps           traycontrollers.StepConfiguration
+	recipeVersion   int
 	inProgress      bool
 	manual          bool
 	mockCellAPI     bool
@@ -40,17 +42,11 @@ func (p *ProcessStep) action() {
 
 	if !p.manual {
 		// in manual mode this is handled in the barcode scan step so the operator can confirm
-		// the correct process step name
-		if !p.mockCellAPI {
-			var err error
-			if bc.ProcessStepName, err = p.CellAPIClient.GetNextProcessStep(bc.Tray.SN); err != nil {
-				fatalError(p, p.Logger, fmt.Errorf("GetNextProcessStep for %s: %v", bc.Tray.SN, err))
-				return
-			}
-		} else {
-			p.Logger.Warnf("cell API mocked, skipping GetNextProcessStep and using %s", _mockedFormRequest)
-			bc.ProcessStepName = _mockedFormRequest
-		}
+		// the correct process step name. In C-Tower and on this is just the recipe name from CND
+		bc.ProcessStepName = bc.RecipeName
+		// we also get steps and recipe version from CND
+		p.steps = bc.StepConf
+		p.recipeVersion = bc.RecipeVersion
 	}
 
 	p.tbc = bc.Tray
@@ -77,7 +73,8 @@ func (p *ProcessStep) Actions() []func() {
 func (p *ProcessStep) Next() statemachine.State {
 	var next statemachine.State
 
-	if p.inProgress {
+	switch {
+	case p.inProgress:
 		// if this tray was discovered to already be in-progress skip right to monitoring the status
 		next = &InProcess{
 			Config:          p.Config,
@@ -88,8 +85,10 @@ func (p *ProcessStep) Next() statemachine.State {
 			fxbc:            p.fxbc,
 			manual:          p.manual,
 			mockCellAPI:     p.mockCellAPI,
+			recipeVersion:   p.recipeVersion,
 		}
-	} else {
+	case p.manual:
+		// if this is manual we need to load the recipe locally
 		next = &ReadRecipe{
 			Config:          p.Config,
 			Logger:          p.Logger,
@@ -99,6 +98,20 @@ func (p *ProcessStep) Next() statemachine.State {
 			fxbc:            p.fxbc,
 			manual:          p.manual,
 			mockCellAPI:     p.mockCellAPI,
+		}
+	default:
+		// not in progress, not in manual mode (don't need to load recipe)
+		next = &StartProcess{
+			Config:          p.Config,
+			Logger:          p.Logger,
+			CellAPIClient:   p.CellAPIClient,
+			processStepName: p.processStepName,
+			fxbc:            p.fxbc,
+			tbc:             p.tbc,
+			manual:          p.manual,
+			mockCellAPI:     p.mockCellAPI,
+			steps:           p.steps,
+			recipeVersion:   p.recipeVersion,
 		}
 	}
 

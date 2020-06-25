@@ -24,11 +24,12 @@ type StartProcess struct {
 	processStepName string
 	tbc             traycontrollers.TrayBarcode
 	fxbc            traycontrollers.FixtureBarcode
-	rcpe            []Ingredients
+	steps           traycontrollers.StepConfiguration
 	cells           map[string]cellapi.CellData
 	canErr, apiErr  error
 	manual          bool
 	mockCellAPI     bool
+	recipeVersion   int
 }
 
 func (s *StartProcess) action() {
@@ -43,15 +44,15 @@ func (s *StartProcess) action() {
 		},
 	}
 
-	for _, ingredient := range s.rcpe {
+	for _, step := range s.steps {
 		twr2Fxr.Recipe.Steps = append(twr2Fxr.Recipe.Steps, &pb.RecipeStep{
-			Mode:          modeStringToEnum(ingredient.Mode),
-			ChargeCurrent: ingredient.ChargeCurrentAmps,
-			MaxCurrent:    ingredient.MaxCurrentAmps,
-			CutOffVoltage: ingredient.CutOffVoltage,
-			CutOffCurrent: ingredient.CutOffCurrent,
-			CellDropOutV:  ingredient.CellDropOutVoltage,
-			StepTimeout:   ingredient.StepTimeoutSeconds,
+			Mode:          modeStringToEnum(step.Mode),
+			ChargeCurrent: step.ChargeCurrentAmps,
+			MaxCurrent:    step.MaxCurrentAmps,
+			CutOffVoltage: step.CutOffVoltage,
+			CutOffCurrent: step.CutOffCurrent,
+			CellDropOutV:  step.CellDropOutVoltage,
+			StepTimeout:   step.StepTimeoutSeconds,
 		})
 	}
 
@@ -169,6 +170,7 @@ func (s *StartProcess) Next() statemachine.State {
 		processStepName: s.processStepName,
 		manual:          s.manual,
 		mockCellAPI:     s.mockCellAPI,
+		recipeVersion:   s.recipeVersion,
 	}
 	s.Logger.Debugw("transitioning to next state", "next", statemachine.NameOf(next))
 

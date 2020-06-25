@@ -47,7 +47,13 @@ func main() {
 		log.Fatalf("load configuration: %v", err)
 	}
 
-	caClient := cellapi.NewClient(conf.CellAPI.Base,
+	// use normal base URL unless we are running SWIFT (manual) mode
+	base := conf.CellAPI.Base
+	if *manual {
+		base = conf.CellAPI.BaseSWIFT
+	}
+
+	caClient := cellapi.NewClient(base,
 		cellapi.WithNextProcessStepFmtEndpoint(conf.CellAPI.Endpoints.NextProcStepFmt),
 		cellapi.WithProcessStatusFmtEndpoint(conf.CellAPI.Endpoints.ProcessStatusFmt),
 		cellapi.WithCellMapFmtEndpoint(conf.CellAPI.Endpoints.CellMapFmt),

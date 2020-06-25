@@ -18,7 +18,8 @@ type ReadRecipe struct {
 	processStepName string
 	tbc             traycontrollers.TrayBarcode
 	fxbc            traycontrollers.FixtureBarcode
-	rcpe            []Ingredients
+	steps           traycontrollers.StepConfiguration
+	recipeVersion   int
 	rcpErr          error
 	manual          bool
 	mockCellAPI     bool
@@ -27,7 +28,7 @@ type ReadRecipe struct {
 func (r *ReadRecipe) action() {
 	r.Logger.Info("loading recipe for process step")
 
-	if r.rcpe, r.rcpErr = LoadRecipe(r.Config.RecipeFile, r.Config.IngredientsFile, r.processStepName); r.rcpErr != nil {
+	if r.steps, r.rcpErr = LoadRecipe(r.Config.RecipeFile, r.Config.IngredientsFile, r.processStepName); r.rcpErr != nil {
 		fatalError(r, r.Logger, r.rcpErr)
 		return
 	}
@@ -51,9 +52,10 @@ func (r *ReadRecipe) Next() statemachine.State {
 		processStepName: r.processStepName,
 		fxbc:            r.fxbc,
 		tbc:             r.tbc,
-		rcpe:            r.rcpe,
+		steps:           r.steps,
 		manual:          r.manual,
 		mockCellAPI:     r.mockCellAPI,
+		recipeVersion:   r.recipeVersion,
 	}
 	r.Logger.Debugw("transitioning to next state", "next", statemachine.NameOf(next))
 
