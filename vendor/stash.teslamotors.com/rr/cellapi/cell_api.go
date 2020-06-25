@@ -150,7 +150,7 @@ func (c *Client) UpdateProcessStatus(sn, rcpeName string, s TrayStatus) error {
 		return fmt.Errorf("status %s is not valid", s)
 	}
 
-	process, err := recipeToProcess(rcpeName)
+	process, err := RecipeToProcess(rcpeName)
 	if err != nil {
 		return fmt.Errorf("determine process name: %v", err)
 	}
@@ -171,7 +171,7 @@ func (c *Client) UpdateProcessStatus(sn, rcpeName string, s TrayStatus) error {
 	if resp.StatusCode != http.StatusOK {
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			return fmt.Errorf("POST response NOT OK: %v; %s", resp.StatusCode, resp.Status)
+			return fmt.Errorf("POST response from %s NOT OK: %v; %s", url, resp.StatusCode, resp.Status)
 		}
 
 		type errMsg struct {
@@ -189,7 +189,8 @@ func (c *Client) UpdateProcessStatus(sn, rcpeName string, s TrayStatus) error {
 		}
 
 		return fmt.Errorf(
-			"POST response NOT OK: %v; %s; %s; %s",
+			"POST response from %s NOT OK: %v; %s; %s; %s",
+			url,
 			resp.StatusCode,
 			resp.Status,
 			eResp.Error.Message,
@@ -219,10 +220,12 @@ func (c *Client) SetCellStatuses(cpf []CellPFData) error {
 		return fmt.Errorf("POST to %s: %v", url, err)
 	}
 
-	_ = resp.Body.Close()
+	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("POST response NOT OK: %v", resp.StatusCode)
+		// ignore error here, it's just for enhancing the error string
+		b, _ := ioutil.ReadAll(resp.Body)
+		return fmt.Errorf("POST response NOT OK: %v; %v", resp.StatusCode, string(b))
 	}
 
 	return nil
@@ -259,6 +262,8 @@ func (c *Client) GetNextProcessStep(sn string) (string, error) {
 		return "", fmt.Errorf("next process step not defined for tray %s", sn)
 	}
 
+	r.Next = strings.ToUpper(r.Next)
+
 	prefixes := map[string]string{
 		"PRECHARGE":       "FORM_PRECHARGE",
 		"FIRST_CHARGE":    "FORM_FIRST_CHARGE",
@@ -272,7 +277,7 @@ func (c *Client) GetNextProcessStep(sn string) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("invalid process step %s defined for this tray", r.Next)
+	return "", fmt.Errorf("invalid process step %s defined for this tray %s", r.Next, sn)
 }
 
 func urlJoin(base, endpoint string) string {

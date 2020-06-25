@@ -2,7 +2,8 @@ package cellapi
 
 import "fmt"
 
-func recipeToProcess(step string) (string, error) {
+// RecipeToProcess converts the recipe step into the process step the cell API expects
+func RecipeToProcess(step string) (string, error) {
 	rps := map[string]string{
 		"FORM_PRECHARGE":                "precharge",
 		"FORM_PRECHARGE_SKIP_CHECK":     "precharge",
