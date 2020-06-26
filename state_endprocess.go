@@ -37,15 +37,17 @@ type EndProcess struct {
 
 func (e *EndProcess) action() {
 	// only update cell API on SWIFT. On C Tower and beyond this is done by CND
-	if e.manual && !e.mockCellAPI {
-		e.Logger.Debugw("UpdateProcessStatus", "process_name", e.processStepName)
+	if e.manual {
+		if !e.mockCellAPI {
+			e.Logger.Debugw("UpdateProcessStatus", "process_name", e.processStepName)
 
-		if err := e.CellAPIClient.UpdateProcessStatus(e.tbc.SN, e.processStepName, cellapi.StatusEnd); err != nil {
-			// keep trying the other transactions
-			e.Logger.Warn(err)
+			if err := e.CellAPIClient.UpdateProcessStatus(e.tbc.SN, e.processStepName, cellapi.StatusEnd); err != nil {
+				// keep trying the other transactions
+				e.Logger.Warn(err)
+			}
+		} else {
+			e.Logger.Warn("cell API mocked, skipping UpdateProcessStatus")
 		}
-	} else {
-		e.Logger.Warn("cell API mocked, skipping UpdateProcessStatus")
 	}
 
 	if e.manual {

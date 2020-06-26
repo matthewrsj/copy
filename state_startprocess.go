@@ -139,13 +139,15 @@ func (s *StartProcess) action() {
 		return
 	}
 
-	if !s.mockCellAPI {
-		if err := s.CellAPIClient.UpdateProcessStatus(s.tbc.SN, s.processStepName, cellapi.StatusStart); err != nil {
-			fatalError(s, s.Logger, fmt.Errorf("UpdateProcessStatus: %v", err))
-			return
+	if s.manual {
+		if !s.mockCellAPI {
+			if err := s.CellAPIClient.UpdateProcessStatus(s.tbc.SN, s.processStepName, cellapi.StatusStart); err != nil {
+				fatalError(s, s.Logger, fmt.Errorf("UpdateProcessStatus: %v", err))
+				return
+			}
+		} else {
+			s.Logger.Warn("cell API mocked, skipping UpdateProcessStatus")
 		}
-	} else {
-		s.Logger.Warn("cell API mocked, skipping UpdateProcessStatus")
 	}
 
 	s.Logger.Debug("sent recipe and other information to FXR")
