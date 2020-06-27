@@ -10,6 +10,7 @@ require (
 	go.uber.org/zap v1.15.0
 	google.golang.org/protobuf v1.23.0
 	gopkg.in/yaml.v2 v2.3.0
+	stash.teslamotors.com/cas/asrs v0.0.0-20200623062440-9cee2d665dfb
 	stash.teslamotors.com/ctet/go-socketcan v0.0.2
 	stash.teslamotors.com/ctet/statemachine/v2 v2.0.1
 	stash.teslamotors.com/rr/cellapi v0.0.2

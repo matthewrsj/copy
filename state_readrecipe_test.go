@@ -3,11 +3,10 @@ package towercontroller
 import (
 	"testing"
 
-	"stash.teslamotors.com/rr/traycontrollers"
-
 	"bou.ke/monkey"
 	"go.uber.org/zap"
 	"stash.teslamotors.com/ctet/statemachine/v2"
+	"stash.teslamotors.com/rr/traycontrollers"
 )
 
 func TestRecipe_Action(t *testing.T) {

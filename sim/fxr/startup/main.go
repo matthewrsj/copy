@@ -33,6 +33,8 @@ func main() {
 		status = pb.FixtureStatus_FIXTURE_STATUS_IDLE
 	case "fault":
 		status = pb.FixtureStatus_FIXTURE_STATUS_FAULTED
+	case "ready":
+		status = pb.FixtureStatus_FIXTURE_STATUS_READY
 	default:
 		log.Fatal("unknown status", *statName)
 	}
