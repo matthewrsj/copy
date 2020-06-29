@@ -31,7 +31,9 @@ func (as Availability) ToFXRLayout() (*FXRLayout, error) {
 			Coordinates{Col: c, Lvl: l},
 			&FXR{
 				Status: a.Status,
-				InUse:  a.Status != pb.FixtureStatus_FIXTURE_STATUS_READY,
+				// IDLE means there is no tray sitting in there waiting to start
+				// READY means a tray is already present in the fixture, therefore it is InUse
+				InUse: a.Status != pb.FixtureStatus_FIXTURE_STATUS_IDLE,
 			},
 		); err != nil {
 			return nil, fmt.Errorf("set fixture layout: %v", err)
