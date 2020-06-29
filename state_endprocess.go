@@ -230,7 +230,7 @@ func (e *EndProcess) setCellStatuses() {
 			continue
 		}
 
-		psn, err := cellapi.RecipeToProcess(e.processStepName)
+		psn, err := cellapi.RecipeToProcess(strings.ToUpper(e.processStepName))
 		if err != nil {
 			e.Logger.Warn(fmt.Errorf("invalid recipe name %s, unable to find process name", e.processStepName))
 			continue

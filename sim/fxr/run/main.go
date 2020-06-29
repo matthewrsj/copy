@@ -4,6 +4,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"time"
 
@@ -26,11 +27,16 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fxrDevs := make([]socketcan.Interface, len(conf.Fixtures))
+	type devID struct {
+		name string
+		dev  socketcan.Interface
+	}
+
+	fxrDevs := make([]devID, len(conf.Fixtures))
 
 	var i int
 
-	for _, id := range conf.Fixtures {
+	for n, id := range conf.Fixtures {
 		// tx
 		dev, err := socketcan.NewIsotpInterface(conf.CAN.Device, conf.CAN.TXID, id)
 		if err != nil {
@@ -43,7 +49,15 @@ func main() {
 			return
 		}
 
-		fxrDevs[i] = dev
+		if err = dev.SetRecvTimeout(time.Millisecond * 500); err != nil {
+			log.Println("set RECVTIMEOUT", err)
+			return
+		}
+
+		fxrDevs[i] = devID{
+			name: n,
+			dev:  dev,
+		}
 		i++
 
 		//nolint:gocritic // they are wrong
@@ -84,34 +98,63 @@ func main() {
 	}
 
 	for _, devices := range fxrDevs {
-		go func(dev socketcan.Interface) {
+		go func(did devID) {
 			log.Println("FIXTURE WAITING FOR MESSAGE FROM TOWER")
 
+			dev := did.dev
+
 			for {
-				buf, err := dev.RecvBuf()
-				if err != nil {
-					log.Println("RECV BUF", err)
+				var (
+					buf    []byte
+					msgt2f pb.TowerToFixture
+				)
 
-					return // return so the defer is called
+				for {
+					msg := pb.FixtureToTower{
+						Content: &pb.FixtureToTower_Op{
+							Op: &pb.FixtureOperational{
+								Status: pb.FixtureStatus_FIXTURE_STATUS_IDLE,
+							},
+						},
+						Fixturebarcode: fmt.Sprintf("CM2-63010-%s", did.name),
+					}
+
+					jb, err := proto.Marshal(&msg)
+					if err != nil {
+						log.Println("MARSHAL", err)
+						return
+					}
+
+					if err = dev.SendBuf(jb); err != nil {
+						log.Println("SENDBUF", err)
+						return
+					}
+
+					buf, err = dev.RecvBuf()
+					if err != nil {
+						continue
+					}
+
+					log.Println("MESSAGE RECEIVED")
+
+					if err = proto.Unmarshal(buf, &msgt2f); err != nil {
+						// just means this isn't the message we are looking for
+						continue
+					}
+
+					if msgt2f.GetSysinfo().GetProcessStep() == "" {
+						// not what we are looking for
+						continue
+					}
+
+					// received a process to run
+					log.Println("RUNNING PROCESS", msgt2f.GetSysinfo().GetProcessStep())
+
+					break
 				}
-
-				var msg pb.TowerToFixture
-				if err = proto.Unmarshal(buf, &msg); err != nil {
-					// just means this isn't the message we are looking for
-					time.Sleep(time.Second)
-					continue
-				}
-
-				if msg.GetSysinfo().GetProcessStep() == "" {
-					// not what we are looking for
-					time.Sleep(time.Second)
-					continue
-				}
-
-				log.Println("RECEIVED MESSAGE FROM TOWER")
 
 				cells := make([]*pb.Cell, 64)
-				cms := msg.Recipe.GetCellMasks()
+				cms := msgt2f.Recipe.GetCellMasks()
 
 				for i, cm := range cms {
 					for bit := 0; bit < 32; bit++ {
@@ -131,12 +174,12 @@ func main() {
 					}
 				}
 
-				msgDiag.Fixturebarcode = msg.GetSysinfo().GetFixturebarcode()
-				msgDiag.Traybarcode = msg.GetSysinfo().GetTraybarcode()
-				msgDiag.ProcessStep = msg.GetSysinfo().GetProcessStep()
-				msgOp.Fixturebarcode = msg.GetSysinfo().GetFixturebarcode()
-				msgOp.Traybarcode = msg.GetSysinfo().GetTraybarcode()
-				msgOp.ProcessStep = msg.GetSysinfo().GetProcessStep()
+				msgDiag.Fixturebarcode = msgt2f.GetSysinfo().GetFixturebarcode()
+				msgDiag.Traybarcode = msgt2f.GetSysinfo().GetTraybarcode()
+				msgDiag.ProcessStep = msgt2f.GetSysinfo().GetProcessStep()
+				msgOp.Fixturebarcode = msgt2f.GetSysinfo().GetFixturebarcode()
+				msgOp.Traybarcode = msgt2f.GetSysinfo().GetTraybarcode()
+				msgOp.ProcessStep = msgt2f.GetSysinfo().GetProcessStep()
 				msgOp.GetOp().Status = pb.FixtureStatus_FIXTURE_STATUS_READY
 				msgOp.GetOp().Cells = cells
 
