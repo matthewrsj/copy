@@ -57,6 +57,8 @@ func (s *StartProcess) action() {
 	}
 
 	if !s.mockCellAPI {
+		s.Logger.Info("GetCellMap")
+
 		if s.cells, s.apiErr = s.CellAPIClient.GetCellMap(s.tbc.SN); s.apiErr != nil {
 			fatalError(s, s.Logger, s.apiErr)
 			return
@@ -86,6 +88,8 @@ func (s *StartProcess) action() {
 			},
 		}
 	}
+
+	s.Logger.Infow("GetCellMap complete", "cells", s.cells)
 
 	cellMapConf, ok := s.Config.CellMap[s.tbc.O.String()]
 	if !ok {
