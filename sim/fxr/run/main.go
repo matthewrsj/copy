@@ -6,6 +6,8 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"strings"
+	"sync"
 	"time"
 
 	"google.golang.org/protobuf/proto"
@@ -97,10 +99,10 @@ func main() {
 		},
 	}
 
+	var mx sync.Mutex
+
 	for _, devices := range fxrDevs {
 		go func(did devID) {
-			log.Println("FIXTURE WAITING FOR MESSAGE FROM TOWER")
-
 			dev := did.dev
 
 			for {
@@ -108,6 +110,8 @@ func main() {
 					buf    []byte
 					msgt2f pb.TowerToFixture
 				)
+
+				log.Println("FIXTURE WAITING FOR MESSAGE FROM TOWER", did.name)
 
 				for {
 					msg := pb.FixtureToTower{
@@ -125,10 +129,14 @@ func main() {
 						return
 					}
 
+					mx.Lock()
 					if err = dev.SendBuf(jb); err != nil {
+						mx.Unlock()
 						log.Println("SENDBUF", err)
+
 						return
 					}
+					mx.Unlock()
 
 					buf, err = dev.RecvBuf()
 					if err != nil {
@@ -143,6 +151,11 @@ func main() {
 					}
 
 					if msgt2f.GetSysinfo().GetProcessStep() == "" {
+						// not what we are looking for
+						continue
+					}
+
+					if !strings.HasSuffix(strings.TrimSpace(msgt2f.GetSysinfo().GetFixturebarcode()), strings.TrimSpace(did.name)) {
 						// not what we are looking for
 						continue
 					}
@@ -200,14 +213,20 @@ func main() {
 							return
 						}
 
+						mx.Lock()
 						if err := dev.SendBuf(pkt); err != nil {
+							mx.Unlock()
 							log.Println(err)
+
 							return
 						}
+						mx.Unlock()
 					}
 
 					time.Sleep(time.Second)
 				}
+
+				log.Println("DONE WITH PROCESS", msgt2f.GetSysinfo().GetProcessStep())
 			}
 		}(devices)
 	}
