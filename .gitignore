@@ -5,3 +5,5 @@ cover.out
 sim/fxr/run/run
 sim/fxr/startup/startup
 sim/cnd/cnd
+sniffer/sniffer
+sniffer/out.txt
