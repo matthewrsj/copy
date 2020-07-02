@@ -1,6 +1,7 @@
 package towercontroller
 
 import (
+	"os"
 	"reflect"
 	"testing"
 
@@ -13,6 +14,35 @@ import (
 	pb "stash.teslamotors.com/rr/towerproto"
 	"stash.teslamotors.com/rr/traycontrollers"
 )
+
+func TestMain(m *testing.M) {
+	pni := monkey.Patch(socketcan.NewIsotpInterface, patchNewIsotpInterface)
+	prb := monkey.PatchInstanceMethod(
+		reflect.TypeOf(socketcan.Interface{}),
+		"RecvBuf",
+		patchRecvBuffFunc(
+			&pb.FixtureToTower{
+				Content: &pb.FixtureToTower_Op{
+					Op: &pb.FixtureOperational{
+						Status: pb.FixtureStatus_FIXTURE_STATUS_IDLE,
+					},
+				},
+			},
+		),
+	)
+	psc := monkey.PatchInstanceMethod(reflect.TypeOf(socketcan.Interface{}),
+		"SetCANFD",
+		func(socketcan.Interface) error { return nil },
+	)
+
+	ret := m.Run()
+
+	pni.Unpatch()
+	prb.Unpatch()
+	psc.Unpatch()
+
+	os.Exit(ret)
+}
 
 func patchNewIsotpInterface(dev string, rxid, txid uint32) (socketcan.Interface, error) {
 	return socketcan.Interface{

@@ -7,14 +7,13 @@ import (
 	"net/http"
 
 	"go.uber.org/zap"
-	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/traycontrollers"
 )
 
 const _loadEndpoint = "/load"
 
 // HandleLoad handles requests the the load endpoint
-func HandleLoad(conf Configuration, load chan statemachine.Job, logger *zap.SugaredLogger, mockCellAPI bool) {
+func HandleLoad(conf Configuration, logger *zap.SugaredLogger, registry map[string]*FixtureInfo) {
 	http.HandleFunc(_loadEndpoint, func(w http.ResponseWriter, r *http.Request) {
 		logger.Infow("got request to /load", "remote", r.RemoteAddr)
 
@@ -44,25 +43,24 @@ func HandleLoad(conf Configuration, load chan statemachine.Job, logger *zap.Suga
 			return
 		}
 
-		tbc, err := traycontrollers.NewTrayBarcode(loadRequest.TrayID)
-		if err != nil {
-			logger.Errorw("parse request body for tray ID", "error", err)
+		fInfo, ok := registry[IDFromFXR(fxr)]
+		if !ok {
+			err := fmt.Errorf("registry did not contain fixture %s", fxr.Raw)
+			logger.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 
 			return
 		}
 
-		load <- statemachine.Job{
-			Name: IDFromFXR(fxr),
-			Work: Barcodes{
-				Fixture:       fxr,
-				Tray:          tbc,
-				MockCellAPI:   mockCellAPI,
-				RecipeName:    loadRequest.RecipeName,
-				RecipeVersion: loadRequest.RecipeVersion,
-				StepConf:      loadRequest.Steps,
-			},
+		if fInfo.Avail.Status() == StatusUnknown || fInfo.Avail.Status() > StatusWaitingForLoad {
+			err := fmt.Errorf("received load complete for fixture %s, which is already processing a tray", fxr.Raw)
+			logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+
+			return
 		}
+
+		fInfo.LDC <- loadRequest
 
 		w.WriteHeader(http.StatusOK)
 	})

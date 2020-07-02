@@ -26,9 +26,13 @@ type ProcessStep struct {
 	inProgress      bool
 	manual          bool
 	mockCellAPI     bool
+
+	fxrInfo *FixtureInfo
 }
 
 func (p *ProcessStep) action() {
+	p.fxrInfo.Avail.Set(StatusActive)
+
 	p.Logger.Debug("setting tbc and fxbc from context")
 
 	bc, ok := p.Context().(Barcodes)
@@ -86,6 +90,7 @@ func (p *ProcessStep) Next() statemachine.State {
 			manual:          p.manual,
 			mockCellAPI:     p.mockCellAPI,
 			recipeVersion:   p.recipeVersion,
+			fxrInfo:         p.fxrInfo,
 		}
 	case p.manual:
 		// if this is manual we need to load the recipe locally
@@ -98,6 +103,7 @@ func (p *ProcessStep) Next() statemachine.State {
 			fxbc:            p.fxbc,
 			manual:          p.manual,
 			mockCellAPI:     p.mockCellAPI,
+			fxrInfo:         p.fxrInfo,
 		}
 	default:
 		// not in progress, not in manual mode (don't need to load recipe)
@@ -112,6 +118,7 @@ func (p *ProcessStep) Next() statemachine.State {
 			mockCellAPI:     p.mockCellAPI,
 			steps:           p.steps,
 			recipeVersion:   p.recipeVersion,
+			fxrInfo:         p.fxrInfo,
 		}
 	}
 

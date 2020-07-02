@@ -7,13 +7,13 @@ import (
 	"flag"
 	"log"
 	"net/http"
-	"sync"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cellapi"
 	"stash.teslamotors.com/rr/towercontroller"
+	"stash.teslamotors.com/rr/traycontrollers"
 )
 
 const (
@@ -23,6 +23,7 @@ const (
 	_localDef    = ":13167"
 )
 
+// nolint:funlen // main func
 func main() {
 	logLvl := zap.LevelFlag("loglvl", _logLvlDef, "log level for zap logger")
 	logFile := flag.String("logf", _logFileDef, "path to the log file")
@@ -73,61 +74,24 @@ func main() {
 		)
 	}
 
-	sugar.Info("monitoring for in-progress trays")
-
-	jch := make(chan statemachine.Job)
-
-	var wg sync.WaitGroup
-
-	wg.Add(len(conf.Fixtures))
-
-	for _, id := range conf.Fixtures {
-		go func(id uint32) {
-			defer wg.Done()
-
-			job, err := monitorForInProgress(conf, id, *manual, *mockCellAPI)
-			if err != nil {
-				sugar.Errorw("monitor for in-progress trays", "error", err)
-				return
-			}
-
-			if job.Name == "" {
-				// no job found within timeout
-				return
-			}
-
-			jch <- job
-		}(id)
-	}
-
-	done := make(chan struct{})
-
-	go func() {
-		for job := range jch {
-			sugar.Infow("found in-progress tray", "fixture", job.Name)
-
-			if err := s.Schedule(job); err != nil {
-				sugar.Fatalw("schedule in-progress tray", "error", err)
-			}
-		}
-
-		close(done)
-	}()
-	wg.Wait()
-	close(jch)
-	<-done // wait for all jobs to be read
-
 	if *manual {
 		handleManualOperation(s, sugar, caClient, *mockCellAPI)
 		return
 	} // end of manual operation
 
+	registry := make(map[string]*towercontroller.FixtureInfo)
+	for name := range conf.Fixtures {
+		registry[name] = &towercontroller.FixtureInfo{
+			PFD: make(chan traycontrollers.PreparedForDelivery),
+			LDC: make(chan traycontrollers.FXRLoad),
+		}
+	}
 	// handle incoming requests on availability
-	towercontroller.HandleAvailable(conf, sugar)
-
+	towercontroller.HandleAvailable(conf, sugar, registry)
 	// handle incoming posts to load
-	load := make(chan statemachine.Job)
-	towercontroller.HandleLoad(conf, load, sugar, *mockCellAPI)
+	towercontroller.HandleLoad(conf, sugar, registry)
+	// handle incoming posts to preparedForDelivery
+	towercontroller.HandlePreparedForDelivery(conf, sugar, registry)
 
 	go func() {
 		if err := http.ListenAndServe(*localAddr, nil); err != nil {
@@ -135,16 +99,21 @@ func main() {
 		}
 	}()
 
-	sugar.Info("starting state machine scheduler")
+	sugar.Info("starting state machine")
 
-	for job := range load {
-		sugar.Infow("got tray load", "fixture", job.Name, "tray_info", job.Work)
-
-		if err := s.Schedule(job); err != nil {
-			sugar.Errorw("schedule tray job on fixture", "error", err)
-			continue
-		}
-
-		sugar.Info("starting tray state machine", "fixture", job.Name)
+	for name := range conf.Fixtures {
+		go func(name string) {
+			statemachine.RunFrom(&towercontroller.Idle{
+				Config:        conf,
+				Logger:        sugar,
+				CellAPIClient: caClient,
+				Manual:        *manual,
+				MockCellAPI:   *mockCellAPI,
+				FXRInfo:       registry[name],
+			})
+		}(name)
 	}
+
+	// TODO: pass a context or done channel to shut down the SM
+	select {}
 }

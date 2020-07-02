@@ -12,6 +12,7 @@ func TestProcessStep_Action(t *testing.T) {
 	psState := ProcessStep{
 		Logger:        zap.NewExample().Sugar(),
 		CellAPIClient: cellapi.NewClient("test"),
+		fxrInfo:       &FixtureInfo{},
 	}
 	psState.SetContext(Barcodes{})
 	as := psState.Actions()
@@ -36,6 +37,7 @@ func TestProcessStep_ActionManual(t *testing.T) {
 	psState := ProcessStep{
 		Logger:        zap.NewExample().Sugar(),
 		CellAPIClient: cellapi.NewClient("test"),
+		fxrInfo:       &FixtureInfo{},
 	}
 	psState.SetContext(Barcodes{
 		MockCellAPI: true,
@@ -61,7 +63,8 @@ func TestProcessStep_ActionManual(t *testing.T) {
 
 func TestProcessStep_ActionBadContext(t *testing.T) {
 	psState := ProcessStep{
-		Logger: zap.NewExample().Sugar(),
+		Logger:  zap.NewExample().Sugar(),
+		fxrInfo: &FixtureInfo{},
 	}
 
 	as := psState.Actions()

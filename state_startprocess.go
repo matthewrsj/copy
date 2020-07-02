@@ -30,6 +30,8 @@ type StartProcess struct {
 	manual          bool
 	mockCellAPI     bool
 	recipeVersion   int
+
+	fxrInfo *FixtureInfo
 }
 
 func (s *StartProcess) action() {
@@ -177,6 +179,7 @@ func (s *StartProcess) Next() statemachine.State {
 		manual:          s.manual,
 		mockCellAPI:     s.mockCellAPI,
 		recipeVersion:   s.recipeVersion,
+		fxrInfo:         s.fxrInfo,
 	}
 	s.Logger.Debugw("transitioning to next state", "next", statemachine.NameOf(next))
 

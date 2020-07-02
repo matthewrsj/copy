@@ -23,6 +23,7 @@ type ReadRecipe struct {
 	rcpErr          error
 	manual          bool
 	mockCellAPI     bool
+	fxrInfo         *FixtureInfo
 }
 
 func (r *ReadRecipe) action() {
@@ -56,6 +57,7 @@ func (r *ReadRecipe) Next() statemachine.State {
 		manual:          r.manual,
 		mockCellAPI:     r.mockCellAPI,
 		recipeVersion:   r.recipeVersion,
+		fxrInfo:         r.fxrInfo,
 	}
 	r.Logger.Debugw("transitioning to next state", "next", statemachine.NameOf(next))
 

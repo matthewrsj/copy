@@ -381,7 +381,7 @@ func TestEndProcess_ActionBadSetCellStatus(t *testing.T) {
 }
 
 func TestEndProcess_Next(t *testing.T) {
-	if n := (&EndProcess{Logger: zap.NewExample().Sugar()}).Next(); n != nil {
-		t.Errorf("expected next state nil, got %s", statemachine.NameOf(n))
+	if n := (&EndProcess{Logger: zap.NewExample().Sugar()}).Next(); statemachine.NameOf(n) != "Unloading" {
+		t.Errorf("expected next state Unloading, got %s", statemachine.NameOf(n))
 	}
 }

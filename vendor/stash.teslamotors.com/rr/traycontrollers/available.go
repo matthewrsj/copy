@@ -7,9 +7,13 @@ import (
 )
 
 // Availability is a slice of fixtures and their corresponding statuses
-type Availability []struct {
+type Availability []FXRAvailable
+
+// FXRAvailable contains availability information for one FXR
+type FXRAvailable struct {
 	Location string           `json:"location"`
 	Status   pb.FixtureStatus `json:"status"`
+	Reserved bool             `json:"reserved"`
 }
 
 // ToFXRLayout converts the availability info to a FXRLayout
@@ -33,7 +37,7 @@ func (as Availability) ToFXRLayout() (*FXRLayout, error) {
 				Status: a.Status,
 				// IDLE means there is no tray sitting in there waiting to start
 				// READY means a tray is already present in the fixture, therefore it is InUse
-				InUse: a.Status != pb.FixtureStatus_FIXTURE_STATUS_IDLE,
+				InUse: a.Status != pb.FixtureStatus_FIXTURE_STATUS_IDLE || a.Reserved,
 			},
 		); err != nil {
 			return nil, fmt.Errorf("set fixture layout: %v", err)

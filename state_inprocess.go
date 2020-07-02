@@ -30,6 +30,8 @@ type InProcess struct {
 	cellResponse    []*pb.Cell
 	canErr          error
 	recipeVersion   int
+
+	fxrInfo *FixtureInfo
 }
 
 func (i *InProcess) action() {
@@ -135,6 +137,7 @@ func (i *InProcess) Next() statemachine.State {
 		manual:          i.manual,
 		mockCellAPI:     i.mockCellAPI,
 		recipeVersion:   i.recipeVersion,
+		fxrInfo:         i.fxrInfo,
 	}
 	i.Logger.Debugw("transitioning to next state", "next", statemachine.NameOf(next))
 

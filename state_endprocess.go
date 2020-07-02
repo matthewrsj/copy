@@ -33,6 +33,8 @@ type EndProcess struct {
 	manual          bool
 	mockCellAPI     bool
 	recipeVersion   int
+
+	fxrInfo *FixtureInfo
 }
 
 func (e *EndProcess) action() {
@@ -103,7 +105,10 @@ func (e *EndProcess) action() {
 
 // Actions returns the action functions for this state
 func (e *EndProcess) Actions() []func() {
-	e.SetLast(true)
+	if e.manual {
+		// this is the last state for manual
+		e.SetLast(true)
+	}
 
 	return []func(){
 		e.action,
@@ -112,8 +117,24 @@ func (e *EndProcess) Actions() []func() {
 
 // Next returns the next state to run
 func (e *EndProcess) Next() statemachine.State {
-	e.Logger.Debug("statemachine exiting")
-	return nil
+	if e.manual {
+		// all done
+		e.Logger.Debug("statemachine exiting")
+		return nil
+	}
+
+	next := &Unloading{
+		Config:        e.Config,
+		Logger:        e.Logger,
+		CellAPIClient: e.CellAPIClient,
+		mockCellAPI:   e.mockCellAPI,
+		fxbc:          e.fxbc,
+		fxrInfo:       e.fxrInfo,
+	}
+
+	e.Logger.Debugw("transitioning to next state", "next", statemachine.NameOf(next))
+
+	return next
 }
 
 type trayComplete struct {

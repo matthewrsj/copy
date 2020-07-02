@@ -11,25 +11,22 @@ import (
 	"google.golang.org/protobuf/proto"
 	"stash.teslamotors.com/ctet/go-socketcan/pkg/socketcan"
 	pb "stash.teslamotors.com/rr/towerproto"
+	"stash.teslamotors.com/rr/traycontrollers"
 )
 
 const _availabilityEndpoint = "/avail"
 
-type availability struct {
-	Location string           `json:"location"`
-	Status   pb.FixtureStatus `json:"status"`
-}
-
 // HandleAvailable is the handler for the endpoint reporting availability of fixtures
-func HandleAvailable(conf Configuration, logger *zap.SugaredLogger) {
+// nolint:gocognit // ignore
+func HandleAvailable(conf Configuration, logger *zap.SugaredLogger, registry map[string]*FixtureInfo) {
 	http.HandleFunc(_availabilityEndpoint, func(w http.ResponseWriter, r *http.Request) {
 		logger.Infow("got request to /avail", "remote", r.RemoteAddr)
 
-		avail := make(chan availability)
+		avail := make(chan traycontrollers.FXRAvailable)
 		done := make(chan struct{})
 		var wg sync.WaitGroup
 
-		var as []availability
+		var as traycontrollers.Availability
 		go func() {
 			for a := range avail {
 				as = append(as, a)
@@ -41,7 +38,6 @@ func HandleAvailable(conf Configuration, logger *zap.SugaredLogger) {
 
 		for n, id := range conf.Fixtures {
 			go func(n string, id uint32) {
-				// TODO don't write an error immediately
 				defer func() {
 					wg.Done()
 				}()
@@ -49,9 +45,8 @@ func HandleAvailable(conf Configuration, logger *zap.SugaredLogger) {
 				dev, err := socketcan.NewIsotpInterface(conf.CAN.Device, id, conf.CAN.TXID)
 				if err != nil {
 					logger.Errorw("create new ISOTP interface", "FXR", n, "error", err)
-					avail <- availability{
+					avail <- traycontrollers.FXRAvailable{
 						Location: fmt.Sprintf("%s-%s%s-%s", conf.Loc.Line, conf.Loc.Process, conf.Loc.Aisle, n),
-						Status:   pb.FixtureStatus_FIXTURE_STATUS_UNKNOWN_UNSPECIFIED,
 					}
 					return
 				}
@@ -60,9 +55,8 @@ func HandleAvailable(conf Configuration, logger *zap.SugaredLogger) {
 
 				if err = dev.SetCANFD(); err != nil {
 					logger.Errorw("set CANFD on ISTOP interface", "FXR", n, "error", err)
-					avail <- availability{
+					avail <- traycontrollers.FXRAvailable{
 						Location: fmt.Sprintf("%s-%s%s-%s", conf.Loc.Line, conf.Loc.Process, conf.Loc.Aisle, n),
-						Status:   pb.FixtureStatus_FIXTURE_STATUS_UNKNOWN_UNSPECIFIED,
 					}
 					return
 				}
@@ -71,10 +65,10 @@ func HandleAvailable(conf Configuration, logger *zap.SugaredLogger) {
 
 				if err = dev.SetRecvTimeout(time.Second * 3); err != nil {
 					logger.Errorw("set recv timeout on ISOTP interface", "FXR", n, "error", err)
-					avail <- availability{
+					avail <- traycontrollers.FXRAvailable{
 						Location: fmt.Sprintf("%s-%s%s-%s", conf.Loc.Line, conf.Loc.Process, conf.Loc.Aisle, n),
-						Status:   pb.FixtureStatus_FIXTURE_STATUS_UNKNOWN_UNSPECIFIED,
 					}
+
 					return
 				}
 
@@ -84,10 +78,10 @@ func HandleAvailable(conf Configuration, logger *zap.SugaredLogger) {
 				if err != nil {
 					// only a warn because a timeout could have occurred which isn't as drastic
 					logger.Warnw("receive buffer", "FXR", n, "error", err)
-					avail <- availability{
+					avail <- traycontrollers.FXRAvailable{
 						Location: fmt.Sprintf("%s-%s%s-%s", conf.Loc.Line, conf.Loc.Process, conf.Loc.Aisle, n),
-						Status:   pb.FixtureStatus_FIXTURE_STATUS_UNKNOWN_UNSPECIFIED,
 					}
+
 					return
 				}
 
@@ -95,18 +89,38 @@ func HandleAvailable(conf Configuration, logger *zap.SugaredLogger) {
 
 				var msg pb.FixtureToTower
 				if err = proto.Unmarshal(buf, &msg); err != nil {
-					avail <- availability{
+					avail <- traycontrollers.FXRAvailable{
 						Location: fmt.Sprintf("%s-%s%s-%s", conf.Loc.Line, conf.Loc.Process, conf.Loc.Aisle, n),
-						Status:   pb.FixtureStatus_FIXTURE_STATUS_UNKNOWN_UNSPECIFIED,
 					}
+
 					return
 				}
 
 				logger.Debugw("fixture status", "FXR", n, "status", msg.GetOp().GetStatus().String())
 
-				avail <- availability{
+				fxbc, err := traycontrollers.NewFixtureBarcode(msg.GetFixturebarcode())
+				if err != nil {
+					avail <- traycontrollers.FXRAvailable{
+						Location: fmt.Sprintf("%s-%s%s-%s", conf.Loc.Line, conf.Loc.Process, conf.Loc.Aisle, n),
+					}
+
+					return
+				}
+
+				fxrInfo, ok := registry[IDFromFXR(fxbc)]
+				if !ok {
+					logger.Warnw("fixture not in registry", "fixture", msg.GetFixturebarcode())
+					avail <- traycontrollers.FXRAvailable{
+						Location: msg.GetFixturebarcode(),
+					}
+
+					return
+				}
+
+				avail <- traycontrollers.FXRAvailable{
 					Location: msg.GetFixturebarcode(),
 					Status:   msg.GetOp().GetStatus(),
+					Reserved: fxrInfo.Avail.Status() == StatusWaitingForLoad,
 				}
 			}(n, id)
 		}
