@@ -3,6 +3,7 @@ package towercontroller
 
 import (
 	"fmt"
+	"strings"
 
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
@@ -115,11 +116,14 @@ func (s *StartProcess) action() {
 		return
 	}
 
+	colDev := s.Config.CAN.Col1Device
+	if strings.HasPrefix(IDFromFXR(s.fxbc), _colTwoID) {
+		colDev = s.Config.CAN.Col2Device
+	}
+
 	var dev socketcan.Interface
 
-	if dev, s.canErr = socketcan.NewIsotpInterface(
-		s.Config.CAN.Device, fxrID, s.Config.CAN.TXID,
-	); s.canErr != nil {
+	if dev, s.canErr = socketcan.NewIsotpInterface(colDev, fxrID, s.Config.CAN.TXID); s.canErr != nil {
 		fatalError(s, s.Logger, s.canErr)
 		return
 	}

@@ -20,9 +20,16 @@ type Configuration struct {
 }
 
 type canConf struct {
-	Device string `yaml:"dev"`
-	TXID   uint32 `yaml:"txid"`
+	Col1Device string `yaml:"col1_dev"`
+	Col2Device string `yaml:"col2_dev"`
+	TXID       uint32 `yaml:"txid"`
 }
+
+const (
+	// nolint:deadcode,varcheck // _colOneID is for documentation, but is not currently used
+	_colOneID = "01"
+	_colTwoID = "02"
+)
 
 type location struct {
 	Line    string `yaml:"line"`

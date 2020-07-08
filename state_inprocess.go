@@ -2,6 +2,7 @@ package towercontroller
 
 import (
 	"fmt"
+	"strings"
 
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
@@ -43,9 +44,14 @@ func (i *InProcess) action() {
 
 	i.Logger.Info("creating ISOTP interface to monitor fixture")
 
+	colDev := i.Config.CAN.Col1Device
+	if strings.HasPrefix(IDFromFXR(i.fxbc), _colTwoID) {
+		colDev = i.Config.CAN.Col2Device
+	}
+
 	var dev socketcan.Interface
 
-	if dev, i.canErr = socketcan.NewIsotpInterface(i.Config.CAN.Device, fxrID, i.Config.CAN.TXID); i.canErr != nil {
+	if dev, i.canErr = socketcan.NewIsotpInterface(colDev, fxrID, i.Config.CAN.TXID); i.canErr != nil {
 		fatalError(i, i.Logger, i.canErr)
 		return
 	}
