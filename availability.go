@@ -104,8 +104,9 @@ func HandleAvailable(conf Configuration, logger *zap.SugaredLogger, registry map
 
 				logger.Debugw("fixture status", "FXR", n, "status", msg.GetOp().GetStatus().String())
 
-				fxbc, err := traycontrollers.NewFixtureBarcode(msg.GetFixturebarcode())
-				if err != nil {
+				fxrInfo, ok := registry[n]
+				if !ok {
+					logger.Warnw("fixture not in registry", "fixture", n)
 					avail <- traycontrollers.FXRAvailable{
 						Location: fmt.Sprintf("%s-%s%s-%s", conf.Loc.Line, conf.Loc.Process, conf.Loc.Aisle, n),
 					}
@@ -113,18 +114,8 @@ func HandleAvailable(conf Configuration, logger *zap.SugaredLogger, registry map
 					return
 				}
 
-				fxrInfo, ok := registry[IDFromFXR(fxbc)]
-				if !ok {
-					logger.Warnw("fixture not in registry", "fixture", msg.GetFixturebarcode())
-					avail <- traycontrollers.FXRAvailable{
-						Location: msg.GetFixturebarcode(),
-					}
-
-					return
-				}
-
 				avail <- traycontrollers.FXRAvailable{
-					Location: msg.GetFixturebarcode(),
+					Location: fmt.Sprintf("%s-%s%s-%s", conf.Loc.Line, conf.Loc.Process, conf.Loc.Aisle, n),
 					Status:   msg.GetOp().GetStatus(),
 					Reserved: fxrInfo.Avail.Status() == StatusWaitingForLoad,
 				}
