@@ -8,6 +8,4 @@ services:
       dockerfile: Dockerfile.app
     network_mode: host
     volumes:
-      - ./logs:/var/log
-    stdin_open: true
-    tty: true
+      - /var/log/towercontroller:/go/src/app/cmd/logs/towercontroller

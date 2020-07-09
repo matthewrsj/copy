@@ -1,0 +1,15 @@
+[Unit]
+Description=docker-compose towercontroller.service
+Requires=docker.service network-online.target canup.service
+After=docker.service network-online.target canup.service
+
+[Service]
+WorkingDirectory=/home/mfgtest/projects/towercontroller
+Type=simple
+TimeoutStartSec=15
+Restart=always
+ExecStart=/usr/bin/docker-compose up --remove-orphans --force-recreate
+ExecStop=/usr/bin/docker-compose down --remove-orphans
+
+[Install]
+WantedBy=multi-user.target
