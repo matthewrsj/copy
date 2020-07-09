@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 	"sync"
 	"time"
 
@@ -37,18 +36,13 @@ func HandleAvailable(conf Configuration, logger *zap.SugaredLogger, registry map
 
 		wg.Add(len(conf.Fixtures))
 
-		for n, id := range conf.Fixtures {
-			go func(n string, id uint32) {
+		for n, fConf := range conf.Fixtures {
+			go func(n string, fConf fixtureConf) {
 				defer func() {
 					wg.Done()
 				}()
 
-				colDev := conf.CAN.Col1Device
-				if strings.HasPrefix(n, _colTwoID) {
-					colDev = conf.CAN.Col2Device
-				}
-
-				dev, err := socketcan.NewIsotpInterface(colDev, id, conf.CAN.TXID)
+				dev, err := socketcan.NewIsotpInterface(fConf.Bus, fConf.RX, fConf.TX)
 				if err != nil {
 					logger.Errorw("create new ISOTP interface", "FXR", n, "error", err)
 					avail <- traycontrollers.FXRAvailable{
@@ -119,7 +113,7 @@ func HandleAvailable(conf Configuration, logger *zap.SugaredLogger, registry map
 					Status:   msg.GetOp().GetStatus(),
 					Reserved: fxrInfo.Avail.Status() == StatusWaitingForLoad,
 				}
-			}(n, id)
+			}(n, fConf)
 		}
 
 		wg.Wait()

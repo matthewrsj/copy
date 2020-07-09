@@ -38,14 +38,8 @@ func main() {
 
 	var i int
 
-	for n, id := range conf.Fixtures {
-		// tx
-		colDev := conf.CAN.Col1Device
-		if strings.HasPrefix(n, "02") {
-			colDev = conf.CAN.Col2Device
-		}
-
-		dev, err := socketcan.NewIsotpInterface(colDev, conf.CAN.TXID, id)
+	for n, fConf := range conf.Fixtures {
+		dev, err := socketcan.NewIsotpInterface(fConf.Bus, fConf.TX, fConf.RX)
 		if err != nil {
 			log.Println("create ISOTP interface", err)
 			return // return so the defer is called

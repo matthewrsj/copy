@@ -31,8 +31,12 @@ func TestIdle_Actions(t *testing.T) {
 	pfdC := make(chan traycontrollers.PreparedForDelivery)
 	i := &Idle{
 		Config: Configuration{
-			Fixtures: map[string]uint32{
-				"01-01": 1,
+			Fixtures: map[string]fixtureConf{
+				"01-01": {
+					Bus: "vcan0",
+					RX:  0x1c1,
+					TX:  0x241,
+				},
 			},
 		},
 		Logger: zap.NewExample().Sugar(),

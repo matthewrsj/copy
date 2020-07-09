@@ -66,8 +66,12 @@ func TestInProcess_Action(t *testing.T) {
 	exp := 1
 	ipState := &InProcess{
 		Config: Configuration{
-			Fixtures: map[string]uint32{
-				"01-01": 1,
+			Fixtures: map[string]fixtureConf{
+				"01-01": {
+					Bus: "vcan0",
+					RX:  0x1c1,
+					TX:  0x241,
+				},
 			},
 		},
 		Logger: zap.NewExample().Sugar(),
@@ -152,8 +156,12 @@ func TestInProcess_ActionNoFixture(t *testing.T) {
 func TestInProcess_ActionNoIface(t *testing.T) {
 	ipState := InProcess{
 		Config: Configuration{
-			Fixtures: map[string]uint32{
-				"01": 1,
+			Fixtures: map[string]fixtureConf{
+				"01-01": {
+					Bus: "vcan0",
+					RX:  0x1c1,
+					TX:  0x241,
+				},
 			},
 		},
 		Logger: zap.NewExample().Sugar(),
@@ -183,8 +191,12 @@ func TestInProcess_ActionNoIface(t *testing.T) {
 func TestInProcess_ActionRecvBufErr(t *testing.T) {
 	ipState := InProcess{
 		Config: Configuration{
-			Fixtures: map[string]uint32{
-				"01": 1,
+			Fixtures: map[string]fixtureConf{
+				"01-01": {
+					Bus: "vcan0",
+					RX:  0x1c1,
+					TX:  0x241,
+				},
 			},
 		},
 		Logger: zap.NewExample().Sugar(),
@@ -221,8 +233,12 @@ func TestInProcess_ActionRecvBufErr(t *testing.T) {
 func TestInProcess_ActionBadBuffer(t *testing.T) {
 	ipState := InProcess{
 		Config: Configuration{
-			Fixtures: map[string]uint32{
-				"01": 1,
+			Fixtures: map[string]fixtureConf{
+				"01-01": {
+					Bus: "vcan0",
+					RX:  0x1c1,
+					TX:  0x241,
+				},
 			},
 		},
 		Logger: zap.NewExample().Sugar(),

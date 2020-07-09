@@ -2,7 +2,6 @@ package towercontroller
 
 import (
 	"fmt"
-	"strings"
 
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
@@ -36,7 +35,7 @@ type InProcess struct {
 }
 
 func (i *InProcess) action() {
-	fxrID, ok := i.Config.Fixtures[IDFromFXR(i.fxbc)]
+	fConf, ok := i.Config.Fixtures[IDFromFXR(i.fxbc)]
 	if !ok {
 		fatalError(i, i.Logger, fmt.Errorf("fixture %s not configured for tower controller", IDFromFXR(i.fxbc)))
 		return
@@ -44,14 +43,9 @@ func (i *InProcess) action() {
 
 	i.Logger.Info("creating ISOTP interface to monitor fixture")
 
-	colDev := i.Config.CAN.Col1Device
-	if strings.HasPrefix(IDFromFXR(i.fxbc), _colTwoID) {
-		colDev = i.Config.CAN.Col2Device
-	}
-
 	var dev socketcan.Interface
 
-	if dev, i.canErr = socketcan.NewIsotpInterface(colDev, fxrID, i.Config.CAN.TXID); i.canErr != nil {
+	if dev, i.canErr = socketcan.NewIsotpInterface(fConf.Bus, fConf.RX, fConf.TX); i.canErr != nil {
 		fatalError(i, i.Logger, i.canErr)
 		return
 	}

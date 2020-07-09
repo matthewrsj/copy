@@ -10,8 +10,8 @@ import (
 
 	"google.golang.org/protobuf/proto"
 	"stash.teslamotors.com/ctet/go-socketcan/pkg/socketcan"
+	"stash.teslamotors.com/rr/towercontroller"
 	pb "stash.teslamotors.com/rr/towerproto"
-	"stash.teslamotors.com/rr/traycontrollers"
 )
 
 const _confFileDef = "../../../configuration/statemachine/statemachine.yaml"
@@ -39,7 +39,7 @@ func main() {
 		log.Fatal("unknown status", *statName)
 	}
 
-	conf, err := traycontrollers.LoadConfig(*configFile)
+	conf, err := towercontroller.LoadConfig(*configFile)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -53,10 +53,10 @@ func main() {
 
 	var i int
 
-	for n, id := range conf.Fixtures {
-		log.Printf("%x WRITING TO %x", conf.CAN.TXID, id)
+	for n, fConf := range conf.Fixtures {
+		log.Printf("%x WRITING TO %x", fConf.TX, fConf.RX)
 
-		dev, err := socketcan.NewIsotpInterface(conf.CAN.Device, conf.CAN.TXID, id)
+		dev, err := socketcan.NewIsotpInterface(fConf.Bus, fConf.TX, fConf.RX)
 		if err != nil {
 			log.Println("create ISOTP interface", err)
 			return // return so the defer is called

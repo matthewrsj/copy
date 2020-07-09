@@ -17,30 +17,14 @@ cell_api:
     cell_status: /cells/set_cell_status
 
 fixture_ids:
-  01-01: 0x1c1
-  01-02: 0x1c2
-  01-03: 0x1c3
-  01-04: 0x1c4
-  01-05: 0x1c5
-  01-06: 0x1c6
-  01-07: 0x1c7
-  01-08: 0x1c8
-  01-09: 0x1c9
-  01-10: 0x1ca
-  01-11: 0x1cb
-  01-12: 0x1cc
-  02-01: 0x1c1
-  02-02: 0x1c2
-  02-03: 0x1c3
-  02-04: 0x1c4
-  02-05: 0x1c5
-  02-06: 0x1c6
-  02-07: 0x1c7
-  02-08: 0x1c8
-  02-09: 0x1c9
-  02-10: 0x1ca
-  02-11: 0x1cb
-  02-12: 0x1cc
+  01-01:
+    bus: can0
+    rx: 0x1c1
+    tx: 0x241
+  01-02:
+    bus: can0
+    rx: 0x1c2
+    tx: 0x242
 
 can:
   col1_dev: vcan0

@@ -2,7 +2,6 @@ package towercontroller
 
 import (
 	"fmt"
-	"strings"
 
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
@@ -32,7 +31,7 @@ type Unloading struct {
 func (u *Unloading) action() {
 	u.fxrInfo.Avail.Set(StatusUnloading)
 
-	fxrID, ok := u.Config.Fixtures[IDFromFXR(u.fxbc)]
+	fConf, ok := u.Config.Fixtures[IDFromFXR(u.fxbc)]
 	if !ok {
 		fatalError(u, u.Logger, fmt.Errorf("fixture %s not configured for tower controller", IDFromFXR(u.fxbc)))
 		return
@@ -40,12 +39,7 @@ func (u *Unloading) action() {
 
 	u.Logger.Info("creating ISOTP interface to monitor fixture")
 
-	colDev := u.Config.CAN.Col1Device
-	if strings.HasPrefix(IDFromFXR(u.fxbc), _colTwoID) {
-		colDev = u.Config.CAN.Col2Device
-	}
-
-	dev, err := socketcan.NewIsotpInterface(colDev, fxrID, u.Config.CAN.TXID)
+	dev, err := socketcan.NewIsotpInterface(fConf.Bus, fConf.RX, fConf.TX)
 	if err != nil {
 		fatalError(u, u.Logger, fmt.Errorf("NewIsotpInterface: %v", err))
 		return

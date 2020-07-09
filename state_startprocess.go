@@ -3,7 +3,6 @@ package towercontroller
 
 import (
 	"fmt"
-	"strings"
 
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
@@ -109,21 +108,16 @@ func (s *StartProcess) action() {
 
 	twr2Fxr.Recipe.CellMasks = newCellMask(present)
 
-	var fxrID uint32
+	var fConf fixtureConf
 
-	if fxrID, ok = s.Config.Fixtures[IDFromFXR(s.fxbc)]; !ok {
+	if fConf, ok = s.Config.Fixtures[IDFromFXR(s.fxbc)]; !ok {
 		fatalError(s, s.Logger, fmt.Errorf("fixture %s not configured for tower controller", IDFromFXR(s.fxbc)))
 		return
 	}
 
-	colDev := s.Config.CAN.Col1Device
-	if strings.HasPrefix(IDFromFXR(s.fxbc), _colTwoID) {
-		colDev = s.Config.CAN.Col2Device
-	}
-
 	var dev socketcan.Interface
 
-	if dev, s.canErr = socketcan.NewIsotpInterface(colDev, fxrID, s.Config.CAN.TXID); s.canErr != nil {
+	if dev, s.canErr = socketcan.NewIsotpInterface(fConf.Bus, fConf.RX, fConf.TX); s.canErr != nil {
 		fatalError(s, s.Logger, s.canErr)
 		return
 	}
