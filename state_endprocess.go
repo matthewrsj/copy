@@ -251,16 +251,10 @@ func (e *EndProcess) setCellStatuses() {
 			continue
 		}
 
-		psn, err := cellapi.RecipeToProcess(strings.ToUpper(e.processStepName))
-		if err != nil {
-			e.Logger.Warn(fmt.Errorf("invalid recipe name %s, unable to find process name", e.processStepName))
-			continue
-		}
-
 		cpf = append(cpf, cellapi.CellPFData{
 			Serial:  cell.Serial,
 			Status:  status,
-			Recipe:  psn,
+			Recipe:  e.processStepName,
 			Version: e.recipeVersion,
 		})
 	}
