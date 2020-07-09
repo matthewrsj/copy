@@ -51,6 +51,11 @@ func HandleAvailable(conf Configuration, logger *zap.SugaredLogger, registry map
 					return
 				}
 
+				defer func() {
+					// always try to close it out
+					_ = dev.Close()
+				}()
+
 				logger.Debugw("created ISOTP interface", "FXR", n)
 
 				if err = dev.SetCANFD(); err != nil {
