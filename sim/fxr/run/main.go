@@ -162,6 +162,11 @@ func main() {
 						continue
 					}
 
+					if msgt2f.TransactionId <= 0 {
+						log.Println("invalid transaction ID", msgt2f.TransactionId)
+						continue
+					}
+
 					// received a process to run
 					log.Println("RUNNING PROCESS", msgt2f.GetSysinfo().GetProcessStep())
 
@@ -170,6 +175,7 @@ func main() {
 
 				cells := make([]*pb.Cell, 64)
 				cms := msgt2f.Recipe.GetCellMasks()
+				transactionID := msgt2f.TransactionId
 
 				for i, cm := range cms {
 					for bit := 0; bit < 32; bit++ {
@@ -192,11 +198,13 @@ func main() {
 				msgDiag.Fixturebarcode = msgt2f.GetSysinfo().GetFixturebarcode()
 				msgDiag.Traybarcode = msgt2f.GetSysinfo().GetTraybarcode()
 				msgDiag.ProcessStep = msgt2f.GetSysinfo().GetProcessStep()
+				msgDiag.TransactionId = transactionID
 				msgOp.Fixturebarcode = msgt2f.GetSysinfo().GetFixturebarcode()
 				msgOp.Traybarcode = msgt2f.GetSysinfo().GetTraybarcode()
 				msgOp.ProcessStep = msgt2f.GetSysinfo().GetProcessStep()
 				msgOp.GetOp().Status = pb.FixtureStatus_FIXTURE_STATUS_READY
 				msgOp.GetOp().Cells = cells
+				msgOp.TransactionId = transactionID
 
 				for i := 0; i < 10; i++ {
 					switch {

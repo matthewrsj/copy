@@ -20,6 +20,7 @@ type ReadRecipe struct {
 	tbc             traycontrollers.TrayBarcode
 	fxbc            traycontrollers.FixtureBarcode
 	steps           traycontrollers.StepConfiguration
+	transactID      int64
 	recipeVersion   int
 	rcpErr          error
 	manual          bool
@@ -53,6 +54,7 @@ func (r *ReadRecipe) Next() statemachine.State {
 		CellAPIClient:   r.CellAPIClient,
 		childLogger:     r.childLogger,
 		processStepName: r.processStepName,
+		transactID:      r.transactID,
 		fxbc:            r.fxbc,
 		tbc:             r.tbc,
 		steps:           r.steps,

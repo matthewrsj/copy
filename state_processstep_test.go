@@ -91,3 +91,17 @@ func TestProcessStep_Next(t *testing.T) {
 		t.Errorf("expected next state name to be %s, got %s", exp, n)
 	}
 }
+
+func TestProcessStep_NextIP(t *testing.T) {
+	exp := "InProcess"
+	if n := statemachine.NameOf((&ProcessStep{Logger: zap.NewExample().Sugar(), inProgress: true}).Next()); n != exp {
+		t.Errorf("expected next state name to be %s, got %s", exp, n)
+	}
+}
+
+func TestProcessStep_NextManual(t *testing.T) {
+	exp := "ReadRecipe"
+	if n := statemachine.NameOf((&ProcessStep{Logger: zap.NewExample().Sugar(), manual: true}).Next()); n != exp {
+		t.Errorf("expected next state name to be %s, got %s", exp, n)
+	}
+}

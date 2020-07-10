@@ -23,6 +23,7 @@ type ProcessStep struct {
 	tbc             traycontrollers.TrayBarcode
 	fxbc            traycontrollers.FixtureBarcode
 	steps           traycontrollers.StepConfiguration
+	transactID      int64
 	recipeVersion   int
 	inProgress      bool
 	manual          bool
@@ -58,11 +59,13 @@ func (p *ProcessStep) action() {
 	p.fxbc = bc.Fixture
 	p.processStepName = bc.ProcessStepName
 	p.inProgress = bc.InProgress
+	p.transactID = bc.TransactID
 
 	p.childLogger = p.Logger.With(
 		"tray", p.tbc.SN,
 		"fixture", p.fxbc.Raw,
 		"process_step", p.processStepName,
+		"transaction_id", p.transactID,
 	)
 
 	p.childLogger.Info("running process step")
@@ -103,6 +106,7 @@ func (p *ProcessStep) Next() statemachine.State {
 			CellAPIClient:   p.CellAPIClient,
 			childLogger:     p.childLogger,
 			processStepName: p.processStepName,
+			transactID:      p.transactID,
 			tbc:             p.tbc,
 			fxbc:            p.fxbc,
 			manual:          p.manual,
@@ -117,6 +121,7 @@ func (p *ProcessStep) Next() statemachine.State {
 			CellAPIClient:   p.CellAPIClient,
 			childLogger:     p.childLogger,
 			processStepName: p.processStepName,
+			transactID:      p.transactID,
 			fxbc:            p.fxbc,
 			tbc:             p.tbc,
 			manual:          p.manual,

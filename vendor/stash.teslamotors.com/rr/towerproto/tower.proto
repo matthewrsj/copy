@@ -209,6 +209,7 @@ message FixtureDiagnostic {
   Fxr           fxr   = 1;
   Fib           fib   = 2;
   repeated Stib stibs = 3; // 4 stibs
+  uint32 isotp_rx_complete_msg_received = 5;
 }
 
 message FixtureToTower {
@@ -219,6 +220,7 @@ message FixtureToTower {
   string traybarcode    = 3;
   string fixturebarcode = 4;
   string process_step   = 5;
+  int64 transaction_id = 6;
 }
 
 message RecipeStep {
@@ -262,4 +264,5 @@ message SystemInfo {
 message TowerToFixture {
   Recipe     recipe  = 1;
   SystemInfo sysinfo = 2;
+  int64 transaction_id = 3;
 }

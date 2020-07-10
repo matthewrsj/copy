@@ -3,6 +3,7 @@ package towercontroller
 
 import (
 	"fmt"
+	"time"
 
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
@@ -23,6 +24,7 @@ type StartProcess struct {
 
 	childLogger     *zap.SugaredLogger
 	processStepName string
+	transactID      int64
 	tbc             traycontrollers.TrayBarcode
 	fxbc            traycontrollers.FixtureBarcode
 	steps           traycontrollers.StepConfiguration
@@ -45,6 +47,7 @@ func (s *StartProcess) action() {
 			Fixturebarcode: s.fxbc.Raw,
 			ProcessStep:    s.processStepName,
 		},
+		TransactionId: s.transactID,
 	}
 
 	for _, step := range s.steps {
@@ -132,6 +135,14 @@ func (s *StartProcess) action() {
 		return
 	}
 
+	if err := dev.SetSendTimeout(time.Second * 3); err != nil {
+		s.childLogger.Warnw("unable to set send timeout", "error", err)
+	}
+
+	if err := dev.SetRecvTimeout(time.Second * 3); err != nil {
+		s.childLogger.Warnw("unable to set recv timeout", "error", err)
+	}
+
 	var data []byte
 
 	if data, s.canErr = proto.Marshal(&twr2Fxr); s.canErr != nil {
@@ -139,10 +150,8 @@ func (s *StartProcess) action() {
 		return
 	}
 
-	if s.canErr = dev.SendBuf(data); s.canErr != nil {
-		fatalError(s, s.childLogger, s.canErr)
-		return
-	}
+	// performHandshake blocks until the FXR acknowledges receipt of recipe
+	s.performHandshake(dev, data)
 
 	if s.manual {
 		if !s.mockCellAPI {
@@ -184,4 +193,36 @@ func (s *StartProcess) Next() statemachine.State {
 	s.childLogger.Debugw("transitioning to next state", "next", statemachine.NameOf(next))
 
 	return next
+}
+
+func (s *StartProcess) performHandshake(dev socketcan.Interface, data []byte) {
+	for {
+		if err := dev.SendBuf(data); s.canErr != nil {
+			s.childLogger.Warnw("unable to send data to FXR", "error", err)
+			continue
+		}
+
+		buf, err := dev.RecvBuf()
+		if err != nil {
+			s.childLogger.Warnw("unable to receive data from FXR", "error", err)
+			continue
+		}
+
+		var msg pb.FixtureToTower
+		if err := proto.Unmarshal(buf, &msg); err != nil {
+			s.childLogger.Warnw("unable to unmarshal data from FXR", "error", err)
+			continue
+		}
+
+		if msg.TransactionId != s.transactID {
+			s.childLogger.Warnw(
+				"transaction ID from FXR did not match transaction ID sent",
+				"fxr_transaction_id", msg.TransactionId, "sent_transaction_id", s.transactID,
+			)
+
+			continue
+		}
+
+		break
+	}
 }

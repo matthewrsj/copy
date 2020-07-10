@@ -33,6 +33,14 @@ func HandleLoad(conf Configuration, logger *zap.SugaredLogger, registry map[stri
 			return
 		}
 
+		if loadRequest.TransactionID <= 0 {
+			err = fmt.Errorf("invalid transaction ID %d, must be greater than 0", loadRequest.TransactionID)
+			logger.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+
+			return
+		}
+
 		fxr, err := traycontrollers.NewFixtureBarcode(
 			fmt.Sprintf("%s-%s%s-%02d-%02d", conf.Loc.Line, conf.Loc.Process, conf.Loc.Aisle, loadRequest.Column, loadRequest.Level),
 		)

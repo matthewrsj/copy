@@ -38,7 +38,8 @@ func TestStartProcess_Action(t *testing.T) {
 			Raw: "11223344A",
 		},
 		fxbc: traycontrollers.FixtureBarcode{
-			Fxn: "01",
+			Tower: "01",
+			Fxn:   "01",
 		},
 		steps: traycontrollers.StepConfiguration{{Mode: "test"}},
 	}
@@ -86,6 +87,13 @@ func TestStartProcess_Action(t *testing.T) {
 		func(socketcan.Interface, []byte) error { return nil },
 	)
 	defer sb.Unpatch()
+
+	rb := monkey.PatchInstanceMethod(
+		reflect.TypeOf(socketcan.Interface{}),
+		"RecvBuf",
+		func(socketcan.Interface) ([]byte, error) { return nil, nil },
+	)
+	defer rb.Unpatch()
 
 	defer func() {
 		if r := recover(); r != nil {

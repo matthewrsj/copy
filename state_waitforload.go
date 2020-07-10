@@ -21,6 +21,7 @@ type WaitForLoad struct {
 	fxbc            traycontrollers.FixtureBarcode
 	steps           traycontrollers.StepConfiguration
 	processStepName string
+	transactID      int64
 	recipeVersion   int
 	manual          bool
 	mockCellAPI     bool
@@ -62,6 +63,7 @@ func (w *WaitForLoad) action() {
 	w.processStepName = fxrLoad.RecipeName
 	w.recipeVersion = fxrLoad.RecipeVersion
 	w.steps = fxrLoad.Steps
+	w.transactID = fxrLoad.TransactionID
 
 	if w.processStepName == "" || len(w.steps) == 0 {
 		w.err = fmt.Errorf("invalid fixture load message: %v", fxrLoad)
@@ -110,6 +112,7 @@ func (w *WaitForLoad) Next() statemachine.State {
 			RecipeName:      w.processStepName,
 			RecipeVersion:   w.recipeVersion,
 			StepConf:        w.steps,
+			TransactID:      w.transactID,
 		})
 	}
 

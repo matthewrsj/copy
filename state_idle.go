@@ -78,6 +78,7 @@ func (i *Idle) action() {
 			RecipeName:      fxrLoad.RecipeName,
 			RecipeVersion:   fxrLoad.RecipeVersion,
 			StepConf:        fxrLoad.Steps,
+			TransactID:      fxrLoad.TransactionID,
 		})
 	}
 }
