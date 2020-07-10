@@ -21,6 +21,7 @@ type StartProcess struct {
 	Logger        *zap.SugaredLogger
 	CellAPIClient *cellapi.Client
 
+	childLogger     *zap.SugaredLogger
 	processStepName string
 	tbc             traycontrollers.TrayBarcode
 	fxbc            traycontrollers.FixtureBarcode
@@ -35,7 +36,7 @@ type StartProcess struct {
 }
 
 func (s *StartProcess) action() {
-	s.Logger.Info("sending recipe and other information to FXR")
+	s.childLogger.Info("sending recipe and other information to FXR")
 
 	twr2Fxr := pb.TowerToFixture{
 		Recipe: &pb.Recipe{Formrequest: pb.FormRequest_FORM_REQUEST_START},
@@ -59,14 +60,14 @@ func (s *StartProcess) action() {
 	}
 
 	if !s.mockCellAPI {
-		s.Logger.Info("GetCellMap")
+		s.childLogger.Info("GetCellMap")
 
 		if s.cells, s.apiErr = s.CellAPIClient.GetCellMap(s.tbc.SN); s.apiErr != nil {
-			fatalError(s, s.Logger, s.apiErr)
+			fatalError(s, s.childLogger, s.apiErr)
 			return
 		}
 	} else {
-		s.Logger.Warn("cell API mocked, skipping GetCellMap and populating a few cells")
+		s.childLogger.Warn("cell API mocked, skipping GetCellMap and populating a few cells")
 		s.cells = map[string]cellapi.CellData{
 			"A01": {
 				Position: "A01",
@@ -91,11 +92,11 @@ func (s *StartProcess) action() {
 		}
 	}
 
-	s.Logger.Infow("GetCellMap complete", "cells", s.cells)
+	s.childLogger.Infow("GetCellMap complete", "cells", s.cells)
 
 	cellMapConf, ok := s.Config.CellMap[s.tbc.O.String()]
 	if !ok {
-		fatalError(s, s.Logger, fmt.Errorf("could not find orientation %s in configuration", s.tbc.O))
+		fatalError(s, s.childLogger, fmt.Errorf("could not find orientation %s in configuration", s.tbc.O))
 		return
 	}
 
@@ -111,14 +112,14 @@ func (s *StartProcess) action() {
 	var fConf fixtureConf
 
 	if fConf, ok = s.Config.Fixtures[IDFromFXR(s.fxbc)]; !ok {
-		fatalError(s, s.Logger, fmt.Errorf("fixture %s not configured for tower controller", IDFromFXR(s.fxbc)))
+		fatalError(s, s.childLogger, fmt.Errorf("fixture %s not configured for tower controller", IDFromFXR(s.fxbc)))
 		return
 	}
 
 	var dev socketcan.Interface
 
 	if dev, s.canErr = socketcan.NewIsotpInterface(fConf.Bus, fConf.RX, fConf.TX); s.canErr != nil {
-		fatalError(s, s.Logger, s.canErr)
+		fatalError(s, s.childLogger, s.canErr)
 		return
 	}
 
@@ -127,34 +128,34 @@ func (s *StartProcess) action() {
 	}()
 
 	if err := dev.SetCANFD(); err != nil {
-		fatalError(s, s.Logger, err)
+		fatalError(s, s.childLogger, err)
 		return
 	}
 
 	var data []byte
 
 	if data, s.canErr = proto.Marshal(&twr2Fxr); s.canErr != nil {
-		fatalError(s, s.Logger, s.canErr)
+		fatalError(s, s.childLogger, s.canErr)
 		return
 	}
 
 	if s.canErr = dev.SendBuf(data); s.canErr != nil {
-		fatalError(s, s.Logger, s.canErr)
+		fatalError(s, s.childLogger, s.canErr)
 		return
 	}
 
 	if s.manual {
 		if !s.mockCellAPI {
 			if err := s.CellAPIClient.UpdateProcessStatus(s.tbc.SN, s.processStepName, cellapi.StatusStart); err != nil {
-				fatalError(s, s.Logger, fmt.Errorf("UpdateProcessStatus: %v", err))
+				fatalError(s, s.childLogger, fmt.Errorf("UpdateProcessStatus: %v", err))
 				return
 			}
 		} else {
-			s.Logger.Warn("cell API mocked, skipping UpdateProcessStatus")
+			s.childLogger.Warn("cell API mocked, skipping UpdateProcessStatus")
 		}
 	}
 
-	s.Logger.Debug("sent recipe and other information to FXR")
+	s.childLogger.Debug("sent recipe and other information to FXR")
 }
 
 // Actions returns the action functions for this state
@@ -170,6 +171,7 @@ func (s *StartProcess) Next() statemachine.State {
 		Config:          s.Config,
 		Logger:          s.Logger,
 		CellAPIClient:   s.CellAPIClient,
+		childLogger:     s.childLogger,
 		tbc:             s.tbc,
 		fxbc:            s.fxbc,
 		cells:           s.cells,
@@ -179,7 +181,7 @@ func (s *StartProcess) Next() statemachine.State {
 		recipeVersion:   s.recipeVersion,
 		fxrInfo:         s.fxrInfo,
 	}
-	s.Logger.Debugw("transitioning to next state", "next", statemachine.NameOf(next))
+	s.childLogger.Debugw("transitioning to next state", "next", statemachine.NameOf(next))
 
 	return next
 }

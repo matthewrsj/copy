@@ -11,7 +11,7 @@ import (
 
 func TestRecipe_Action(t *testing.T) {
 	exp := 1
-	as := (&ReadRecipe{Logger: zap.NewExample().Sugar()}).Actions()
+	as := (&ReadRecipe{childLogger: zap.NewExample().Sugar()}).Actions()
 
 	if l := len(as); l != exp {
 		t.Errorf("expected %d actions, got %d", exp, l)
@@ -35,7 +35,7 @@ func TestRecipe_Action(t *testing.T) {
 
 func TestRecipe_ActionNoRecipe(t *testing.T) {
 	exp := 1
-	as := (&ReadRecipe{Logger: zap.NewExample().Sugar()}).Actions()
+	as := (&ReadRecipe{childLogger: zap.NewExample().Sugar()}).Actions()
 
 	if l := len(as); l != exp {
 		t.Errorf("expected %d actions, got %d", exp, l)
@@ -54,7 +54,7 @@ func TestRecipe_ActionNoRecipe(t *testing.T) {
 
 func TestRecipe_Next(t *testing.T) {
 	exp := "StartProcess"
-	if n := statemachine.NameOf((&ReadRecipe{Logger: zap.NewExample().Sugar()}).Next()); n != exp {
+	if n := statemachine.NameOf((&ReadRecipe{childLogger: zap.NewExample().Sugar()}).Next()); n != exp {
 		t.Errorf("expected next state name to be %s, got %s", exp, n)
 	}
 }

@@ -20,6 +20,7 @@ type Unloading struct {
 	Logger        *zap.SugaredLogger
 	CellAPIClient *cellapi.Client
 
+	childLogger *zap.SugaredLogger
 	manual      bool
 	mockCellAPI bool
 
@@ -33,15 +34,15 @@ func (u *Unloading) action() {
 
 	fConf, ok := u.Config.Fixtures[IDFromFXR(u.fxbc)]
 	if !ok {
-		fatalError(u, u.Logger, fmt.Errorf("fixture %s not configured for tower controller", IDFromFXR(u.fxbc)))
+		fatalError(u, u.childLogger, fmt.Errorf("fixture %s not configured for tower controller", IDFromFXR(u.fxbc)))
 		return
 	}
 
-	u.Logger.Info("creating ISOTP interface to monitor fixture")
+	u.childLogger.Info("creating ISOTP interface to monitor fixture for unload")
 
 	dev, err := socketcan.NewIsotpInterface(fConf.Bus, fConf.RX, fConf.TX)
 	if err != nil {
-		fatalError(u, u.Logger, fmt.Errorf("NewIsotpInterface: %v", err))
+		fatalError(u, u.childLogger, fmt.Errorf("NewIsotpInterface: %v", err))
 		return
 	}
 
@@ -50,25 +51,25 @@ func (u *Unloading) action() {
 	}()
 
 	if err := dev.SetCANFD(); err != nil {
-		fatalError(u, u.Logger, fmt.Errorf("SetCANFD: %v", err))
+		fatalError(u, u.childLogger, fmt.Errorf("SetCANFD: %v", err))
 		return
 	}
 
 	for {
 		data, err := dev.RecvBuf()
 		if err != nil {
-			fatalError(u, u.Logger, fmt.Errorf("RecvBuf: %v", err))
+			fatalError(u, u.childLogger, fmt.Errorf("RecvBuf: %v", err))
 		}
 
 		msg := &pb.FixtureToTower{}
 
 		if err = proto.Unmarshal(data, msg); err != nil {
-			u.Logger.Debug("expecting FixtureToTower message", "error", err)
+			u.childLogger.Debug("expecting FixtureToTower message", "error", err)
 			continue
 		}
 
 		if msg.GetOp().GetStatus() != pb.FixtureStatus_FIXTURE_STATUS_COMPLETE {
-			u.Logger.Info("tray unloaded")
+			u.childLogger.Info("tray unloaded")
 			break
 		}
 	}
@@ -91,7 +92,7 @@ func (u *Unloading) Next() statemachine.State {
 		MockCellAPI:   u.mockCellAPI,
 		FXRInfo:       u.fxrInfo,
 	}
-	u.Logger.Debugw("transitioning to next state", "next", statemachine.NameOf(next))
+	u.childLogger.Debugw("transitioning back to Idle", "next", statemachine.NameOf(next))
 
 	return next
 }

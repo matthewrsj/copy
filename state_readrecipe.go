@@ -15,6 +15,7 @@ type ReadRecipe struct {
 	Logger        *zap.SugaredLogger
 	CellAPIClient *cellapi.Client
 
+	childLogger     *zap.SugaredLogger
 	processStepName string
 	tbc             traycontrollers.TrayBarcode
 	fxbc            traycontrollers.FixtureBarcode
@@ -27,14 +28,14 @@ type ReadRecipe struct {
 }
 
 func (r *ReadRecipe) action() {
-	r.Logger.Info("loading recipe for process step")
+	r.childLogger.Info("loading recipe for process step")
 
 	if r.steps, r.rcpErr = LoadRecipe(r.Config.RecipeFile, r.Config.IngredientsFile, r.processStepName); r.rcpErr != nil {
-		fatalError(r, r.Logger, r.rcpErr)
+		fatalError(r, r.childLogger, r.rcpErr)
 		return
 	}
 
-	r.Logger.Debug("loaded recipe")
+	r.childLogger.Debug("loaded recipe")
 }
 
 // Actions returns the action functions for this state
@@ -50,6 +51,7 @@ func (r *ReadRecipe) Next() statemachine.State {
 		Config:          r.Config,
 		Logger:          r.Logger,
 		CellAPIClient:   r.CellAPIClient,
+		childLogger:     r.childLogger,
 		processStepName: r.processStepName,
 		fxbc:            r.fxbc,
 		tbc:             r.tbc,
@@ -59,7 +61,7 @@ func (r *ReadRecipe) Next() statemachine.State {
 		recipeVersion:   r.recipeVersion,
 		fxrInfo:         r.fxrInfo,
 	}
-	r.Logger.Debugw("transitioning to next state", "next", statemachine.NameOf(next))
+	r.childLogger.Debugw("transitioning to next state", "next", statemachine.NameOf(next))
 
 	return next
 }

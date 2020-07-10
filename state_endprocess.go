@@ -24,6 +24,7 @@ type EndProcess struct {
 	Logger        *zap.SugaredLogger
 	CellAPIClient *cellapi.Client
 
+	childLogger     *zap.SugaredLogger
 	tbc             traycontrollers.TrayBarcode
 	fxbc            traycontrollers.FixtureBarcode
 	cells           map[string]cellapi.CellData
@@ -41,14 +42,14 @@ func (e *EndProcess) action() {
 	// only update cell API on SWIFT. On C Tower and beyond this is done by CND
 	if e.manual {
 		if !e.mockCellAPI {
-			e.Logger.Debugw("UpdateProcessStatus", "process_name", e.processStepName)
+			e.childLogger.Debugw("UpdateProcessStatus", "process_name", e.processStepName)
 
 			if err := e.CellAPIClient.UpdateProcessStatus(e.tbc.SN, e.processStepName, cellapi.StatusEnd); err != nil {
 				// keep trying the other transactions
-				e.Logger.Warn(err)
+				e.childLogger.Warn(err)
 			}
 		} else {
-			e.Logger.Warn("cell API mocked, skipping UpdateProcessStatus")
+			e.childLogger.Warn("cell API mocked, skipping UpdateProcessStatus")
 		}
 	}
 
@@ -64,11 +65,11 @@ func (e *EndProcess) action() {
 		msg += "; fixture faulted"
 	}
 
-	e.Logger.Info(msg)
+	e.childLogger.Info(msg)
 
 	// if this is manual we are done
 	if e.manual {
-		e.Logger.Info("done with tray")
+		e.childLogger.Info("done with tray")
 		return
 	}
 
@@ -81,13 +82,13 @@ func (e *EndProcess) action() {
 
 	b, err := json.Marshal(tc)
 	if err != nil {
-		fatalError(e, e.Logger, err)
+		fatalError(e, e.childLogger, err)
 		return
 	}
 
 	resp, err := http.Post(e.Config.Remote+_unloadEndpoint, "application/json", bytes.NewReader(b))
 	if err != nil {
-		fatalError(e, e.Logger, err)
+		fatalError(e, e.childLogger, err)
 		return
 	}
 
@@ -96,11 +97,11 @@ func (e *EndProcess) action() {
 	}()
 
 	if resp.StatusCode != 200 {
-		fatalError(e, e.Logger, fmt.Errorf("response NOT OK: %v, %v", resp.StatusCode, resp.Status))
+		fatalError(e, e.childLogger, fmt.Errorf("response NOT OK: %v, %v", resp.StatusCode, resp.Status))
 		return
 	}
 
-	e.Logger.Info("done with tray")
+	e.childLogger.Info("done with tray")
 }
 
 // Actions returns the action functions for this state
@@ -119,7 +120,7 @@ func (e *EndProcess) Actions() []func() {
 func (e *EndProcess) Next() statemachine.State {
 	if e.manual {
 		// all done
-		e.Logger.Debug("statemachine exiting")
+		e.childLogger.Debug("statemachine exiting")
 		return nil
 	}
 
@@ -127,12 +128,13 @@ func (e *EndProcess) Next() statemachine.State {
 		Config:        e.Config,
 		Logger:        e.Logger,
 		CellAPIClient: e.CellAPIClient,
+		childLogger:   e.childLogger,
 		mockCellAPI:   e.mockCellAPI,
 		fxbc:          e.fxbc,
 		fxrInfo:       e.fxrInfo,
 	}
 
-	e.Logger.Debugw("transitioning to next state", "next", statemachine.NameOf(next))
+	e.childLogger.Debugw("transitioning to next state", "next", statemachine.NameOf(next))
 
 	return next
 }
@@ -163,12 +165,12 @@ func (e *EndProcess) setCellStatusesSWIFT() {
 
 		m, ok := e.Config.CellMap[e.tbc.O.String()]
 		if !ok {
-			e.Logger.Error(fmt.Errorf("invalid tray position: %s", e.tbc.O.String()))
+			e.childLogger.Error(fmt.Errorf("invalid tray position: %s", e.tbc.O.String()))
 			return
 		}
 
 		if i > len(m) || len(m) == 0 {
-			e.Logger.Error(fmt.Errorf("invalid cell position index, cell list too large: %d > %d", i, len(m)))
+			e.childLogger.Error(fmt.Errorf("invalid cell position index, cell list too large: %d > %d", i, len(m)))
 			return
 		}
 
@@ -180,13 +182,13 @@ func (e *EndProcess) setCellStatusesSWIFT() {
 
 		cell, ok := e.cells[position]
 		if !ok {
-			e.Logger.Warn(fmt.Errorf("invalid cell position %s, unable to find cell serial", position))
+			e.childLogger.Warn(fmt.Errorf("invalid cell position %s, unable to find cell serial", position))
 			continue
 		}
 
 		psn, err := cellapi.RecipeToProcess(e.processStepName)
 		if err != nil {
-			e.Logger.Warn(fmt.Errorf("invalid recipe name %s, unable to find process name", e.processStepName))
+			e.childLogger.Warn(fmt.Errorf("invalid recipe name %s, unable to find process name", e.processStepName))
 			continue
 		}
 
@@ -198,16 +200,16 @@ func (e *EndProcess) setCellStatusesSWIFT() {
 	}
 
 	if len(failed) > 0 {
-		e.Logger.Info(fmt.Sprintf("failed cells: %s", strings.Join(failed, ", ")))
+		e.childLogger.Info(fmt.Sprintf("failed cells: %s", strings.Join(failed, ", ")))
 	}
 
 	if !e.mockCellAPI {
 		if err := e.CellAPIClient.SetCellStatusesSWIFT(cpf); err != nil {
-			e.Logger.Errorw("SetCellStatuses", "error", err)
+			e.childLogger.Errorw("SetCellStatuses", "error", err)
 			return
 		}
 	} else {
-		e.Logger.Warn("cell API mocked, skipping SetCellStatuses")
+		e.childLogger.Warn("cell API mocked, skipping SetCellStatuses")
 	}
 }
 
@@ -230,12 +232,12 @@ func (e *EndProcess) setCellStatuses() {
 
 		m, ok := e.Config.CellMap[e.tbc.O.String()]
 		if !ok {
-			e.Logger.Error(fmt.Errorf("invalid tray position: %s", e.tbc.O.String()))
+			e.childLogger.Error(fmt.Errorf("invalid tray position: %s", e.tbc.O.String()))
 			return
 		}
 
 		if i > len(m) || len(m) == 0 {
-			e.Logger.Error(fmt.Errorf("invalid cell position index, cell list too large: %d > %d", i, len(m)))
+			e.childLogger.Error(fmt.Errorf("invalid cell position index, cell list too large: %d > %d", i, len(m)))
 			return
 		}
 
@@ -247,7 +249,7 @@ func (e *EndProcess) setCellStatuses() {
 
 		cell, ok := e.cells[position]
 		if !ok {
-			e.Logger.Warn(fmt.Errorf("invalid cell position %s, unable to find cell serial", position))
+			e.childLogger.Warn(fmt.Errorf("invalid cell position %s, unable to find cell serial", position))
 			continue
 		}
 
@@ -260,15 +262,15 @@ func (e *EndProcess) setCellStatuses() {
 	}
 
 	if len(failed) > 0 {
-		e.Logger.Info(fmt.Sprintf("failed cells: %s", strings.Join(failed, ", ")))
+		e.childLogger.Info(fmt.Sprintf("failed cells: %s", strings.Join(failed, ", ")))
 	}
 
 	if !e.mockCellAPI {
 		if err := e.CellAPIClient.SetCellStatuses(cpf); err != nil {
-			e.Logger.Errorw("SetCellStatuses", "error", err)
+			e.childLogger.Errorw("SetCellStatuses", "error", err)
 			return
 		}
 	} else {
-		e.Logger.Warn("cell API mocked, skipping SetCellStatuses")
+		e.childLogger.Warn("cell API mocked, skipping SetCellStatuses")
 	}
 }

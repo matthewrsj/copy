@@ -74,7 +74,7 @@ func TestInProcess_Action(t *testing.T) {
 				},
 			},
 		},
-		Logger: zap.NewExample().Sugar(),
+		childLogger: zap.NewExample().Sugar(),
 		tbc: traycontrollers.TrayBarcode{
 			SN:  "11223344",
 			O:   traycontrollers.OrientationA,
@@ -142,7 +142,7 @@ func TestInProcess_Action(t *testing.T) {
 
 func TestInProcess_ActionNoFixture(t *testing.T) {
 	ipState := InProcess{
-		Logger: zap.NewExample().Sugar(),
+		childLogger: zap.NewExample().Sugar(),
 	}
 	as := ipState.Actions()
 
@@ -164,7 +164,7 @@ func TestInProcess_ActionNoIface(t *testing.T) {
 				},
 			},
 		},
-		Logger: zap.NewExample().Sugar(),
+		childLogger: zap.NewExample().Sugar(),
 		fxbc: traycontrollers.FixtureBarcode{
 			Location: "SWIFT",
 			Aisle:    "01",
@@ -199,7 +199,7 @@ func TestInProcess_ActionRecvBufErr(t *testing.T) {
 				},
 			},
 		},
-		Logger: zap.NewExample().Sugar(),
+		childLogger: zap.NewExample().Sugar(),
 		fxbc: traycontrollers.FixtureBarcode{
 			Location: "SWIFT",
 			Aisle:    "01",
@@ -241,7 +241,7 @@ func TestInProcess_ActionBadBuffer(t *testing.T) {
 				},
 			},
 		},
-		Logger: zap.NewExample().Sugar(),
+		childLogger: zap.NewExample().Sugar(),
 		fxbc: traycontrollers.FixtureBarcode{
 			Location: "SWIFT",
 			Aisle:    "01",
@@ -274,7 +274,7 @@ func TestInProcess_ActionBadBuffer(t *testing.T) {
 
 func TestInProcess_Next(t *testing.T) {
 	exp := "EndProcess"
-	if n := statemachine.NameOf((&InProcess{Logger: zap.NewExample().Sugar()}).Next()); n != exp {
+	if n := statemachine.NameOf((&InProcess{childLogger: zap.NewExample().Sugar()}).Next()); n != exp {
 		t.Errorf("expected next state name to be %s, got %s", exp, n)
 	}
 }

@@ -18,6 +18,7 @@ type ProcessStep struct {
 	Logger        *zap.SugaredLogger
 	CellAPIClient *cellapi.Client
 
+	childLogger     *zap.SugaredLogger
 	processStepName string
 	tbc             traycontrollers.TrayBarcode
 	fxbc            traycontrollers.FixtureBarcode
@@ -58,12 +59,13 @@ func (p *ProcessStep) action() {
 	p.processStepName = bc.ProcessStepName
 	p.inProgress = bc.InProgress
 
-	p.Logger = p.Logger.With(
+	p.childLogger = p.Logger.With(
 		"tray", p.tbc.SN,
 		"fixture", p.fxbc.Raw,
 		"process_step", p.processStepName,
 	)
-	p.Logger.Info("running process step")
+
+	p.childLogger.Info("running process step")
 }
 
 // Actions returns the action functions for this state
@@ -84,6 +86,7 @@ func (p *ProcessStep) Next() statemachine.State {
 			Config:          p.Config,
 			Logger:          p.Logger,
 			CellAPIClient:   p.CellAPIClient,
+			childLogger:     p.childLogger,
 			processStepName: p.processStepName,
 			tbc:             p.tbc,
 			fxbc:            p.fxbc,
@@ -98,6 +101,7 @@ func (p *ProcessStep) Next() statemachine.State {
 			Config:          p.Config,
 			Logger:          p.Logger,
 			CellAPIClient:   p.CellAPIClient,
+			childLogger:     p.childLogger,
 			processStepName: p.processStepName,
 			tbc:             p.tbc,
 			fxbc:            p.fxbc,
@@ -111,6 +115,7 @@ func (p *ProcessStep) Next() statemachine.State {
 			Config:          p.Config,
 			Logger:          p.Logger,
 			CellAPIClient:   p.CellAPIClient,
+			childLogger:     p.childLogger,
 			processStepName: p.processStepName,
 			fxbc:            p.fxbc,
 			tbc:             p.tbc,

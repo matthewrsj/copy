@@ -16,7 +16,7 @@ import (
 func TestEndProcess_Action(t *testing.T) {
 	exp := 1
 	as := (&EndProcess{
-		Logger: zap.NewExample().Sugar(),
+		childLogger: zap.NewExample().Sugar(),
 		Config: Configuration{
 			CellMap: map[string][]string{
 				"A": {"A01", "A02"},
@@ -95,7 +95,7 @@ func TestEndProcess_Action(t *testing.T) {
 func TestEndProcess_ActionSWIFT(t *testing.T) {
 	exp := 1
 	as := (&EndProcess{
-		Logger: zap.NewExample().Sugar(),
+		childLogger: zap.NewExample().Sugar(),
 		Config: Configuration{
 			CellMap: map[string][]string{
 				"A": {"A01", "A02"},
@@ -173,7 +173,7 @@ func TestEndProcess_ActionSWIFT(t *testing.T) {
 
 func TestEndProcess_ActionBadOrientation(t *testing.T) {
 	as := (&EndProcess{
-		Logger: zap.NewExample().Sugar(),
+		childLogger: zap.NewExample().Sugar(),
 		Config: Configuration{
 			CellMap: map[string][]string{
 				"A": {"A01", "A02"},
@@ -238,7 +238,7 @@ func TestEndProcess_ActionBadOrientation(t *testing.T) {
 
 func TestEndProcess_ActionShortMap(t *testing.T) {
 	as := (&EndProcess{
-		Logger: zap.NewExample().Sugar(),
+		childLogger: zap.NewExample().Sugar(),
 		Config: Configuration{
 			CellMap: map[string][]string{
 				"A": {},
@@ -304,7 +304,7 @@ func TestEndProcess_ActionShortMap(t *testing.T) {
 func TestEndProcess_ActionBadSetCellStatus(t *testing.T) {
 	exp := 1
 	as := (&EndProcess{
-		Logger: zap.NewExample().Sugar(),
+		childLogger: zap.NewExample().Sugar(),
 		Config: Configuration{
 			CellMap: map[string][]string{
 				"A": {"A01", "A02"},
@@ -381,7 +381,7 @@ func TestEndProcess_ActionBadSetCellStatus(t *testing.T) {
 }
 
 func TestEndProcess_Next(t *testing.T) {
-	if n := (&EndProcess{Logger: zap.NewExample().Sugar()}).Next(); statemachine.NameOf(n) != "Unloading" {
+	if n := (&EndProcess{childLogger: zap.NewExample().Sugar()}).Next(); statemachine.NameOf(n) != "Unloading" {
 		t.Errorf("expected next state Unloading, got %s", statemachine.NameOf(n))
 	}
 }

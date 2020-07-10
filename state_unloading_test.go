@@ -10,7 +10,7 @@ import (
 )
 
 func TestUnloading_Next(t *testing.T) {
-	assert.Equal(t, "Idle", statemachine.NameOf((&Unloading{Logger: zap.NewExample().Sugar()}).Next()))
+	assert.Equal(t, "Idle", statemachine.NameOf((&Unloading{childLogger: zap.NewExample().Sugar()}).Next()))
 }
 
 func TestUnloading_Actions(t *testing.T) {
@@ -24,7 +24,7 @@ func TestUnloading_Actions(t *testing.T) {
 				},
 			},
 		},
-		Logger: zap.NewExample().Sugar(),
+		childLogger: zap.NewExample().Sugar(),
 		fxbc: traycontrollers.FixtureBarcode{
 			Location: "",
 			Aisle:    "",
