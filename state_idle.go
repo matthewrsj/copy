@@ -63,17 +63,22 @@ func (i *Idle) action() {
 
 		// TODO: short circuit to in-progress if fixture status is active (or complete?)
 		i.next = &ProcessStep{
-			Config:          i.Config,
-			Logger:          i.Logger,
-			CellAPIClient:   i.CellAPIClient,
-			processStepName: fxrLoad.RecipeName,
-			tbc:             tbc,
-			fxbc:            fxbc,
-			steps:           fxrLoad.Steps,
-			recipeVersion:   fxrLoad.RecipeVersion,
-			mockCellAPI:     i.MockCellAPI,
-			fxrInfo:         i.FXRInfo,
+			Config:        i.Config,
+			Logger:        i.Logger,
+			CellAPIClient: i.CellAPIClient,
+			mockCellAPI:   i.MockCellAPI,
+			fxrInfo:       i.FXRInfo,
 		}
+
+		i.next.SetContext(Barcodes{
+			Fixture:         fxbc,
+			Tray:            tbc,
+			ProcessStepName: fxrLoad.RecipeName,
+			MockCellAPI:     i.MockCellAPI,
+			RecipeName:      fxrLoad.RecipeName,
+			RecipeVersion:   fxrLoad.RecipeVersion,
+			StepConf:        fxrLoad.Steps,
+		})
 	}
 }
 

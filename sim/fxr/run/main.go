@@ -146,16 +146,19 @@ func main() {
 
 					if err = proto.Unmarshal(buf, &msgt2f); err != nil {
 						// just means this isn't the message we are looking for
+						log.Println("wrong message")
 						continue
 					}
 
 					if msgt2f.GetSysinfo().GetProcessStep() == "" {
 						// not what we are looking for
+						log.Println("empty process step")
 						continue
 					}
 
 					if !strings.HasSuffix(strings.TrimSpace(msgt2f.GetSysinfo().GetFixturebarcode()), strings.TrimSpace(did.name)) {
 						// not what we are looking for
+						log.Println("wrong fixture")
 						continue
 					}
 
