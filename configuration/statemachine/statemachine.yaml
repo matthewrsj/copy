@@ -26,11 +26,6 @@ fixture_ids:
     rx: 0x1c2
     tx: 0x242
 
-can:
-  col1_dev: vcan0
-  col2_dev: vcan1
-  txid: 0x241
-
 cell_map:
   A: [
       A08, B08, C08, D08, E08, F08, G08, H08,
