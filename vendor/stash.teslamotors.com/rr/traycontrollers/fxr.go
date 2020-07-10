@@ -106,8 +106,10 @@ func (fl *FXRLayout) GetNeighbor(coord Coordinates) *FXR {
 		Lvl: coord.Lvl,
 	}
 
-	if coord.colIdx() == 0 {
+	if coord.colIdx() == 0 { // column 1, find neighbor in column 2
 		nc.Col = coord.Col + 1
+	} else { // column 2, find neighbor in column 1
+		nc.Col = coord.Col - 1
 	}
 
 	return fl.Get(nc)
@@ -207,10 +209,15 @@ func (fl *FXRLayout) String() string {
 			Lvl: i,
 		})
 
-		ss = append(ss, fmt.Sprintf("%s  |  %s", left, right))
+		ss = append(ss,
+			[]string{
+				fmt.Sprintf("col: %d, lvl: %d, status: %s, in-use: %v", left.Coord.Col, left.Coord.Lvl, left.Status, left.InUse),
+				fmt.Sprintf("col: %d, lvl: %d, status: %s, in-use: %v", right.Coord.Col, right.Coord.Lvl, right.Status, right.InUse),
+			}...,
+		)
 	}
 
-	return strings.Join(ss, "\n")
+	return strings.Join(ss, "||")
 }
 
 type locIdx int
