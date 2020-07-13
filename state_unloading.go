@@ -58,17 +58,23 @@ func (u *Unloading) action() {
 	for {
 		data, err := dev.RecvBuf()
 		if err != nil {
-			fatalError(u, u.childLogger, fmt.Errorf("RecvBuf: %v", err))
+			u.childLogger.Infow("unable to receive buffer", "error", err)
+			continue
 		}
 
 		msg := &pb.FixtureToTower{}
 
 		if err = proto.Unmarshal(data, msg); err != nil {
-			u.childLogger.Debug("expecting FixtureToTower message", "error", err)
+			u.childLogger.Infow("expecting FixtureToTower message", "error", err)
 			continue
 		}
 
-		if msg.GetOp().GetStatus() != pb.FixtureStatus_FIXTURE_STATUS_COMPLETE {
+		status := msg.GetOp().GetStatus()
+
+		u.childLogger.Infow("received status", "status", status.String())
+
+		// fixture will stay in fault, don't wait for it to go to idle before we go back to idle
+		if status == pb.FixtureStatus_FIXTURE_STATUS_IDLE || status == pb.FixtureStatus_FIXTURE_STATUS_FAULTED {
 			u.childLogger.Info("tray unloaded")
 			break
 		}

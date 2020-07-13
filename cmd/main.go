@@ -82,8 +82,9 @@ func main() {
 	registry := make(map[string]*towercontroller.FixtureInfo)
 	for name := range conf.Fixtures {
 		registry[name] = &towercontroller.FixtureInfo{
-			PFD: make(chan traycontrollers.PreparedForDelivery),
-			LDC: make(chan traycontrollers.FXRLoad),
+			Name: name,
+			PFD:  make(chan traycontrollers.PreparedForDelivery),
+			LDC:  make(chan traycontrollers.FXRLoad),
 		}
 	}
 	// handle incoming requests on availability

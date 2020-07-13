@@ -8,6 +8,7 @@ import (
 
 // FixtureInfo contains the feeds for messages from the C/D Controller
 type FixtureInfo struct {
+	Name  string
 	PFD   chan traycontrollers.PreparedForDelivery
 	LDC   chan traycontrollers.FXRLoad
 	Avail ReadyStatus

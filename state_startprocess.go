@@ -29,7 +29,7 @@ type StartProcess struct {
 	fxbc            traycontrollers.FixtureBarcode
 	steps           traycontrollers.StepConfiguration
 	cells           map[string]cellapi.CellData
-	canErr, apiErr  error
+	canErr          error
 	manual          bool
 	mockCellAPI     bool
 	recipeVersion   int
@@ -62,37 +62,12 @@ func (s *StartProcess) action() {
 		})
 	}
 
-	if !s.mockCellAPI {
-		s.childLogger.Info("GetCellMap")
+	var err error
 
-		if s.cells, s.apiErr = s.CellAPIClient.GetCellMap(s.tbc.SN); s.apiErr != nil {
-			fatalError(s, s.childLogger, s.apiErr)
-			return
-		}
-	} else {
-		s.childLogger.Warn("cell API mocked, skipping GetCellMap and populating a few cells")
-		s.cells = map[string]cellapi.CellData{
-			"A01": {
-				Position: "A01",
-				Serial:   "TESTA01",
-				IsEmpty:  false,
-			},
-			"A02": {
-				Position: "A02",
-				Serial:   "TESTA02",
-				IsEmpty:  false,
-			},
-			"A03": {
-				Position: "A03",
-				Serial:   "TESTA03",
-				IsEmpty:  false,
-			},
-			"A04": {
-				Position: "A04",
-				Serial:   "TESTA04",
-				IsEmpty:  false,
-			},
-		}
+	s.cells, err = getCellMap(s.mockCellAPI, s.childLogger, s.CellAPIClient, s.tbc.SN)
+	if err != nil {
+		fatalError(s, s.childLogger, err)
+		return
 	}
 
 	s.childLogger.Infow("GetCellMap complete", "cells", s.cells)

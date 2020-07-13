@@ -53,6 +53,16 @@ func (e *EndProcess) action() {
 		}
 	}
 
+	if len(e.cells) == 0 { // we short-circuited here or something went wrong, just re-get the map
+		e.childLogger.Info("empty cell map, querying API for new map")
+
+		var err error
+		if e.cells, err = getCellMap(e.mockCellAPI, e.childLogger, e.CellAPIClient, e.tbc.SN); err != nil {
+			fatalError(e, e.childLogger, err)
+			return
+		}
+	}
+
 	if e.manual {
 		e.setCellStatusesSWIFT()
 	} else {
