@@ -20,7 +20,7 @@ const (
 	_logLvlDef   = zapcore.InfoLevel
 	_logFileDef  = "logs/towercontroller/statemachine.log"
 	_confFileDef = "../configuration/statemachine/statemachine.yaml"
-	_localDef    = ":13167"
+	_localDef    = "0.0.0.0:13167"
 )
 
 // nolint:funlen // main func
