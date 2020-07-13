@@ -17,10 +17,22 @@ import (
 const _availabilityEndpoint = "/avail"
 
 // HandleAvailable is the handler for the endpoint reporting availability of fixtures
-// nolint:gocognit // ignore
-func HandleAvailable(conf Configuration, logger *zap.SugaredLogger, registry map[string]*FixtureInfo) {
+// nolint:gocognit,funlen // ignore
+func HandleAvailable(configPath string, logger *zap.SugaredLogger, registry map[string]*FixtureInfo) {
 	http.HandleFunc(_availabilityEndpoint, func(w http.ResponseWriter, r *http.Request) {
 		logger.Infow("got request to /avail", "remote", r.RemoteAddr)
+
+		var (
+			conf Configuration
+			err  error
+		)
+
+		if conf, err = LoadConfig(configPath); err != nil {
+			logger.Errorw("read configuration file", "error", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+
+			return
+		}
 
 		avail := make(chan traycontrollers.FXRAvailable)
 		done := make(chan struct{})
@@ -42,8 +54,13 @@ func HandleAvailable(conf Configuration, logger *zap.SugaredLogger, registry map
 					wg.Done()
 				}()
 
-				dev, err := socketcan.NewIsotpInterface(fConf.Bus, fConf.RX, fConf.TX)
-				if err != nil {
+				// nolint:govet // allow shadow of err declaration for go routine scope
+				var (
+					dev socketcan.Interface
+					err error
+				)
+
+				if dev, err = socketcan.NewIsotpInterface(fConf.Bus, fConf.RX, fConf.TX); err != nil {
 					logger.Errorw("create new ISOTP interface", "FXR", n, "error", err)
 					avail <- traycontrollers.FXRAvailable{
 						Location: fmt.Sprintf("%s-%s%s-%s", conf.Loc.Line, conf.Loc.Process, conf.Loc.Aisle, n),
@@ -79,8 +96,9 @@ func HandleAvailable(conf Configuration, logger *zap.SugaredLogger, registry map
 
 				logger.Debugw("set recv timeout", "FXR", n)
 
-				buf, err := dev.RecvBuf()
-				if err != nil {
+				var buf []byte
+
+				if buf, err = dev.RecvBuf(); err != nil {
 					// only a warn because a timeout could have occurred which isn't as drastic
 					logger.Warnw("receive buffer", "FXR", n, "error", err)
 					avail <- traycontrollers.FXRAvailable{

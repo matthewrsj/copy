@@ -9,3 +9,4 @@ services:
     network_mode: host
     volumes:
       - /var/log/towercontroller:/go/src/app/cmd/logs/towercontroller
+      - /etc/towercontroller.d:/etc/towercontroller.d

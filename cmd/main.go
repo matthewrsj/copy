@@ -19,7 +19,7 @@ import (
 const (
 	_logLvlDef   = zapcore.InfoLevel
 	_logFileDef  = "logs/towercontroller/statemachine.log"
-	_confFileDef = "../configuration/statemachine/statemachine.yaml"
+	_confFileDef = "/etc/towercontroller.d/statemachine.yaml"
 	_localDef    = "0.0.0.0:13167"
 )
 
@@ -87,7 +87,7 @@ func main() {
 		}
 	}
 	// handle incoming requests on availability
-	towercontroller.HandleAvailable(conf, sugar, registry)
+	towercontroller.HandleAvailable(*configFile, sugar, registry)
 	// handle incoming posts to load
 	towercontroller.HandleLoad(conf, sugar, registry)
 	// handle incoming posts to preparedForDelivery
