@@ -58,6 +58,7 @@ func HandleAvailable(configPath string, logger *zap.SugaredLogger, registry map[
 				var (
 					dev socketcan.Interface
 					err error
+					msg pb.FixtureToTower
 				)
 
 				if dev, err = socketcan.NewIsotpInterface(fConf.Bus, fConf.RX, fConf.TX); err != nil {
@@ -96,27 +97,27 @@ func HandleAvailable(configPath string, logger *zap.SugaredLogger, registry map[
 
 				logger.Debugw("set recv timeout", "FXR", n)
 
-				var buf []byte
+				for {
+					var buf []byte
 
-				if buf, err = dev.RecvBuf(); err != nil {
-					// only a warn because a timeout could have occurred which isn't as drastic
-					logger.Warnw("receive buffer", "FXR", n, "error", err)
-					avail <- traycontrollers.FXRAvailable{
-						Location: fmt.Sprintf("%s-%s%s-%s", conf.Loc.Line, conf.Loc.Process, conf.Loc.Aisle, n),
+					if buf, err = dev.RecvBuf(); err != nil {
+						// only a warn because a timeout could have occurred which isn't as drastic
+						logger.Warnw("receive buffer", "FXR", n, "error", err)
+						avail <- traycontrollers.FXRAvailable{
+							Location: fmt.Sprintf("%s-%s%s-%s", conf.Loc.Line, conf.Loc.Process, conf.Loc.Aisle, n),
+						}
+
+						return
 					}
 
-					return
-				}
+					logger.Debugw("received message from FXR", "FXR", n)
 
-				logger.Debugw("received message from FXR", "FXR", n)
-
-				var msg pb.FixtureToTower
-				if err = proto.Unmarshal(buf, &msg); err != nil {
-					avail <- traycontrollers.FXRAvailable{
-						Location: fmt.Sprintf("%s-%s%s-%s", conf.Loc.Line, conf.Loc.Process, conf.Loc.Aisle, n),
+					if err = proto.Unmarshal(buf, &msg); err != nil {
+						logger.Debugw("not the message we were expecting", "error", err)
+						continue
 					}
 
-					return
+					break
 				}
 
 				logger.Debugw("fixture status", "FXR", n, "status", msg.GetOp().GetStatus().String())
