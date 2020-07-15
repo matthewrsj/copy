@@ -246,7 +246,7 @@ func (i *Idle) monitorForStatus(done <-chan struct{}, active chan<- inProgressIn
 				// go to in-progress
 				active <- ipInfo
 				return
-			case pb.FixtureStatus_FIXTURE_STATUS_COMPLETE, pb.FixtureStatus_FIXTURE_STATUS_FAULTED:
+			case pb.FixtureStatus_FIXTURE_STATUS_COMPLETE:
 				// go to unload
 				complete <- ipInfo
 				return
