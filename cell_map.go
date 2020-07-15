@@ -6,7 +6,7 @@ import (
 )
 
 func getCellMap(mockCellAPI bool, logger *zap.SugaredLogger, ca *cellapi.Client, tray string) (map[string]cellapi.CellData, error) {
-	if mockCellAPI {
+	if !mockCellAPI {
 		logger.Info("GetCellMap")
 		return ca.GetCellMap(tray)
 	}
