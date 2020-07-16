@@ -6,6 +6,7 @@ import (
 	"go.uber.org/zap"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cellapi"
+	"stash.teslamotors.com/rr/protostream"
 	"stash.teslamotors.com/rr/traycontrollers"
 )
 
@@ -17,6 +18,7 @@ type ProcessStep struct {
 	Config        Configuration
 	Logger        *zap.SugaredLogger
 	CellAPIClient *cellapi.Client
+	SubscribeChan <-chan *protostream.Message
 
 	childLogger     *zap.SugaredLogger
 	processStepName string
@@ -89,6 +91,7 @@ func (p *ProcessStep) Next() statemachine.State {
 			Config:          p.Config,
 			Logger:          p.Logger,
 			CellAPIClient:   p.CellAPIClient,
+			SubscribeChan:   p.SubscribeChan,
 			childLogger:     p.childLogger,
 			processStepName: p.processStepName,
 			tbc:             p.tbc,
@@ -104,6 +107,7 @@ func (p *ProcessStep) Next() statemachine.State {
 			Config:          p.Config,
 			Logger:          p.Logger,
 			CellAPIClient:   p.CellAPIClient,
+			SubscribeChan:   p.SubscribeChan,
 			childLogger:     p.childLogger,
 			processStepName: p.processStepName,
 			transactID:      p.transactID,
@@ -119,6 +123,7 @@ func (p *ProcessStep) Next() statemachine.State {
 			Config:          p.Config,
 			Logger:          p.Logger,
 			CellAPIClient:   p.CellAPIClient,
+			SubscribeChan:   p.SubscribeChan,
 			childLogger:     p.childLogger,
 			processStepName: p.processStepName,
 			transactID:      p.transactID,

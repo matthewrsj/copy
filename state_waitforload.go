@@ -6,6 +6,7 @@ import (
 	"go.uber.org/zap"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cellapi"
+	"stash.teslamotors.com/rr/protostream"
 	"stash.teslamotors.com/rr/traycontrollers"
 )
 
@@ -16,6 +17,7 @@ type WaitForLoad struct {
 	Config        Configuration
 	Logger        *zap.SugaredLogger
 	CellAPIClient *cellapi.Client
+	SubscribeChan <-chan *protostream.Message
 
 	tbc             traycontrollers.TrayBarcode
 	fxbc            traycontrollers.FixtureBarcode
@@ -92,6 +94,7 @@ func (w *WaitForLoad) Next() statemachine.State {
 			Config:        w.Config,
 			Logger:        w.Logger,
 			CellAPIClient: w.CellAPIClient,
+			SubscribeChan: w.SubscribeChan,
 			Manual:        w.manual,
 			MockCellAPI:   w.mockCellAPI,
 			FXRInfo:       w.fxrInfo,
@@ -101,6 +104,7 @@ func (w *WaitForLoad) Next() statemachine.State {
 			Config:        w.Config,
 			Logger:        w.Logger,
 			CellAPIClient: w.CellAPIClient,
+			SubscribeChan: w.SubscribeChan,
 			fxrInfo:       w.fxrInfo,
 		}
 

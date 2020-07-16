@@ -1,13 +1,14 @@
 package towercontroller
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
-	"stash.teslamotors.com/ctet/go-socketcan/pkg/socketcan"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cellapi"
+	"stash.teslamotors.com/rr/protostream"
 	pb "stash.teslamotors.com/rr/towerproto"
 	"stash.teslamotors.com/rr/traycontrollers"
 )
@@ -19,6 +20,7 @@ type InProcess struct {
 	Config        Configuration
 	Logger        *zap.SugaredLogger
 	CellAPIClient *cellapi.Client
+	SubscribeChan <-chan *protostream.Message
 
 	childLogger     *zap.SugaredLogger
 	tbc             traycontrollers.TrayBarcode
@@ -29,56 +31,31 @@ type InProcess struct {
 	mockCellAPI     bool
 	cells           map[string]cellapi.CellData
 	cellResponse    []*pb.Cell
-	canErr          error
 	recipeVersion   int
 
 	fxrInfo *FixtureInfo
 }
 
 func (i *InProcess) action() {
-	fConf, ok := i.Config.Fixtures[IDFromFXR(i.fxbc)]
-	if !ok {
-		fatalError(i, i.childLogger, fmt.Errorf("fixture %s not configured for tower controller", IDFromFXR(i.fxbc)))
-		return
-	}
-
-	i.childLogger.Info("creating ISOTP interface to monitor fixture")
-
-	var dev socketcan.Interface
-
-	if dev, i.canErr = socketcan.NewIsotpInterface(fConf.Bus, fConf.RX, fConf.TX); i.canErr != nil {
-		fatalError(i, i.childLogger, i.canErr)
-		return
-	}
-
-	defer func() {
-		_ = dev.Close()
-	}()
-
-	if err := dev.SetCANFD(); err != nil {
-		fatalError(i, i.childLogger, err)
-		return
-	}
-
 	i.childLogger.Info("monitoring fixture to go to complete or fault")
 
-	for {
-		var data []byte
+	for lMsg := range i.SubscribeChan {
+		i.childLogger.Debugw("got message", "message", lMsg.Msg)
 
-		data, i.canErr = dev.RecvBuf()
-		if i.canErr != nil {
-			fatalError(i, i.childLogger, i.canErr)
-			return
+		var event protostream.ProtoMessage
+		if err := json.Unmarshal(lMsg.Msg.Body, &event); err != nil {
+			i.Logger.Debugw("unmarshal JSON frame", "error", err, "bytes", string(lMsg.Msg.Body))
+			continue
 		}
 
 		msg := &pb.FixtureToTower{}
 
-		if i.canErr = proto.Unmarshal(data, msg); i.canErr != nil {
-			fatalError(i, i.childLogger, i.canErr)
+		if err := proto.Unmarshal(event.Body, msg); err != nil {
+			i.Logger.Debugw("unmarshal proto", "error", err)
 			return
 		}
 
-		i.childLogger.Debug("got FixtureToTower message")
+		i.childLogger.Infow("got FixtureToTower message", "msg", msg.String())
 
 		fxbcBroadcast, err := traycontrollers.NewFixtureBarcode(msg.GetFixturebarcode())
 		if err != nil {
@@ -129,6 +106,7 @@ func (i *InProcess) Next() statemachine.State {
 		Config:          i.Config,
 		Logger:          i.Logger,
 		CellAPIClient:   i.CellAPIClient,
+		SubscribeChan:   i.SubscribeChan,
 		childLogger:     i.childLogger,
 		tbc:             i.tbc,
 		fxbc:            i.fxbc,

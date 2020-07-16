@@ -12,6 +12,7 @@ type Configuration struct {
 	RecipeFile      string                 `yaml:"recipefile"`
 	IngredientsFile string                 `yaml:"ingredientsfile"`
 	Remote          string                 `yaml:"cdcontroller_remote"`
+	RouterAddress   string                 `yaml:"router_address"`
 	CellAPI         cellAPIConf            `yaml:"cell_api"`
 	Loc             location               `yaml:"location"`
 	Fixtures        map[string]fixtureConf `yaml:"fixture_ids"`

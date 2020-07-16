@@ -1,14 +1,12 @@
 package towercontroller
 
 import (
-	"reflect"
 	"testing"
 
-	"bou.ke/monkey"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
-	"stash.teslamotors.com/ctet/go-socketcan/pkg/socketcan"
 	"stash.teslamotors.com/ctet/statemachine/v2"
+	"stash.teslamotors.com/rr/protostream"
 	pb "stash.teslamotors.com/rr/towerproto"
 	"stash.teslamotors.com/rr/traycontrollers"
 )
@@ -18,7 +16,9 @@ func TestUnloading_Next(t *testing.T) {
 }
 
 func TestUnloading_Actions(t *testing.T) {
+	sc := make(chan *protostream.Message)
 	ul := &Unloading{
+		SubscribeChan: sc,
 		Config: Configuration{
 			Fixtures: map[string]fixtureConf{
 				"01-01": {
@@ -39,20 +39,21 @@ func TestUnloading_Actions(t *testing.T) {
 		fxrInfo: &FixtureInfo{},
 	}
 
-	prb := monkey.PatchInstanceMethod(
-		reflect.TypeOf(socketcan.Interface{}),
-		"RecvBuf",
-		patchRecvBuffFunc(
-			&pb.FixtureToTower{
-				Content: &pb.FixtureToTower_Op{
-					Op: &pb.FixtureOperational{
-						Status: pb.FixtureStatus_FIXTURE_STATUS_IDLE,
-					},
-				},
+	msg, err := marshalMessage(
+		&pb.FixtureToTower{
+			Content: &pb.FixtureToTower_Op{
+				Op: &pb.FixtureOperational{Status: pb.FixtureStatus_FIXTURE_STATUS_IDLE},
 			},
-		),
+		},
 	)
-	defer prb.Unpatch()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	go func() {
+		sc <- msg
+		close(sc)
+	}()
 
 	as := ul.Actions()
 

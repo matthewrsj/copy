@@ -3,6 +3,7 @@ package towercontroller
 import (
 	"sync"
 
+	"stash.teslamotors.com/rr/protostream"
 	"stash.teslamotors.com/rr/traycontrollers"
 )
 
@@ -11,6 +12,7 @@ type FixtureInfo struct {
 	Name  string
 	PFD   chan traycontrollers.PreparedForDelivery
 	LDC   chan traycontrollers.FXRLoad
+	SC    <-chan *protostream.Message
 	Avail ReadyStatus
 }
 

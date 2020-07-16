@@ -5,11 +5,10 @@ import (
 	"fmt"
 	"net/http"
 	"sync"
-	"time"
 
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
-	"stash.teslamotors.com/ctet/go-socketcan/pkg/socketcan"
+	"stash.teslamotors.com/rr/protostream"
 	pb "stash.teslamotors.com/rr/towerproto"
 	"stash.teslamotors.com/rr/traycontrollers"
 )
@@ -48,46 +47,22 @@ func HandleAvailable(configPath string, logger *zap.SugaredLogger, registry map[
 
 		wg.Add(len(conf.Fixtures))
 
-		for n, fConf := range conf.Fixtures {
-			go func(n string, fConf fixtureConf) {
-				defer func() {
-					wg.Done()
-				}()
+		for n := range conf.Fixtures {
+			go func(n string) {
+				defer wg.Done()
+
+				cl := logger.With("fixture", n)
+				cl.Debug("checking availability on fixture")
 
 				// nolint:govet // allow shadow of err declaration for go routine scope
 				var (
-					dev socketcan.Interface
 					err error
 					msg pb.FixtureToTower
 				)
 
-				if dev, err = socketcan.NewIsotpInterface(fConf.Bus, fConf.RX, fConf.TX); err != nil {
-					logger.Errorw("create new ISOTP interface", "FXR", n, "error", err)
-					avail <- traycontrollers.FXRAvailable{
-						Location: fmt.Sprintf("%s-%s%s-%s", conf.Loc.Line, conf.Loc.Process, conf.Loc.Aisle, n),
-					}
-					return
-				}
-
-				defer func() {
-					// always try to close it out
-					_ = dev.Close()
-				}()
-
-				logger.Debugw("created ISOTP interface", "FXR", n)
-
-				if err = dev.SetCANFD(); err != nil {
-					logger.Errorw("set CANFD on ISTOP interface", "FXR", n, "error", err)
-					avail <- traycontrollers.FXRAvailable{
-						Location: fmt.Sprintf("%s-%s%s-%s", conf.Loc.Line, conf.Loc.Process, conf.Loc.Aisle, n),
-					}
-					return
-				}
-
-				logger.Debugw("set CANFD flags", "FXR", n)
-
-				if err = dev.SetRecvTimeout(time.Second * 3); err != nil {
-					logger.Errorw("set recv timeout on ISOTP interface", "FXR", n, "error", err)
+				fxrInfo, ok := registry[n]
+				if !ok {
+					cl.Warn("fixture not in registry")
 					avail <- traycontrollers.FXRAvailable{
 						Location: fmt.Sprintf("%s-%s%s-%s", conf.Loc.Line, conf.Loc.Process, conf.Loc.Aisle, n),
 					}
@@ -95,54 +70,45 @@ func HandleAvailable(configPath string, logger *zap.SugaredLogger, registry map[
 					return
 				}
 
-				logger.Debugw("set recv timeout", "FXR", n)
+				for lMsg := range fxrInfo.SC {
+					cl.Debugw("got message, checking if fixture is available", "message", lMsg.Msg)
 
-				for {
-					var buf []byte
-
-					if buf, err = dev.RecvBuf(); err != nil {
-						// only a warn because a timeout could have occurred which isn't as drastic
-						logger.Warnw("receive buffer", "FXR", n, "error", err)
-						avail <- traycontrollers.FXRAvailable{
-							Location: fmt.Sprintf("%s-%s%s-%s", conf.Loc.Line, conf.Loc.Process, conf.Loc.Aisle, n),
-						}
-
-						return
+					var event protostream.ProtoMessage
+					if err = json.Unmarshal(lMsg.Msg.Body, &event); err != nil {
+						cl.Debugw("unmarshal JSON frame", "error", err, "bytes", string(lMsg.Msg.Body))
+						continue
 					}
 
-					logger.Debugw("received message from FXR", "FXR", n)
+					cl.Debug("received message from FXR, unmarshalling to check if it is available")
 
-					if err = proto.Unmarshal(buf, &msg); err != nil {
-						logger.Debugw("not the message we were expecting", "error", err)
+					if err = proto.Unmarshal(event.Body, &msg); err != nil {
+						cl.Debugw("not the message we were expecting", "error", err)
+						continue
+					}
+
+					if msg.GetOp() == nil {
+						cl.Debugw("look for the next message, this is diagnostic", "msg", msg.String())
 						continue
 					}
 
 					break
 				}
 
-				logger.Debugw("fixture status", "FXR", n, "status", msg.GetOp().GetStatus().String())
-
-				fxrInfo, ok := registry[n]
-				if !ok {
-					logger.Warnw("fixture not in registry", "fixture", n)
-					avail <- traycontrollers.FXRAvailable{
-						Location: fmt.Sprintf("%s-%s%s-%s", conf.Loc.Line, conf.Loc.Process, conf.Loc.Aisle, n),
-					}
-
-					return
-				}
+				cl.Debugw("fixture status, checking if available", "status", msg.GetOp().GetStatus().String())
 
 				avail <- traycontrollers.FXRAvailable{
 					Location: fmt.Sprintf("%s-%s%s-%s", conf.Loc.Line, conf.Loc.Process, conf.Loc.Aisle, n),
 					Status:   msg.GetOp().GetStatus(),
 					Reserved: fxrInfo.Avail.Status() == StatusWaitingForLoad,
 				}
-			}(n, fConf)
+			}(n)
 		}
 
+		logger.Debug("waiting for all routines to finish getting status")
 		wg.Wait()
 		close(avail)
 
+		logger.Debug("waiting for all data to be consumed")
 		<-done
 
 		body, err := json.Marshal(as)
@@ -157,5 +123,7 @@ func HandleAvailable(configPath string, logger *zap.SugaredLogger, registry map[
 			logger.Errorw("write body to responsewriter", "error", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
+
+		logger.Info("sent response to request to /avail")
 	})
 }

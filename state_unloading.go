@@ -1,13 +1,13 @@
 package towercontroller
 
 import (
-	"fmt"
+	"encoding/json"
 
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
-	"stash.teslamotors.com/ctet/go-socketcan/pkg/socketcan"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cellapi"
+	"stash.teslamotors.com/rr/protostream"
 	pb "stash.teslamotors.com/rr/towerproto"
 	"stash.teslamotors.com/rr/traycontrollers"
 )
@@ -19,6 +19,7 @@ type Unloading struct {
 	Config        Configuration
 	Logger        *zap.SugaredLogger
 	CellAPIClient *cellapi.Client
+	SubscribeChan <-chan *protostream.Message
 
 	childLogger *zap.SugaredLogger
 	manual      bool
@@ -32,40 +33,24 @@ type Unloading struct {
 func (u *Unloading) action() {
 	u.fxrInfo.Avail.Set(StatusUnloading)
 
-	fConf, ok := u.Config.Fixtures[IDFromFXR(u.fxbc)]
-	if !ok {
-		fatalError(u, u.childLogger, fmt.Errorf("fixture %s not configured for tower controller", IDFromFXR(u.fxbc)))
-		return
-	}
+	for lMsg := range u.SubscribeChan {
+		u.childLogger.Debugw("unloading: got message", "message", lMsg.Msg)
 
-	u.childLogger.Info("creating ISOTP interface to monitor fixture for unload")
-
-	dev, err := socketcan.NewIsotpInterface(fConf.Bus, fConf.RX, fConf.TX)
-	if err != nil {
-		fatalError(u, u.childLogger, fmt.Errorf("NewIsotpInterface: %v", err))
-		return
-	}
-
-	defer func() {
-		_ = dev.Close()
-	}()
-
-	if err := dev.SetCANFD(); err != nil {
-		fatalError(u, u.childLogger, fmt.Errorf("SetCANFD: %v", err))
-		return
-	}
-
-	for {
-		data, err := dev.RecvBuf()
-		if err != nil {
-			u.childLogger.Infow("unable to receive buffer", "error", err)
+		var event protostream.ProtoMessage
+		if err := json.Unmarshal(lMsg.Msg.Body, &event); err != nil {
+			u.childLogger.Debugw("unmarshal JSON frame", "error", err, "bytes", string(lMsg.Msg.Body))
 			continue
 		}
 
 		msg := &pb.FixtureToTower{}
 
-		if err = proto.Unmarshal(data, msg); err != nil {
+		if err := proto.Unmarshal(event.Body, msg); err != nil {
 			u.childLogger.Infow("expecting FixtureToTower message", "error", err)
+			continue
+		}
+
+		if msg.GetOp() == nil {
+			u.childLogger.Debugw("got non-operational message, checking next one", "msg", msg.String())
 			continue
 		}
 
@@ -94,6 +79,7 @@ func (u *Unloading) Next() statemachine.State {
 		Config:        u.Config,
 		Logger:        u.Logger,
 		CellAPIClient: u.CellAPIClient,
+		SubscribeChan: u.SubscribeChan,
 		Manual:        u.manual,
 		MockCellAPI:   u.mockCellAPI,
 		FXRInfo:       u.fxrInfo,

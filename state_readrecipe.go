@@ -4,6 +4,7 @@ import (
 	"go.uber.org/zap"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cellapi"
+	"stash.teslamotors.com/rr/protostream"
 	"stash.teslamotors.com/rr/traycontrollers"
 )
 
@@ -14,6 +15,7 @@ type ReadRecipe struct {
 	Config        Configuration
 	Logger        *zap.SugaredLogger
 	CellAPIClient *cellapi.Client
+	SubscribeChan <-chan *protostream.Message
 
 	childLogger     *zap.SugaredLogger
 	processStepName string
@@ -52,6 +54,7 @@ func (r *ReadRecipe) Next() statemachine.State {
 		Config:          r.Config,
 		Logger:          r.Logger,
 		CellAPIClient:   r.CellAPIClient,
+		SubscribeChan:   r.SubscribeChan,
 		childLogger:     r.childLogger,
 		processStepName: r.processStepName,
 		transactID:      r.transactID,

@@ -14,7 +14,7 @@ import (
 	pb "stash.teslamotors.com/rr/towerproto"
 )
 
-const _confFileDef = "../../../configuration/statemachine/statemachine.yaml"
+const _confFileDef = "/etc/towercontroller.d/statemachine.yaml"
 
 func main() {
 	configFile := flag.String("conf", _confFileDef, "path to the configuration file")
@@ -54,7 +54,7 @@ func main() {
 	var i int
 
 	for n, fConf := range conf.Fixtures {
-		log.Printf("%x WRITING TO %x", fConf.TX, fConf.RX)
+		log.Printf("%x WRITING TO %x", fConf.RX, fConf.TX)
 
 		dev, err := socketcan.NewIsotpInterface(fConf.Bus, fConf.TX, fConf.RX)
 		if err != nil {
@@ -94,6 +94,7 @@ func main() {
 				Fixturebarcode: ctx.fxbc,
 				Traybarcode:    ctx.tbc,
 				ProcessStep:    ctx.pstep,
+				TransactionId:  1,
 			}
 
 			pkt, err := proto.Marshal(msgOp)

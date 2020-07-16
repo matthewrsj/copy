@@ -4,6 +4,7 @@ go 1.14
 
 require (
 	bou.ke/monkey v1.0.2
+	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/fatih/color v1.9.0
 	github.com/manifoldco/promptui v0.7.0
 	github.com/stretchr/testify v1.6.1
@@ -14,6 +15,7 @@ require (
 	stash.teslamotors.com/ctet/go-socketcan v0.0.2
 	stash.teslamotors.com/ctet/statemachine/v2 v2.0.1
 	stash.teslamotors.com/rr/cellapi v0.0.2
+	stash.teslamotors.com/rr/protostream v0.0.1
 	stash.teslamotors.com/rr/towerproto v0.0.6
 	stash.teslamotors.com/rr/traycontrollers v0.0.7
 )

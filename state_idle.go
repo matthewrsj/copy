@@ -1,14 +1,14 @@
 package towercontroller
 
 import (
+	"encoding/json"
 	"fmt"
-	"time"
 
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
-	"stash.teslamotors.com/ctet/go-socketcan/pkg/socketcan"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cellapi"
+	"stash.teslamotors.com/rr/protostream"
 	pb "stash.teslamotors.com/rr/towerproto"
 	"stash.teslamotors.com/rr/traycontrollers"
 )
@@ -20,6 +20,7 @@ type Idle struct {
 	Config        Configuration
 	Logger        *zap.SugaredLogger
 	CellAPIClient *cellapi.Client
+	SubscribeChan <-chan *protostream.Message
 
 	Manual      bool
 	MockCellAPI bool
@@ -55,6 +56,7 @@ waitForUpdate:
 			Config:        i.Config,
 			Logger:        i.Logger,
 			CellAPIClient: i.CellAPIClient,
+			SubscribeChan: i.SubscribeChan,
 			tbc:           tbc,
 			fxbc:          fxbc,
 			manual:        i.Manual,
@@ -77,6 +79,7 @@ waitForUpdate:
 			Config:        i.Config,
 			Logger:        i.Logger,
 			CellAPIClient: i.CellAPIClient,
+			SubscribeChan: i.SubscribeChan,
 			mockCellAPI:   i.MockCellAPI,
 			fxrInfo:       i.FXRInfo,
 		}
@@ -115,6 +118,7 @@ waitForUpdate:
 			Config:          i.Config,
 			Logger:          i.Logger,
 			CellAPIClient:   i.CellAPIClient,
+			SubscribeChan:   i.SubscribeChan,
 			tbc:             tbc,
 			fxbc:            fxbc,
 			processStepName: ip.processStep,
@@ -147,6 +151,7 @@ waitForUpdate:
 			Config:        i.Config,
 			Logger:        i.Logger,
 			CellAPIClient: i.CellAPIClient,
+			SubscribeChan: i.SubscribeChan,
 			fxbc:          fxbc,
 			mockCellAPI:   i.MockCellAPI,
 			fxrInfo:       i.FXRInfo,
@@ -186,50 +191,21 @@ func (i *Idle) monitorForStatus(done <-chan struct{}, active chan<- inProgressIn
 	defer close(active)
 	defer close(complete)
 
-	fxrConf, ok := i.Config.Fixtures[i.FXRInfo.Name]
-	if !ok {
-		i.Logger.Warn("name not found in fixture configuration, unable to monitor for status")
-		return
-	}
-
-	dev, err := socketcan.NewIsotpInterface(fxrConf.Bus, fxrConf.RX, fxrConf.TX)
-	if err != nil {
-		i.Logger.Warnw("unable to monitor FXR status to see if it is in progress", "error", err)
-		return
-	}
-
-	defer func() {
-		_ = dev.Close()
-	}()
-
-	if err = dev.SetCANFD(); err != nil {
-		i.Logger.Warnw("unable to set CANFD on device", "error", err)
-		return
-	}
-
-	if err = dev.SetRecvTimeout(time.Second * 3); err != nil {
-		i.Logger.Warnw("unable to set RECV timeout on device", "error", err)
-		return
-	}
-
 	for {
 		select {
 		case <-done:
 			return
-		default:
-			buf, err := dev.RecvBuf()
-			if err != nil {
-				// only debug, this is best effort
-				i.Logger.Debugw("unable to receive buffer to see if FXR is in progress",
-					"error", err,
-					"fixture", i.FXRInfo.Name,
-				)
+		case lMsg := <-i.SubscribeChan:
+			i.Logger.Debugw("got message", "message", lMsg.Msg)
 
+			var event protostream.ProtoMessage
+			if err := json.Unmarshal(lMsg.Msg.Body, &event); err != nil {
+				i.Logger.Debugw("unmarshal JSON frame", "error", err, "bytes", string(lMsg.Msg.Body))
 				continue
 			}
 
 			var msg pb.FixtureToTower
-			if err = proto.Unmarshal(buf, &msg); err != nil {
+			if err := proto.Unmarshal(event.Body, &msg); err != nil {
 				i.Logger.Debugw("unable to unmarshal message (may be wrong type)", "error", err)
 				continue
 			}
@@ -244,12 +220,22 @@ func (i *Idle) monitorForStatus(done <-chan struct{}, active chan<- inProgressIn
 			switch msg.GetOp().GetStatus() {
 			case pb.FixtureStatus_FIXTURE_STATUS_ACTIVE:
 				// go to in-progress
+				i.Logger.Debug("fixture ACTIVE")
 				active <- ipInfo
+
+				i.Logger.Debug("returning")
+
 				return
 			case pb.FixtureStatus_FIXTURE_STATUS_COMPLETE:
 				// go to unload
+				i.Logger.Debug("fixture COMPLETE")
 				complete <- ipInfo
+
+				i.Logger.Debug("returning")
+
 				return
+			default:
+				i.Logger.Debugw("fixture", "status", msg.GetOp().GetStatus().String())
 			}
 		}
 	}

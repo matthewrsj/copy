@@ -10,6 +10,7 @@ import (
 	"go.uber.org/zap"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cellapi"
+	"stash.teslamotors.com/rr/protostream"
 	pb "stash.teslamotors.com/rr/towerproto"
 	"stash.teslamotors.com/rr/traycontrollers"
 )
@@ -23,6 +24,7 @@ type EndProcess struct {
 	Config        Configuration
 	Logger        *zap.SugaredLogger
 	CellAPIClient *cellapi.Client
+	SubscribeChan <-chan *protostream.Message
 
 	childLogger     *zap.SugaredLogger
 	tbc             traycontrollers.TrayBarcode
@@ -138,6 +140,7 @@ func (e *EndProcess) Next() statemachine.State {
 		Config:        e.Config,
 		Logger:        e.Logger,
 		CellAPIClient: e.CellAPIClient,
+		SubscribeChan: e.SubscribeChan,
 		childLogger:   e.childLogger,
 		mockCellAPI:   e.mockCellAPI,
 		fxbc:          e.fxbc,

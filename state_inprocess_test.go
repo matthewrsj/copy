@@ -1,16 +1,19 @@
 package towercontroller
 
 import (
+	"encoding/json"
 	"os"
 	"reflect"
 	"testing"
 
 	"bou.ke/monkey"
-	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
+	"nanomsg.org/go/mangos/v2"
 	"stash.teslamotors.com/ctet/go-socketcan/pkg/socketcan"
 	"stash.teslamotors.com/ctet/statemachine/v2"
+	"stash.teslamotors.com/rr/protostream"
 	pb "stash.teslamotors.com/rr/towerproto"
 	"stash.teslamotors.com/rr/traycontrollers"
 )
@@ -63,8 +66,10 @@ func patchRecvBuffFunc(msg proto.Message) func(socketcan.Interface) ([]byte, err
 }
 
 func TestInProcess_Action(t *testing.T) {
+	sc := make(chan *protostream.Message)
 	exp := 1
 	ipState := &InProcess{
+		SubscribeChan: sc,
 		Config: Configuration{
 			Fixtures: map[string]fixtureConf{
 				"01-01": {
@@ -94,40 +99,38 @@ func TestInProcess_Action(t *testing.T) {
 		t.Errorf("expected %d actions, got %d", exp, l)
 	}
 
-	ifp := monkey.Patch(socketcan.NewIsotpInterface, patchNewIsotpInterface)
-	defer ifp.Unpatch()
-
-	fdp := monkey.PatchInstanceMethod(reflect.TypeOf(socketcan.Interface{}), "SetCANFD", func(p socketcan.Interface) error { return nil })
-	defer fdp.Unpatch()
-
-	rbp := monkey.PatchInstanceMethod(
-		reflect.TypeOf(socketcan.Interface{}),
-		"RecvBuf",
-		patchRecvBuffFunc(&pb.FixtureToTower{
-			Content: &pb.FixtureToTower_Op{
-				Op: &pb.FixtureOperational{
-					Status: pb.FixtureStatus_FIXTURE_STATUS_COMPLETE,
-					Cells: []*pb.Cell{
-						{
-							Cellstatus: pb.CellStatus_CELL_STATUS_COMPLETE,
-							Cellmeasurement: &pb.CellMeasurement{
-								Current: 3.49,
-							},
+	msg := &pb.FixtureToTower{
+		Content: &pb.FixtureToTower_Op{
+			Op: &pb.FixtureOperational{
+				Status: pb.FixtureStatus_FIXTURE_STATUS_COMPLETE,
+				Cells: []*pb.Cell{
+					{
+						Cellstatus: pb.CellStatus_CELL_STATUS_COMPLETE,
+						Cellmeasurement: &pb.CellMeasurement{
+							Current: 3.49,
 						},
-						{
-							Cellstatus: pb.CellStatus_CELL_STATUS_COMPLETE,
-							Cellmeasurement: &pb.CellMeasurement{
-								Current: 3.49,
-							},
+					},
+					{
+						Cellstatus: pb.CellStatus_CELL_STATUS_COMPLETE,
+						Cellmeasurement: &pb.CellMeasurement{
+							Current: 3.49,
 						},
 					},
 				},
 			},
-			Traybarcode:    "",
-			Fixturebarcode: ipState.fxbc.Raw,
-		}),
-	)
-	defer rbp.Unpatch()
+		},
+		Traybarcode:    "",
+		Fixturebarcode: ipState.fxbc.Raw,
+	}
+
+	event, err := marshalMessage(msg)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	go func() {
+		sc <- event
+	}()
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -140,136 +143,52 @@ func TestInProcess_Action(t *testing.T) {
 	}
 }
 
+func marshalMessage(msg protoreflect.ProtoMessage) (*protostream.Message, error) {
+	msgb, err := proto.Marshal(msg)
+	if err != nil {
+		return nil, err
+	}
+
+	pmb, err := json.Marshal(&protostream.ProtoMessage{Location: "01-02", Body: msgb})
+	if err != nil {
+		return nil, err
+	}
+
+	return &protostream.Message{
+		Msg: &mangos.Message{
+			Body: pmb,
+		},
+	}, nil
+}
+
 func TestInProcess_ActionNoFixture(t *testing.T) {
+	sc := make(chan *protostream.Message)
+
 	ipState := InProcess{
-		childLogger: zap.NewExample().Sugar(),
+		childLogger:   zap.NewExample().Sugar(),
+		SubscribeChan: sc,
 	}
 	as := ipState.Actions()
+
+	msg, err := marshalMessage(&pb.FixtureToTower{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	go func() {
+		sc <- msg
+		close(sc)
+	}()
+
+	defer func() {
+		if r := recover(); r != nil {
+			t.Errorf("panic when actions called: %v", r)
+		}
+	}()
 
 	for _, a := range as {
 		a()
 	}
-
-	assert.True(t, ipState.Last())
-}
-
-func TestInProcess_ActionNoIface(t *testing.T) {
-	ipState := InProcess{
-		Config: Configuration{
-			Fixtures: map[string]fixtureConf{
-				"01-01": {
-					Bus: "vcan0",
-					RX:  0x1c1,
-					TX:  0x241,
-				},
-			},
-		},
-		childLogger: zap.NewExample().Sugar(),
-		fxbc: traycontrollers.FixtureBarcode{
-			Location: "SWIFT",
-			Aisle:    "01",
-			Tower:    "A",
-			Fxn:      "01",
-			Raw:      "SWIFT-01-A-01",
-		},
-	}
-
-	ifp := monkey.Patch(socketcan.NewIsotpInterface, func(string, uint32, uint32) (socketcan.Interface, error) {
-		return socketcan.Interface{}, assert.AnError
-	})
-	defer ifp.Unpatch()
-
-	as := ipState.Actions()
-
-	for _, a := range as {
-		a()
-	}
-
-	assert.True(t, ipState.Last())
-}
-
-func TestInProcess_ActionRecvBufErr(t *testing.T) {
-	ipState := InProcess{
-		Config: Configuration{
-			Fixtures: map[string]fixtureConf{
-				"01-01": {
-					Bus: "vcan0",
-					RX:  0x1c1,
-					TX:  0x241,
-				},
-			},
-		},
-		childLogger: zap.NewExample().Sugar(),
-		fxbc: traycontrollers.FixtureBarcode{
-			Location: "SWIFT",
-			Aisle:    "01",
-			Tower:    "A",
-			Fxn:      "01",
-			Raw:      "SWIFT-01-A-01",
-		},
-	}
-
-	ifp := monkey.Patch(socketcan.NewIsotpInterface, patchNewIsotpInterface)
-	defer ifp.Unpatch()
-
-	rbp := monkey.PatchInstanceMethod(
-		reflect.TypeOf(socketcan.Interface{}),
-		"RecvBuf",
-		func(socketcan.Interface) ([]byte, error) {
-			return nil, assert.AnError
-		},
-	)
-	rbp.Unpatch()
-
-	as := ipState.Actions()
-
-	for _, a := range as {
-		a()
-	}
-
-	assert.True(t, ipState.Last())
-}
-
-func TestInProcess_ActionBadBuffer(t *testing.T) {
-	ipState := InProcess{
-		Config: Configuration{
-			Fixtures: map[string]fixtureConf{
-				"01-01": {
-					Bus: "vcan0",
-					RX:  0x1c1,
-					TX:  0x241,
-				},
-			},
-		},
-		childLogger: zap.NewExample().Sugar(),
-		fxbc: traycontrollers.FixtureBarcode{
-			Location: "SWIFT",
-			Aisle:    "01",
-			Tower:    "A",
-			Fxn:      "01",
-			Raw:      "SWIFT-01-A-01",
-		},
-	}
-
-	ifp := monkey.Patch(socketcan.NewIsotpInterface, patchNewIsotpInterface)
-	defer ifp.Unpatch()
-
-	rbp := monkey.PatchInstanceMethod(
-		reflect.TypeOf(socketcan.Interface{}),
-		"RecvBuf",
-		func(socketcan.Interface) ([]byte, error) {
-			return []byte("this is not proto"), nil
-		},
-	)
-	defer rbp.Unpatch()
-
-	as := ipState.Actions()
-
-	for _, a := range as {
-		a()
-	}
-
-	assert.True(t, ipState.Last())
 }
 
 func TestInProcess_Next(t *testing.T) {

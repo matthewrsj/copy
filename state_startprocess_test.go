@@ -9,14 +9,18 @@ import (
 	"stash.teslamotors.com/ctet/go-socketcan/pkg/socketcan"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cellapi"
+	"stash.teslamotors.com/rr/protostream"
+	pb "stash.teslamotors.com/rr/towerproto"
 	"stash.teslamotors.com/rr/traycontrollers"
 )
 
 func TestStartProcess_Action(t *testing.T) {
+	sc := make(chan *protostream.Message)
 	cmc := make([]string, 64)
 	cmc[0] = "A01"
 	cmc[1] = "A02"
 	spState := StartProcess{
+		SubscribeChan: sc,
 		Config: Configuration{
 			CellMap: map[string][]string{
 				"A": cmc,
@@ -88,12 +92,14 @@ func TestStartProcess_Action(t *testing.T) {
 	)
 	defer sb.Unpatch()
 
-	rb := monkey.PatchInstanceMethod(
-		reflect.TypeOf(socketcan.Interface{}),
-		"RecvBuf",
-		func(socketcan.Interface) ([]byte, error) { return nil, nil },
-	)
-	defer rb.Unpatch()
+	msg, err := marshalMessage(&pb.FixtureToTower{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	go func() {
+		sc <- msg
+	}()
 
 	defer func() {
 		if r := recover(); r != nil {

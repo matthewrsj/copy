@@ -1,6 +1,6 @@
 recipefile: /home/parallels/projects/towercontroller/configuration/recipes/recipes.yaml
 ingredientsfile: /home/parallels/projects/towercontroller/configuration/recipes/ingredients.yaml
-cdcontroller_remote: "http://localhost:8080"
+cdcontroller_remote: "http://localhost:8081"
 
 location:
   line: CM2

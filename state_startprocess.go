@@ -2,6 +2,7 @@
 package towercontroller
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	"stash.teslamotors.com/ctet/go-socketcan/pkg/socketcan"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cellapi"
+	"stash.teslamotors.com/rr/protostream"
 	pb "stash.teslamotors.com/rr/towerproto"
 	"stash.teslamotors.com/rr/traycontrollers"
 )
@@ -21,6 +23,7 @@ type StartProcess struct {
 	Config        Configuration
 	Logger        *zap.SugaredLogger
 	CellAPIClient *cellapi.Client
+	SubscribeChan <-chan *protostream.Message
 
 	childLogger     *zap.SugaredLogger
 	processStepName string
@@ -139,7 +142,7 @@ func (s *StartProcess) action() {
 		}
 	}
 
-	s.childLogger.Debug("sent recipe and other information to FXR")
+	s.childLogger.Info("sent recipe and other information to FXR")
 }
 
 // Actions returns the action functions for this state
@@ -155,6 +158,7 @@ func (s *StartProcess) Next() statemachine.State {
 		Config:          s.Config,
 		Logger:          s.Logger,
 		CellAPIClient:   s.CellAPIClient,
+		SubscribeChan:   s.SubscribeChan,
 		childLogger:     s.childLogger,
 		tbc:             s.tbc,
 		fxbc:            s.fxbc,
@@ -172,19 +176,26 @@ func (s *StartProcess) Next() statemachine.State {
 
 func (s *StartProcess) performHandshake(dev socketcan.Interface, data []byte) {
 	for {
+		s.childLogger.Infow("attempting handshake with FXR")
+
 		if err := dev.SendBuf(data); s.canErr != nil {
 			s.childLogger.Warnw("unable to send data to FXR", "error", err)
 			continue
 		}
 
-		buf, err := dev.RecvBuf()
-		if err != nil {
-			s.childLogger.Warnw("unable to receive data from FXR", "error", err)
+		s.childLogger.Infow("reading from subscribeChan")
+		lMsg := <-s.SubscribeChan
+		s.childLogger.Infow("received message from subscribeChan")
+
+		var event protostream.ProtoMessage
+
+		if err := json.Unmarshal(lMsg.Msg.Body, &event); err != nil {
+			s.childLogger.Debugw("unmarshal JSON frame", "error", err, "bytes", string(lMsg.Msg.Body))
 			continue
 		}
 
 		var msg pb.FixtureToTower
-		if err := proto.Unmarshal(buf, &msg); err != nil {
+		if err := proto.Unmarshal(event.Body, &msg); err != nil {
 			s.childLogger.Warnw("unable to unmarshal data from FXR", "error", err)
 			continue
 		}
