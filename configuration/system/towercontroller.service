@@ -1,7 +1,7 @@
 [Unit]
 Description=docker-compose towercontroller.service
-Requires=docker.service network-online.target canup.service
-After=docker.service network-online.target canup.service
+Requires=docker.service network-online.target canup.service protostream.service
+After=docker.service network-online.target canup.service protostream.service
 
 [Service]
 WorkingDirectory=/home/mfgtest/projects/towercontroller
