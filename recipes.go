@@ -107,12 +107,10 @@ func LoadRecipe(recipePath, ingredientsPath, recipe string) (traycontrollers.Ste
 }
 
 func modeStringToEnum(input string) pb.RecipeStep_FormMode {
-	switch input {
-	case "FORM_REQ_CC":
-		return pb.RecipeStep_FORM_MODE_CC
-	case "FORM_REQ_CV":
-		return pb.RecipeStep_FORM_MODE_CV
-	default:
+	fm, ok := pb.RecipeStep_FormMode_value[input]
+	if !ok {
 		return pb.RecipeStep_FORM_MODE_UNKNOWN_UNSPECIFIED
 	}
+
+	return pb.RecipeStep_FormMode(fm)
 }

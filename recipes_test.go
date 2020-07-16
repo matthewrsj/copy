@@ -172,9 +172,9 @@ func Test_modeStringToEnum(t *testing.T) {
 		in  string
 		exp pb.RecipeStep_FormMode
 	}{
-		{"FORM_REQ_CC", pb.RecipeStep_FORM_MODE_CC},
-		{"FORM_REQ_CV", pb.RecipeStep_FORM_MODE_CV},
-		{"FORM_REQ", pb.RecipeStep_FORM_MODE_UNKNOWN_UNSPECIFIED},
+		{"FORM_MODE_CC", pb.RecipeStep_FORM_MODE_CC},
+		{"FORM_MODE_CV", pb.RecipeStep_FORM_MODE_CV},
+		{"FORM_MODE", pb.RecipeStep_FORM_MODE_UNKNOWN_UNSPECIFIED},
 		{"", pb.RecipeStep_FORM_MODE_UNKNOWN_UNSPECIFIED},
 	}
 
