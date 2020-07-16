@@ -66,3 +66,43 @@ func TestIdle_Actions(t *testing.T) {
 
 	assert.Equal(t, "WaitForLoad", statemachine.NameOf(i.Next()))
 }
+
+func TestIdle_ActionsBadTray(t *testing.T) {
+	pfdC := make(chan traycontrollers.PreparedForDelivery)
+	i := &Idle{
+		Config: Configuration{
+			Fixtures: map[string]fixtureConf{
+				"01-01": {
+					Bus: "vcan0",
+					RX:  0x1c1,
+					TX:  0x241,
+				},
+			},
+		},
+		Logger: zap.NewExample().Sugar(),
+		FXRInfo: &FixtureInfo{
+			PFD: pfdC,
+		},
+	}
+
+	as := i.Actions()
+
+	defer func() {
+		if r := recover(); r != nil {
+			t.Errorf("panic when running action: %v", r)
+		}
+	}()
+
+	go func() {
+		pfdC <- traycontrollers.PreparedForDelivery{
+			Tray:    "11223",
+			Fixture: "CM2-63010-01-01",
+		}
+	}()
+
+	for _, a := range as {
+		a()
+	}
+
+	assert.Equal(t, "Idle", statemachine.NameOf(i.Next()))
+}
