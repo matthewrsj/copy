@@ -2,68 +2,17 @@ package towercontroller
 
 import (
 	"encoding/json"
-	"os"
-	"reflect"
 	"testing"
 
-	"bou.ke/monkey"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"nanomsg.org/go/mangos/v2"
-	"stash.teslamotors.com/ctet/go-socketcan/pkg/socketcan"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/protostream"
 	pb "stash.teslamotors.com/rr/towerproto"
 	"stash.teslamotors.com/rr/traycontrollers"
 )
-
-func TestMain(m *testing.M) {
-	pni := monkey.Patch(socketcan.NewIsotpInterface, patchNewIsotpInterface)
-	prb := monkey.PatchInstanceMethod(
-		reflect.TypeOf(socketcan.Interface{}),
-		"RecvBuf",
-		patchRecvBuffFunc(
-			&pb.FixtureToTower{
-				Content: &pb.FixtureToTower_Op{
-					Op: &pb.FixtureOperational{
-						Status: pb.FixtureStatus_FIXTURE_STATUS_IDLE,
-					},
-				},
-			},
-		),
-	)
-	psc := monkey.PatchInstanceMethod(reflect.TypeOf(socketcan.Interface{}),
-		"SetCANFD",
-		func(socketcan.Interface) error { return nil },
-	)
-
-	ret := m.Run()
-
-	pni.Unpatch()
-	prb.Unpatch()
-	psc.Unpatch()
-
-	os.Exit(ret)
-}
-
-func patchNewIsotpInterface(dev string, rxid, txid uint32) (socketcan.Interface, error) {
-	return socketcan.Interface{
-		IfName:   dev,
-		SocketFd: 0,
-	}, nil
-}
-
-func patchRecvBuffFunc(msg proto.Message) func(socketcan.Interface) ([]byte, error) {
-	buf, err := proto.Marshal(msg)
-	if err != nil {
-		panic(err)
-	}
-
-	return func(socketcan.Interface) ([]byte, error) {
-		return buf, nil
-	}
-}
 
 func TestInProcess_Action(t *testing.T) {
 	sc := make(chan *protostream.Message)

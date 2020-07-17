@@ -20,6 +20,7 @@ type InProcess struct {
 	Config        Configuration
 	Logger        *zap.SugaredLogger
 	CellAPIClient *cellapi.Client
+	Publisher     *protostream.Socket
 	SubscribeChan <-chan *protostream.Message
 
 	childLogger     *zap.SugaredLogger
@@ -106,6 +107,7 @@ func (i *InProcess) Next() statemachine.State {
 		Config:          i.Config,
 		Logger:          i.Logger,
 		CellAPIClient:   i.CellAPIClient,
+		Publisher:       i.Publisher,
 		SubscribeChan:   i.SubscribeChan,
 		childLogger:     i.childLogger,
 		tbc:             i.tbc,

@@ -20,6 +20,7 @@ type Idle struct {
 	Config        Configuration
 	Logger        *zap.SugaredLogger
 	CellAPIClient *cellapi.Client
+	Publisher     *protostream.Socket
 	SubscribeChan <-chan *protostream.Message
 
 	Manual      bool
@@ -56,6 +57,7 @@ waitForUpdate:
 			Config:        i.Config,
 			Logger:        i.Logger,
 			CellAPIClient: i.CellAPIClient,
+			Publisher:     i.Publisher,
 			SubscribeChan: i.SubscribeChan,
 			tbc:           tbc,
 			fxbc:          fxbc,
@@ -79,6 +81,7 @@ waitForUpdate:
 			Config:        i.Config,
 			Logger:        i.Logger,
 			CellAPIClient: i.CellAPIClient,
+			Publisher:     i.Publisher,
 			SubscribeChan: i.SubscribeChan,
 			mockCellAPI:   i.MockCellAPI,
 			fxrInfo:       i.FXRInfo,
@@ -118,6 +121,7 @@ waitForUpdate:
 			Config:          i.Config,
 			Logger:          i.Logger,
 			CellAPIClient:   i.CellAPIClient,
+			Publisher:       i.Publisher,
 			SubscribeChan:   i.SubscribeChan,
 			tbc:             tbc,
 			fxbc:            fxbc,
@@ -151,6 +155,7 @@ waitForUpdate:
 			Config:        i.Config,
 			Logger:        i.Logger,
 			CellAPIClient: i.CellAPIClient,
+			Publisher:     i.Publisher,
 			SubscribeChan: i.SubscribeChan,
 			fxbc:          fxbc,
 			mockCellAPI:   i.MockCellAPI,

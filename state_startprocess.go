@@ -4,11 +4,9 @@ package towercontroller
 import (
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
-	"stash.teslamotors.com/ctet/go-socketcan/pkg/socketcan"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cellapi"
 	"stash.teslamotors.com/rr/protostream"
@@ -23,6 +21,7 @@ type StartProcess struct {
 	Config        Configuration
 	Logger        *zap.SugaredLogger
 	CellAPIClient *cellapi.Client
+	Publisher     *protostream.Socket
 	SubscribeChan <-chan *protostream.Message
 
 	childLogger     *zap.SugaredLogger
@@ -90,37 +89,6 @@ func (s *StartProcess) action() {
 
 	twr2Fxr.Recipe.CellMasks = newCellMask(present)
 
-	var fConf fixtureConf
-
-	if fConf, ok = s.Config.Fixtures[IDFromFXR(s.fxbc)]; !ok {
-		fatalError(s, s.childLogger, fmt.Errorf("fixture %s not configured for tower controller", IDFromFXR(s.fxbc)))
-		return
-	}
-
-	var dev socketcan.Interface
-
-	if dev, s.canErr = socketcan.NewIsotpInterface(fConf.Bus, fConf.RX, fConf.TX); s.canErr != nil {
-		fatalError(s, s.childLogger, s.canErr)
-		return
-	}
-
-	defer func() {
-		_ = dev.Close()
-	}()
-
-	if err := dev.SetCANFD(); err != nil {
-		fatalError(s, s.childLogger, err)
-		return
-	}
-
-	if err := dev.SetSendTimeout(time.Second * 3); err != nil {
-		s.childLogger.Warnw("unable to set send timeout", "error", err)
-	}
-
-	if err := dev.SetRecvTimeout(time.Second * 3); err != nil {
-		s.childLogger.Warnw("unable to set recv timeout", "error", err)
-	}
-
 	var data []byte
 
 	if data, s.canErr = proto.Marshal(&twr2Fxr); s.canErr != nil {
@@ -129,7 +97,7 @@ func (s *StartProcess) action() {
 	}
 
 	// performHandshake blocks until the FXR acknowledges receipt of recipe
-	s.performHandshake(dev, data)
+	s.performHandshake(data)
 
 	if s.manual {
 		if !s.mockCellAPI {
@@ -158,6 +126,7 @@ func (s *StartProcess) Next() statemachine.State {
 		Config:          s.Config,
 		Logger:          s.Logger,
 		CellAPIClient:   s.CellAPIClient,
+		Publisher:       s.Publisher,
 		SubscribeChan:   s.SubscribeChan,
 		childLogger:     s.childLogger,
 		tbc:             s.tbc,
@@ -174,18 +143,29 @@ func (s *StartProcess) Next() statemachine.State {
 	return next
 }
 
-func (s *StartProcess) performHandshake(dev socketcan.Interface, data []byte) {
+func (s *StartProcess) performHandshake(data []byte) {
 	for {
-		s.childLogger.Infow("attempting handshake with FXR")
+		s.childLogger.Info("attempting handshake with FXR")
 
-		if err := dev.SendBuf(data); s.canErr != nil {
-			s.childLogger.Warnw("unable to send data to FXR", "error", err)
+		sendEvent := protostream.ProtoMessage{
+			Location: IDFromFXR(s.fxbc),
+			Body:     data,
+		}
+
+		jb, err := json.Marshal(sendEvent)
+		if err != nil {
+			s.childLogger.Warnw("unable to marshal data to send to protostream", "error", err)
 			continue
 		}
 
-		s.childLogger.Infow("reading from subscribeChan")
+		if err := s.Publisher.PublishTo(IDFromFXR(s.fxbc), jb); err != nil {
+			s.childLogger.Warnw("unable to send data to protostream", "error", err)
+			continue
+		}
+
+		s.childLogger.Debug("reading from subscribeChan")
 		lMsg := <-s.SubscribeChan
-		s.childLogger.Infow("received message from subscribeChan")
+		s.childLogger.Debug("received message from subscribeChan")
 
 		var event protostream.ProtoMessage
 

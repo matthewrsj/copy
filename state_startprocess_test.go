@@ -6,7 +6,6 @@ import (
 
 	"bou.ke/monkey"
 	"go.uber.org/zap"
-	"stash.teslamotors.com/ctet/go-socketcan/pkg/socketcan"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cellapi"
 	"stash.teslamotors.com/rr/protostream"
@@ -21,6 +20,7 @@ func TestStartProcess_Action(t *testing.T) {
 	cmc[1] = "A02"
 	spState := StartProcess{
 		SubscribeChan: sc,
+		Publisher:     &protostream.Socket{},
 		Config: Configuration{
 			CellMap: map[string][]string{
 				"A": cmc,
@@ -79,18 +79,14 @@ func TestStartProcess_Action(t *testing.T) {
 	)
 	defer ups.Unpatch()
 
-	ip := monkey.Patch(socketcan.NewIsotpInterface, patchNewIsotpInterface)
-	defer ip.Unpatch()
-
-	fdp := monkey.PatchInstanceMethod(reflect.TypeOf(socketcan.Interface{}), "SetCANFD", func(socketcan.Interface) error { return nil })
-	defer fdp.Unpatch()
-
-	sb := monkey.PatchInstanceMethod(
-		reflect.TypeOf(socketcan.Interface{}),
-		"SendBuf",
-		func(socketcan.Interface, []byte) error { return nil },
+	pub := monkey.PatchInstanceMethod(
+		reflect.TypeOf(&protostream.Socket{}),
+		"PublishTo",
+		func(*protostream.Socket, string, []byte) error {
+			return nil
+		},
 	)
-	defer sb.Unpatch()
+	defer pub.Unpatch()
 
 	msg, err := marshalMessage(&pb.FixtureToTower{})
 	if err != nil {

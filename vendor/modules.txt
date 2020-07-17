@@ -167,6 +167,7 @@ gopkg.in/yaml.v2
 # gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
 gopkg.in/yaml.v3
 # nanomsg.org/go/mangos/v2 v2.0.8
+## explicit
 nanomsg.org/go/mangos/v2
 nanomsg.org/go/mangos/v2/errors
 nanomsg.org/go/mangos/v2/internal/core
@@ -195,7 +196,7 @@ stash.teslamotors.com/ctet/statemachine/v2
 # stash.teslamotors.com/rr/cellapi v0.0.2
 ## explicit
 stash.teslamotors.com/rr/cellapi
-# stash.teslamotors.com/rr/protostream v0.0.1
+# stash.teslamotors.com/rr/protostream v0.0.2
 ## explicit
 stash.teslamotors.com/rr/protostream
 # stash.teslamotors.com/rr/towerproto v0.0.6

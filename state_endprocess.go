@@ -24,6 +24,7 @@ type EndProcess struct {
 	Config        Configuration
 	Logger        *zap.SugaredLogger
 	CellAPIClient *cellapi.Client
+	Publisher     *protostream.Socket
 	SubscribeChan <-chan *protostream.Message
 
 	childLogger     *zap.SugaredLogger
@@ -140,6 +141,7 @@ func (e *EndProcess) Next() statemachine.State {
 		Config:        e.Config,
 		Logger:        e.Logger,
 		CellAPIClient: e.CellAPIClient,
+		Publisher:     e.Publisher,
 		SubscribeChan: e.SubscribeChan,
 		childLogger:   e.childLogger,
 		mockCellAPI:   e.mockCellAPI,

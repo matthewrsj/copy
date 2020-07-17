@@ -19,6 +19,7 @@ type Unloading struct {
 	Config        Configuration
 	Logger        *zap.SugaredLogger
 	CellAPIClient *cellapi.Client
+	Publisher     *protostream.Socket
 	SubscribeChan <-chan *protostream.Message
 
 	childLogger *zap.SugaredLogger
@@ -79,6 +80,7 @@ func (u *Unloading) Next() statemachine.State {
 		Config:        u.Config,
 		Logger:        u.Logger,
 		CellAPIClient: u.CellAPIClient,
+		Publisher:     u.Publisher,
 		SubscribeChan: u.SubscribeChan,
 		Manual:        u.manual,
 		MockCellAPI:   u.mockCellAPI,

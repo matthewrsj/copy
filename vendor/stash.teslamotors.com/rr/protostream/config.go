@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"strconv"
 	"strings"
+	"time"
 
 	"gopkg.in/yaml.v2"
 )
@@ -28,8 +29,10 @@ type ColumnConfig struct {
 
 // CANConfig contains the RX, TX and bus information for a single FXR
 type CANConfig struct {
-	RX, TX uint32
-	Bus    string
+	RX, TX      uint32
+	Bus         string
+	NodeID      string
+	RecvTimeout time.Duration
 }
 
 // LoadConfig loads a protostream configuration file

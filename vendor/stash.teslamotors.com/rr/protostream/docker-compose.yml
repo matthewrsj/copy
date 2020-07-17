@@ -1,0 +1,12 @@
+version: '3.7'
+
+services:
+  protostream:
+    image: protostreamapp
+    build:
+      context: .
+      dockerfile: Dockerfile.app
+    network_mode: host
+    volumes:
+      - /var/log/protostream:/go/src/app/cmd/logs/protostream
+      - /etc/protostream.d:/etc/protostream.d

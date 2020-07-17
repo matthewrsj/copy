@@ -99,6 +99,11 @@ func (s *Socket) Listen() <-chan *Message {
 				}
 				select {
 				case m := <-msgChan:
+					// nil message needs to be ignored
+					if m == nil || m.Msg == nil || m.Msg.Body == nil {
+						break
+					}
+
 					m.Msg.Body = bytes.TrimPrefix(m.Msg.Body, []byte(s.prefix))
 					c <- m
 					// we consumed the value off this channel, so we know the

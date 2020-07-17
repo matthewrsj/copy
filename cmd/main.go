@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/cenkalti/backoff"
 	"go.uber.org/zap"
@@ -20,11 +21,10 @@ import (
 )
 
 const (
-	_logLvlDef     = zapcore.InfoLevel
-	_logFileDef    = "logs/towercontroller/statemachine.log"
-	_confFileDef   = "/etc/towercontroller.d/statemachine.yaml"
-	_localDef      = "0.0.0.0:13167"
-	_wsAddrDefault = "localhost:8080"
+	_logLvlDef   = zapcore.InfoLevel
+	_logFileDef  = "logs/towercontroller/statemachine.log"
+	_confFileDef = "/etc/towercontroller.d/statemachine.yaml"
+	_localDef    = "0.0.0.0:13163"
 )
 
 // nolint:funlen // main func
@@ -129,6 +129,24 @@ func main() {
 		}
 	}()
 
+	var publisher *protostream.Socket
+
+	pubU := url.URL{Scheme: "ws", Host: protostream.DefaultListenerAddress, Path: protostream.WSEndpoint}
+
+	// will never return an error because the operation never returns a backoff.PermanentError (tries forever)
+	_ = backoff.Retry(
+		func() error {
+			publisher, err = protostream.NewPublisher(pubU.String(), "")
+			if err != nil {
+				sugar.Warnw("unable to create new publisher", "error", err)
+				return err
+			}
+
+			return nil
+		},
+		backoff.NewConstantBackOff(time.Second*5),
+	)
+
 	u := url.URL{Scheme: "ws", Host: *wsAddr, Path: protostream.WSEndpoint}
 
 	sugar.Info("starting state machine")
@@ -163,6 +181,7 @@ func main() {
 				Manual:        *manual,
 				MockCellAPI:   *mockCellAPI,
 				FXRInfo:       registry[name],
+				Publisher:     publisher,
 				SubscribeChan: lc,
 			})
 		}(name)
