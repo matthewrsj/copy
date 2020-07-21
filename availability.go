@@ -74,7 +74,6 @@ func HandleAvailable(configPath string, logger *zap.SugaredLogger, registry map[
 					return
 				}
 
-			findAvailable:
 				for begin := time.Now(); time.Since(begin) < _availabilityTimeout; {
 					select {
 					case lMsg := <-fxrInfo.SC:
@@ -90,7 +89,7 @@ func HandleAvailable(configPath string, logger *zap.SugaredLogger, registry map[
 
 						if err = proto.Unmarshal(event.Body, &msg); err != nil {
 							cl.Debugw("not the message we were expecting", "error", err)
-							return
+							break
 						}
 
 						if msg.GetOp() == nil {
@@ -106,10 +105,18 @@ func HandleAvailable(configPath string, logger *zap.SugaredLogger, registry map[
 							Reserved: fxrInfo.Avail.Status() == StatusWaitingForLoad,
 						}
 
-						break findAvailable
+						return
 					case <-time.After(_availabilityTimeout):
+						avail <- traycontrollers.FXRAvailable{
+							Location: fmt.Sprintf("%s-%s%s-%s", conf.Loc.Line, conf.Loc.Process, conf.Loc.Aisle, n),
+						}
 						return
 					}
+				}
+
+				cl.Warnw("unable to find fixture status in timeout", "timeout", _availabilityTimeout)
+				avail <- traycontrollers.FXRAvailable{
+					Location: fmt.Sprintf("%s-%s%s-%s", conf.Loc.Line, conf.Loc.Process, conf.Loc.Aisle, n),
 				}
 			}(n)
 		}
