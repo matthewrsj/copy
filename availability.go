@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"sync"
+	"time"
 
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
@@ -13,7 +14,10 @@ import (
 	"stash.teslamotors.com/rr/traycontrollers"
 )
 
-const _availabilityEndpoint = "/avail"
+const (
+	_availabilityEndpoint = "/avail"
+	_availabilityTimeout  = time.Second * 3
+)
 
 // HandleAvailable is the handler for the endpoint reporting availability of fixtures
 // nolint:gocognit,funlen // ignore
@@ -70,36 +74,42 @@ func HandleAvailable(configPath string, logger *zap.SugaredLogger, registry map[
 					return
 				}
 
-				for lMsg := range fxrInfo.SC {
-					cl.Debugw("got message, checking if fixture is available", "message", lMsg.Msg)
+			findAvailable:
+				for begin := time.Now(); time.Since(begin) < _availabilityTimeout; {
+					select {
+					case lMsg := <-fxrInfo.SC:
+						cl.Debugw("got message, checking if fixture is available", "message", lMsg.Msg)
 
-					var event protostream.ProtoMessage
-					if err = json.Unmarshal(lMsg.Msg.Body, &event); err != nil {
-						cl.Debugw("unmarshal JSON frame", "error", err, "bytes", string(lMsg.Msg.Body))
-						continue
+						var event protostream.ProtoMessage
+						if err = json.Unmarshal(lMsg.Msg.Body, &event); err != nil {
+							cl.Debugw("unmarshal JSON frame", "error", err, "bytes", string(lMsg.Msg.Body))
+							return
+						}
+
+						cl.Debug("received message from FXR, unmarshalling to check if it is available")
+
+						if err = proto.Unmarshal(event.Body, &msg); err != nil {
+							cl.Debugw("not the message we were expecting", "error", err)
+							return
+						}
+
+						if msg.GetOp() == nil {
+							cl.Debugw("look for the next message, this is diagnostic", "msg", msg.String())
+							break
+						}
+
+						cl.Debugw("fixture status rxd, checking if available", "status", msg.GetOp().GetStatus().String())
+
+						avail <- traycontrollers.FXRAvailable{
+							Location: fmt.Sprintf("%s-%s%s-%s", conf.Loc.Line, conf.Loc.Process, conf.Loc.Aisle, n),
+							Status:   msg.GetOp().GetStatus(),
+							Reserved: fxrInfo.Avail.Status() == StatusWaitingForLoad,
+						}
+
+						break findAvailable
+					case <-time.After(_availabilityTimeout):
+						return
 					}
-
-					cl.Debug("received message from FXR, unmarshalling to check if it is available")
-
-					if err = proto.Unmarshal(event.Body, &msg); err != nil {
-						cl.Debugw("not the message we were expecting", "error", err)
-						continue
-					}
-
-					if msg.GetOp() == nil {
-						cl.Debugw("look for the next message, this is diagnostic", "msg", msg.String())
-						continue
-					}
-
-					break
-				}
-
-				cl.Debugw("fixture status, checking if available", "status", msg.GetOp().GetStatus().String())
-
-				avail <- traycontrollers.FXRAvailable{
-					Location: fmt.Sprintf("%s-%s%s-%s", conf.Loc.Line, conf.Loc.Process, conf.Loc.Aisle, n),
-					Status:   msg.GetOp().GetStatus(),
-					Reserved: fxrInfo.Avail.Status() == StatusWaitingForLoad,
 				}
 			}(n)
 		}
@@ -124,6 +134,6 @@ func HandleAvailable(configPath string, logger *zap.SugaredLogger, registry map[
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 
-		logger.Info("sent response to request to /avail")
+		logger.Infow("sent response to request to /avail", "response", body)
 	})
 }
