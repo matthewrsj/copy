@@ -17,6 +17,6 @@ require (
 	stash.teslamotors.com/ctet/statemachine/v2 v2.0.1
 	stash.teslamotors.com/rr/cellapi v0.0.2
 	stash.teslamotors.com/rr/protostream v0.0.2
-	stash.teslamotors.com/rr/towerproto v0.0.6
+	stash.teslamotors.com/rr/towerproto v0.0.7
 	stash.teslamotors.com/rr/traycontrollers v0.0.7
 )

@@ -1,4 +1,5 @@
 syntax = "proto3";
+option go_package = "tower";
 
 // https://confluence.teslamotors.com/x/fFElIg
 
@@ -23,6 +24,8 @@ syntax = "proto3";
 // -- PCBA / ambient temperature sensors
 // -- tied to controllers in each fixture
 
+import "alerts.proto";
+
 message Genealogy {
   string board_pn      = 1;
   string board_sn      = 2;
@@ -41,6 +44,17 @@ message FxrSensors {
   float v_bus_24             = 3;
   bool  position_switch_up   = 4;
   bool  position_switch_down = 5;
+  float micro_temp           = 6;
+  float v_rail_5v            = 7;
+  float v_rail_3v3           = 8;
+}
+
+message FxrInternal {
+  float stack_usage_system = 7;
+  float stack_usage_1khz   = 8;
+  float stack_usage_10hz   = 9;
+  float stack_usage_uds    = 10;
+  float stack_usage_nvram  = 11;
 }
 
 message FxrOutputs {
@@ -50,9 +64,11 @@ message FxrOutputs {
 }
 
 message Fxr {
-  FxrSensors sensors   = 1;
-  FxrOutputs outputs   = 2;
-  Genealogy  genealogy = 3;
+  FxrSensors      sensors        = 1;
+  FxrInternal     internal       = 2;
+  FxrOutputs      outputs        = 3;
+  Genealogy       genealogy      = 4;
+  AlertMatrix alert_matrices     = 5;
 }
 
 message FibSensors {
@@ -100,10 +116,11 @@ message Fan {
 }
 
 message Fib {
-  FibSensors   sensors   = 1;
-  FibInternal  internal  = 2;
-  Genealogy    genealogy = 3;
-  repeated Fan fans      = 4; // always 9 fans
+  FibSensors      sensors        = 1;
+  FibInternal     internal       = 2;
+  Genealogy       genealogy      = 3;
+  repeated Fan    fans           = 4; // always 9 fans
+  AlertMatrix     alert_matrices = 5;
 }
 
 enum StibDCDCState {
@@ -150,11 +167,13 @@ message StibInternal {
   StibDCDCState dcdc_state = 1;
   StibFormState form_state = 2;
 }
+
 message Stib {
-  StibSensors    sensors    = 1;
-  StibStatistics statistics = 2;
-  Genealogy      genealogy  = 3;
-  StibInternal   internal   = 4;
+  StibSensors     sensors        = 1;
+  StibStatistics  statistics     = 2;
+  Genealogy       genealogy      = 3;
+  StibInternal    internal       = 4;
+  AlertMatrix alert_matrices = 5;
 }
 
 enum CellStatus {
@@ -214,8 +233,9 @@ message FixtureDiagnostic {
 
 message FixtureToTower {
   oneof content {
-    FixtureOperational op   = 1;
-    FixtureDiagnostic  diag = 2;
+    FixtureOperational op        = 1;
+    FixtureDiagnostic  diag      = 2;
+    AlertLog           alert_log = 7;
   }
   string traybarcode    = 3;
   string fixturebarcode = 4;
@@ -250,15 +270,15 @@ enum FormRequest {
 }
 
 message Recipe {
-  repeated RecipeStep steps       = 1;
-  repeated uint32     cell_masks  = 2;
+  repeated RecipeStep steps        = 1;
+  repeated uint32     cell_masks   = 2;
   FormRequest         formrequest = 3;
 }
 
 message SystemInfo {
   string traybarcode    = 1;
   string fixturebarcode = 2;
-  string process_step   = 3;
+  string process_step    = 3;
 }
 
 message TowerToFixture {

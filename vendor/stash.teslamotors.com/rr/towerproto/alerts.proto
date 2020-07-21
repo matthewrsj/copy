@@ -1,0 +1,138 @@
+syntax = "proto3";
+option go_package = "tower";
+
+message StibAlert {
+  enum AlertId {
+    STIB_NONE                           = 0;
+    STIB_a001_SwAppBoot                 = 1;
+    STIB_a002_HalError                  = 2;
+    STIB_a003_WatchDog                  = 3;
+    STIB_a004_CpuOverRun                = 4;
+    STIB_a005_CANBusReset               = 5;
+    STIB_a006_STIBrx_MIA                = 6;
+    STIB_a007_unused                    = 7;
+    STIB_a008_unused                    = 8;
+    STIB_a009_unused                    = 9;
+    STIB_a010_unused                    = 10;
+    STIB_a011_AllegroHwOC               = 11;
+    STIB_a012_ComparatorHwOC            = 12;
+    STIB_a013_SwOC                      = 13;
+    STIB_a014_BusU                      = 14;
+    STIB_a015_BusOV                     = 15;
+    STIB_a016_StringOV                  = 16;
+    STIB_a017_StringUV                  = 17;
+    STIB_a018_SwitchTempTooHigh         = 18;
+    STIB_a019_ShuntTempTooHigh          = 19;
+    STIB_a020_VoltageMatchingTimeout    = 20;
+    STIB_a021_LossOfCurrentControl      = 21;
+    STIB_a022_SensorOffsetTooHigh       = 22;
+    STIB_a023_EnableLineLost            = 23;
+    STIB_a024_irefCorrectionIrrational  = 24;
+    STIB_a025_unused                    = 25;
+    STIB_a026_unused                    = 26;
+    STIB_a027_unused                    = 27;
+    STIB_a028_AppliedCurrentIsSaturated = 28;
+    STIB_a029_CellSafetyCheckFailed     = 29;
+    STIB_a030_CellQualityCheckFailed    = 30;
+    STIB_a031_CellOV                    = 31;
+    STIB_a032_CellUV                    = 32;
+    STIB_a033_CellDvDT                  = 33;
+    STIB_a034_PogoVIrrational           = 34;
+    STIB_a035_CibFaulted                = 35;
+    STIB_a036_CellTempTooHigh           = 36;
+    STIB_a037_FormationTimeout          = 37;
+    STIB_a038_FormationCheckFailed      = 38;
+    STIB_a039_unused                    = 39;
+    STIB_a040_unused                    = 40;
+    STIB_a041_CIBDataInvalid_1          = 41;
+    STIB_a042_CIBDataInvalid_2          = 42;
+    STIB_a043_CIBNotConnected           = 43;
+    STIB_a044_CIBCellSwitchWriteFail    = 44;
+  }
+
+  message a004_CpuOverRun {
+    float ISR_time_max     = 1; // us
+    float f_1kHz_time_max  = 2; // us
+    float f_100Hz_time_max = 3; // us
+  }
+
+  message a031_CellOV {
+    uint32 cell_index   = 1;
+    float  cell_voltage = 2; // V
+  }
+
+  AlertId alert_id   = 1;
+  uint32  stib_index = 2;
+
+  oneof AlertData {
+    a004_CpuOverRun a004 = 4;
+    a031_CellOV     a031 = 31;
+  }
+}
+
+message FibAlert {
+  enum AlertId {
+      FIB_NONE                           = 0;
+      FIB_a001_SwAppBoot                 = 1;
+      FIB_a002_watchdogExpired           = 2;
+      FIB_a003_internalFault             = 3;  
+    }
+
+  message a002_watchdogExpired {
+    float TaskId = 1; // us
+    float AppCRC = 2; // us
+  }
+
+  message a003_internalFault {
+  }
+
+  AlertId alert_id   = 1;
+
+  oneof AlertData {
+    a002_watchdogExpired a002 = 2;
+    a003_internalFault   a003 = 3;
+  }
+}
+
+message FxrAlert {
+  enum AlertId {
+      FXR_NONE                           = 0;
+      FXR_a001_SwAppBoot                 = 1;
+      FXR_a002_watchdogExpired           = 2;
+      FXR_a003_internalFault             = 3;  
+    }
+
+  message a002_watchdogExpired {
+    float TaskId = 1; // us
+    float AppCRC = 2; // us
+  }
+
+  message a003_internalFault {
+  }
+
+  AlertId alert_id   = 1;
+
+  oneof AlertData {
+    a002_watchdogExpired a002 = 2;
+    a003_internalFault   a003 = 3;
+  }
+}
+
+message AlertLog {
+  oneof EcuAlert {
+    FxrAlert fxr_alert  = 1;
+    FibAlert  fib_alert  = 2;
+    StibAlert stib_alert = 3;
+  }
+}
+
+message AlertMatrix {
+    repeated uint32 alert_matrices = 1;
+}
+
+message Alerts {
+  oneof AlertDetail {
+    AlertLog log = 1;
+    AlertMatrix matrix  = 2;
+  }
+}
