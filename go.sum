@@ -255,6 +255,8 @@ stash.teslamotors.com/rr/cellapi v0.0.2 h1:vjdjOyrce8jH1HqoYwBx2kCuSIja7Vq376Kp1
 stash.teslamotors.com/rr/cellapi v0.0.2/go.mod h1:ew9szdkYauU5DsA2AjqBLShLuZK+5EohBMRszCF1xfI=
 stash.teslamotors.com/rr/protostream v0.0.2 h1:tqg45f4SDXtg4MsB/ejtHMvrwQLB15+3ER/mU1GY7do=
 stash.teslamotors.com/rr/protostream v0.0.2/go.mod h1:gYmChMOacMxrNXLvtgKqkxyYjFEyrL/43poqUgOWe60=
+stash.teslamotors.com/rr/protostream v0.0.3 h1:PeNVdHeIlqW2Y7SzM3YEnFlkT7NUxpMGtTRtDIDTEVA=
+stash.teslamotors.com/rr/protostream v0.0.3/go.mod h1:6mZUASeRL4olurJOuiuEvZya/3WJ0TPL6P6AHJiXyI0=
 stash.teslamotors.com/rr/towerproto v0.0.5 h1:5YkvjCXQHCvQW3na2RfsQPgj8w65JCR4evbPo9yryTk=
 stash.teslamotors.com/rr/towerproto v0.0.5/go.mod h1:FDbAtKBEKCStkYKJSOamESQ6NjyN7zmV9HAqydiJQs4=
 stash.teslamotors.com/rr/towerproto v0.0.6 h1:vWaHVu8dgFLM7y3jYEgf1sdTY8Ak8QGih4l7/t9GQXc=

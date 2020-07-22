@@ -91,5 +91,5 @@ nanomsg.org/go/mangos/v2 v2.0.8 h1:Nnc5gCNPd8sSyxgfMTdlKK020p4nxLAxcQrhLVnjGQ8=
 nanomsg.org/go/mangos/v2 v2.0.8/go.mod h1:gngxudWUZkxqHN+8n/2y9gWZPcwmSbliFYJsYG8mbKs=
 stash.teslamotors.com/ctet/go-socketcan v0.0.2 h1:MqrqIikwW6QJRY8l6DpLJA842y+JWKhhAT48V8R7S7I=
 stash.teslamotors.com/ctet/go-socketcan v0.0.2/go.mod h1:6IDCQ1OX3RSaS5JrLfqV8lyI1C1ZW/TuuqvD6lzNO2A=
-stash.teslamotors.com/rr/towerproto v0.0.6 h1:vWaHVu8dgFLM7y3jYEgf1sdTY8Ak8QGih4l7/t9GQXc=
-stash.teslamotors.com/rr/towerproto v0.0.6/go.mod h1:FDbAtKBEKCStkYKJSOamESQ6NjyN7zmV9HAqydiJQs4=
+stash.teslamotors.com/rr/towerproto v0.0.7 h1:E4FbZL4+tcS0lm0Q3yrCECM/kOObu3ilvAjrOAYnHSw=
+stash.teslamotors.com/rr/towerproto v0.0.7/go.mod h1:FDbAtKBEKCStkYKJSOamESQ6NjyN7zmV9HAqydiJQs4=

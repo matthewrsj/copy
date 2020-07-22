@@ -105,7 +105,15 @@ func (s *Socket) Listen() <-chan *Message {
 					}
 
 					m.Msg.Body = bytes.TrimPrefix(m.Msg.Body, []byte(s.prefix))
-					c <- m
+
+					// perform a non-blocking write to the channel. We don't want to write (and then block)
+					// to a channel if nothing is reading, because then the data in that channel will become
+					// stale.
+					select {
+					case c <- m: // there's an active reader (this is not buffered)
+					default: // no reader on this channel, don't let the data get stale
+					}
+
 					// we consumed the value off this channel, so we know the
 					// goroutine in getMessage() ended and isn't blocked on
 					// RecvMsg anymore. This means on the next iteration we will
