@@ -72,6 +72,14 @@ func (e *EndProcess) action() {
 		e.setCellStatuses()
 	}
 
+	if !e.manual && !e.mockCellAPI {
+		e.childLogger.Infow("closing process step", "recipe_name", e.processStepName, "recipe_version", e.recipeVersion)
+
+		if err := e.CellAPIClient.CloseProcessStep(e.tbc.SN, e.processStepName, e.recipeVersion); err != nil {
+			e.childLogger.Error("close process status", "error", err)
+		}
+	}
+
 	// TODO: determine how to inform cell API of fault
 	msg := "tray complete"
 	if e.fixtureFault {

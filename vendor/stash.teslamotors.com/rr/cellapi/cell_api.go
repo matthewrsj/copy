@@ -48,6 +48,7 @@ type endpoints struct {
 	processStatusFmt   string
 	nextProcessStepFmt string
 	cellStatus         string
+	closeProcessFmt    string
 }
 
 const (
@@ -61,6 +62,8 @@ const (
 	DefaultNextProcessStepFmt = "/trays/%s/formation"
 	// DefaultCellStatus is the default endpoint for posting cell status.
 	DefaultCellStatus = "/cells/set_cell_status"
+	// DefaultCloseProcessFmt is the default endpoint for closing a process step
+	DefaultCloseProcessFmt = "/trays/%s/formation/next"
 )
 
 // Option function to set internal fields on the client
@@ -97,6 +100,14 @@ func WithCellStatusEndpoint(ep string) Option {
 	}
 }
 
+// WithCloseProcessFmtEndpoint returns an option to set the client close process endpoint.
+// The epf argument is a format string that accepts the tray serial number.
+func WithCloseProcessFmtEndpoint(epf string) Option {
+	return func(c *Client) {
+		c.eps.closeProcessFmt = epf
+	}
+}
+
 // NewClient returns a pointer to a new Client object configured with opts.
 func NewClient(baseURL string, opts ...Option) *Client {
 	c := Client{
@@ -106,6 +117,7 @@ func NewClient(baseURL string, opts ...Option) *Client {
 			processStatusFmt:   DefaultProcessStatusFmt,
 			nextProcessStepFmt: DefaultNextProcessStepFmt,
 			cellStatus:         DefaultCellStatus,
+			closeProcessFmt:    DefaultCloseProcessFmt,
 		},
 	}
 
@@ -114,6 +126,63 @@ func NewClient(baseURL string, opts ...Option) *Client {
 	}
 
 	return &c
+}
+
+func (c *Client) CloseProcessStep(sn, rcpeName string, version int) error {
+	url := urlJoin(c.baseURL, fmt.Sprintf(c.eps.closeProcessFmt, sn))
+
+	type request struct {
+		RecipeName    string `json:"current_recipe_name"`
+		RecipeVersion int    `json:"current_recipe_version"`
+	}
+
+	b, err := json.Marshal(request{RecipeName: rcpeName, RecipeVersion: version})
+	if err != nil {
+		return fmt.Errorf("marshal request json: %v", err)
+	}
+
+	// of course the URL has to be variable. We need to fmt everything in.
+	// nolint:gosec
+	resp, err := http.Post(url, "application/json", bytes.NewReader(b))
+	if err != nil {
+		return fmt.Errorf("POST to %s: %v", url, err)
+	}
+
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode != http.StatusOK {
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return fmt.Errorf("POST response from %s NOT OK: %v; %s", url, resp.StatusCode, resp.Status)
+		}
+
+		type errMsg struct {
+			Message     string `json:"message"`
+			Description string `json:"description"`
+		}
+
+		type response struct {
+			Error errMsg `json:"error"`
+		}
+
+		var eResp response
+		if err := json.Unmarshal(body, &eResp); err != nil {
+			return fmt.Errorf("POST response NOT OK: %v; %s", resp.StatusCode, resp.Status)
+		}
+
+		return fmt.Errorf(
+			"POST response from %s NOT OK: %v; %s; %s; %s",
+			url,
+			resp.StatusCode,
+			resp.Status,
+			eResp.Error.Message,
+			eResp.Error.Description,
+		)
+	}
+
+	return nil
 }
 
 func (c *Client) GetCellMap(sn string) (map[string]CellData, error) {

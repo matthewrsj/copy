@@ -15,6 +15,8 @@ type endpointConf struct {
 	ProcessStatusFmt string `yaml:"process_status"`
 	// fmt: tray_serial
 	NextProcStepFmt string `yaml:"next_process_step"`
+	// fmt: tray_serial
+	CloseProcessFmt string `yaml:"close_process"`
 
 	// no format here
 	CellStatus string `yaml:"cell_status"`

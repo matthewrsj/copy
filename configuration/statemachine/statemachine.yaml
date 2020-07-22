@@ -14,6 +14,7 @@ cell_api:
     cell_map: /trays/%s/cells                        # tray_serial
     process_status: /trays/%s/%s/%s                  # tray_serial|process|status
     next_process_step: /trays/%s/next_formation_step # tray_serial
+    close_process: /trays/%s/formation/next          # tray_serial
     cell_status: /cells/set_cell_status
 
 fixture_ids:

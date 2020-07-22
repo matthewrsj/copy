@@ -64,6 +64,7 @@ func main() {
 		cellapi.WithProcessStatusFmtEndpoint(conf.CellAPI.Endpoints.ProcessStatusFmt),
 		cellapi.WithCellMapFmtEndpoint(conf.CellAPI.Endpoints.CellMapFmt),
 		cellapi.WithCellStatusEndpoint(conf.CellAPI.Endpoints.CellStatus),
+		cellapi.WithCloseProcessFmtEndpoint(conf.CellAPI.Endpoints.CloseProcessFmt),
 	)
 
 	s := statemachine.NewScheduler()
