@@ -18,5 +18,5 @@ require (
 	stash.teslamotors.com/rr/cellapi v0.0.2
 	stash.teslamotors.com/rr/protostream v0.0.3
 	stash.teslamotors.com/rr/towerproto v0.0.7
-	stash.teslamotors.com/rr/traycontrollers v0.0.7
+	stash.teslamotors.com/rr/traycontrollers v0.0.8
 )

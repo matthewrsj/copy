@@ -37,14 +37,19 @@ func HandleAvailable(configPath string, logger *zap.SugaredLogger, registry map[
 			return
 		}
 
-		avail := make(chan traycontrollers.FXRAvailable)
+		type namedAvail struct {
+			name  string
+			avail traycontrollers.FXRAvailable
+		}
+
+		avail := make(chan namedAvail)
 		done := make(chan struct{})
 		var wg sync.WaitGroup
 
-		var as traycontrollers.Availability
+		as := make(traycontrollers.Availability)
 		go func() {
 			for a := range avail {
-				as = append(as, a)
+				as[a.name] = a.avail
 			}
 			close(done)
 		}()
@@ -54,8 +59,8 @@ func HandleAvailable(configPath string, logger *zap.SugaredLogger, registry map[
 		for n := range conf.Fixtures {
 			go func(n string) {
 				defer wg.Done()
-
-				cl := logger.With("fixture", n)
+				location := fmt.Sprintf("%s-%s%s-%s", conf.Loc.Line, conf.Loc.Process, conf.Loc.Aisle, n)
+				cl := logger.With("fixture", location)
 				cl.Debug("checking availability on fixture")
 
 				// nolint:govet // allow shadow of err declaration for go routine scope
@@ -67,8 +72,11 @@ func HandleAvailable(configPath string, logger *zap.SugaredLogger, registry map[
 				fxrInfo, ok := registry[n]
 				if !ok {
 					cl.Warn("fixture not in registry")
-					avail <- traycontrollers.FXRAvailable{
-						Location: fmt.Sprintf("%s-%s%s-%s", conf.Loc.Line, conf.Loc.Process, conf.Loc.Aisle, n),
+					avail <- namedAvail{
+						name: location,
+						avail: traycontrollers.FXRAvailable{
+							Status: pb.FixtureStatus_FIXTURE_STATUS_UNKNOWN_UNSPECIFIED.String(),
+						},
 					}
 
 					return
@@ -99,25 +107,27 @@ func HandleAvailable(configPath string, logger *zap.SugaredLogger, registry map[
 
 						cl.Debugw("fixture status rxd, checking if available", "status", msg.GetOp().GetStatus().String())
 
-						avail <- traycontrollers.FXRAvailable{
-							Location: fmt.Sprintf("%s-%s%s-%s", conf.Loc.Line, conf.Loc.Process, conf.Loc.Aisle, n),
-							Status:   msg.GetOp().GetStatus(),
-							Reserved: fxrInfo.Avail.Status() == StatusWaitingForLoad,
+						avail <- namedAvail{
+							name: location,
+							avail: traycontrollers.FXRAvailable{
+								Status:   msg.GetOp().GetStatus().String(),
+								Reserved: fxrInfo.Avail.Status() == StatusWaitingForLoad,
+							},
 						}
 
 						return
 					case <-time.After(_availabilityTimeout):
-						avail <- traycontrollers.FXRAvailable{
-							Location: fmt.Sprintf("%s-%s%s-%s", conf.Loc.Line, conf.Loc.Process, conf.Loc.Aisle, n),
+						avail <- namedAvail{name: location,
+							avail: traycontrollers.FXRAvailable{
+								Status: pb.FixtureStatus_FIXTURE_STATUS_UNKNOWN_UNSPECIFIED.String(),
+							},
 						}
 						return
 					}
 				}
 
 				cl.Warnw("unable to find fixture status in timeout", "timeout", _availabilityTimeout)
-				avail <- traycontrollers.FXRAvailable{
-					Location: fmt.Sprintf("%s-%s%s-%s", conf.Loc.Line, conf.Loc.Process, conf.Loc.Aisle, n),
-				}
+				avail <- namedAvail{name: location}
 			}(n)
 		}
 
@@ -136,6 +146,7 @@ func HandleAvailable(configPath string, logger *zap.SugaredLogger, registry map[
 			return
 		}
 
+		w.Header().Set("Content-Type", "application/json")
 		if _, err = w.Write(body); err != nil {
 			logger.Errorw("write body to responsewriter", "error", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
