@@ -25,13 +25,7 @@ func TestStartProcess_Action(t *testing.T) {
 			CellMap: map[string][]string{
 				"A": cmc,
 			},
-			Fixtures: map[string]fixtureConf{
-				"01-01": {
-					Bus: "vcan0",
-					RX:  0x1c1,
-					TX:  0x241,
-				},
-			},
+			AllowedFixtures: []string{"01-01"},
 		},
 		childLogger:     zap.NewExample().Sugar(),
 		CellAPIClient:   &cellapi.Client{},

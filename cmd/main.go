@@ -69,9 +69,9 @@ func main() {
 
 	s := statemachine.NewScheduler()
 
-	for n := range conf.Fixtures {
-		sugar.Infow("registering", "fixture", n)
-		s.Register(n,
+	for _, name := range conf.AllFixtures {
+		sugar.Infow("registering", "fixture", name)
+		s.Register(name,
 			&towercontroller.ProcessStep{
 				Config:        conf,
 				Logger:        sugar,
@@ -87,7 +87,7 @@ func main() {
 
 	registry := make(map[string]*towercontroller.FixtureInfo)
 
-	for name := range conf.Fixtures {
+	for _, name := range conf.AllFixtures {
 		u := url.URL{Scheme: "ws", Host: *wsAddr, Path: protostream.WSEndpoint}
 		n := name
 
@@ -152,7 +152,7 @@ func main() {
 
 	sugar.Info("starting state machine")
 
-	for name := range conf.Fixtures {
+	for _, name := range conf.AllFixtures {
 		var subscriber *protostream.Socket
 
 		n := name

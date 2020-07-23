@@ -22,13 +22,7 @@ func TestWaitForLoad_Actions(t *testing.T) {
 				Process: "63",
 				Aisle:   "010",
 			},
-			Fixtures: map[string]fixtureConf{
-				"01-01": {
-					Bus: "vcan0",
-					RX:  0x1c1,
-					TX:  0x241,
-				},
-			},
+			AllowedFixtures: []string{"01-01"},
 		},
 		Logger: zap.NewExample().Sugar(),
 		fxrInfo: &FixtureInfo{

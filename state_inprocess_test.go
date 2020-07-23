@@ -20,13 +20,7 @@ func TestInProcess_Action(t *testing.T) {
 	ipState := &InProcess{
 		SubscribeChan: sc,
 		Config: Configuration{
-			Fixtures: map[string]fixtureConf{
-				"01-01": {
-					Bus: "vcan0",
-					RX:  0x1c1,
-					TX:  0x241,
-				},
-			},
+			AllowedFixtures: []string{"01-01"},
 		},
 		childLogger: zap.NewExample().Sugar(),
 		tbc: traycontrollers.TrayBarcode{

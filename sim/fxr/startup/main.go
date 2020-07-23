@@ -6,6 +6,8 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"strconv"
+	"strings"
 	"time"
 
 	"google.golang.org/protobuf/proto"
@@ -53,10 +55,25 @@ func main() {
 
 	var i int
 
-	for n, fConf := range conf.Fixtures {
-		log.Printf("%x WRITING TO %x", fConf.RX, fConf.TX)
+	for _, name := range conf.AllowedFixtures {
+		bus := "vcan0"
+		if strings.HasPrefix(name, "02") {
+			bus = "vcan1"
+		}
 
-		dev, err := socketcan.NewIsotpInterface(fConf.Bus, fConf.TX, fConf.RX)
+		lvl := strings.Split(name, "-")[1]
+
+		lvlID, err := strconv.Atoi(lvl)
+		if err != nil {
+			log.Println("generate tx and rx IDs", err)
+			return
+		}
+
+		rx, tx := uint32(0x240+lvlID), uint32(0x1c0+lvlID)
+
+		log.Printf("fixture: %s, bus: %s, rx: 0x%x, tx: 0x%x", name, bus, rx, tx)
+
+		dev, err := socketcan.NewIsotpInterface(bus, rx, tx)
 		if err != nil {
 			log.Println("create ISOTP interface", err)
 			return // return so the defer is called
@@ -71,9 +88,9 @@ func main() {
 			return
 		}
 
-		fxDevs[n] = devCtx{
+		fxDevs[name] = devCtx{
 			writer: dev,
-			fxbc:   fmt.Sprintf("CM2-63010-%s", n),
+			fxbc:   fmt.Sprintf("CM2-63010-%s", name),
 			tbc:    "11223344" + []string{"A", "B", "C", "D"}[i%4],
 			pstep:  "FORM_CYCLE",
 		}

@@ -9,20 +9,15 @@ import (
 
 // Configuration contains the configuration parameters for the statemachine.
 type Configuration struct {
-	RecipeFile      string                 `yaml:"recipefile"`
-	IngredientsFile string                 `yaml:"ingredientsfile"`
-	Remote          string                 `yaml:"cdcontroller_remote"`
-	RouterAddress   string                 `yaml:"router_address"`
-	CellAPI         cellAPIConf            `yaml:"cell_api"`
-	Loc             location               `yaml:"location"`
-	Fixtures        map[string]fixtureConf `yaml:"fixture_ids"`
-	CellMap         map[string][]string    `yaml:"cell_map"`
-}
-
-type fixtureConf struct {
-	Bus string `yaml:"bus"`
-	RX  uint32 `yaml:"rx"`
-	TX  uint32 `yaml:"tx"`
+	RecipeFile      string              `yaml:"recipefile"`
+	IngredientsFile string              `yaml:"ingredientsfile"`
+	Remote          string              `yaml:"cdcontroller_remote"`
+	RouterAddress   string              `yaml:"router_address"`
+	CellAPI         cellAPIConf         `yaml:"cell_api"`
+	Loc             location            `yaml:"location"`
+	AllFixtures     []string            `yaml:"all_fixtures"`
+	AllowedFixtures []string            `yaml:"allowed_fixtures"`
+	CellMap         map[string][]string `yaml:"cell_map"`
 }
 
 type location struct {

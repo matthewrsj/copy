@@ -56,7 +56,7 @@ func (i *InProcess) action() {
 			return
 		}
 
-		i.childLogger.Infow("got FixtureToTower message", "msg", msg.String())
+		i.childLogger.Debugw("got FixtureToTower message", "msg", msg.String())
 
 		fxbcBroadcast, err := traycontrollers.NewFixtureBarcode(msg.GetFixturebarcode())
 		if err != nil {

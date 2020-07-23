@@ -201,8 +201,6 @@ func (i *Idle) monitorForStatus(done <-chan struct{}, active chan<- inProgressIn
 		case <-done:
 			return
 		case lMsg := <-i.SubscribeChan:
-			i.Logger.Debugw("got message", "message", lMsg.Msg)
-
 			var event protostream.ProtoMessage
 			if err := json.Unmarshal(lMsg.Msg.Body, &event); err != nil {
 				i.Logger.Debugw("unmarshal JSON frame", "error", err, "bytes", string(lMsg.Msg.Body))
@@ -222,25 +220,19 @@ func (i *Idle) monitorForStatus(done <-chan struct{}, active chan<- inProgressIn
 				trayBarcode:    msg.GetTraybarcode(),
 			}
 
+			i.Logger.Debugw("fixture status", "fixture", i.FXRInfo.Name, "status", msg.GetOp().GetStatus().String())
+
 			switch msg.GetOp().GetStatus() {
 			case pb.FixtureStatus_FIXTURE_STATUS_ACTIVE:
 				// go to in-progress
-				i.Logger.Debug("fixture ACTIVE")
 				active <- ipInfo
-
-				i.Logger.Debug("returning")
 
 				return
 			case pb.FixtureStatus_FIXTURE_STATUS_COMPLETE:
 				// go to unload
-				i.Logger.Debug("fixture COMPLETE")
 				complete <- ipInfo
 
-				i.Logger.Debug("returning")
-
 				return
-			default:
-				i.Logger.Debugw("fixture", "status", msg.GetOp().GetStatus().String())
 			}
 		}
 	}

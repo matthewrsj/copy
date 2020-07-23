@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -34,12 +35,29 @@ func main() {
 		dev  socketcan.Interface
 	}
 
-	fxrDevs := make([]devID, len(conf.Fixtures))
+	fxrDevs := make([]devID, len(conf.AllowedFixtures))
 
 	var i int
 
-	for n, fConf := range conf.Fixtures {
-		dev, err := socketcan.NewIsotpInterface(fConf.Bus, fConf.TX, fConf.RX)
+	for _, name := range conf.AllowedFixtures {
+		bus := "vcan0"
+		if strings.HasPrefix(name, "02") {
+			bus = "vcan1"
+		}
+
+		lvl := strings.Split(name, "-")[1]
+
+		lvlID, err := strconv.Atoi(lvl)
+		if err != nil {
+			log.Println("generate tx and rx IDs", err)
+			return
+		}
+
+		rx, tx := uint32(0x240+lvlID), uint32(0x1c0+lvlID)
+
+		log.Printf("fixture: %s, bus: %s, rx: 0x%x, tx: 0x%x", name, bus, rx, tx)
+
+		dev, err := socketcan.NewIsotpInterface(bus, rx, tx)
 		if err != nil {
 			log.Println("create ISOTP interface", err)
 			return // return so the defer is called
@@ -56,7 +74,7 @@ func main() {
 		}
 
 		fxrDevs[i] = devID{
-			name: n,
+			name: name,
 			dev:  dev,
 		}
 		i++

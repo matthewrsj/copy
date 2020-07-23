@@ -54,9 +54,9 @@ func HandleAvailable(configPath string, logger *zap.SugaredLogger, registry map[
 			close(done)
 		}()
 
-		wg.Add(len(conf.Fixtures))
+		wg.Add(len(conf.AllowedFixtures))
 
-		for n := range conf.Fixtures {
+		for _, n := range conf.AllowedFixtures {
 			go func(n string) {
 				defer wg.Done()
 				location := fmt.Sprintf("%s-%s%s-%s", conf.Loc.Line, conf.Loc.Process, conf.Loc.Aisle, n)
