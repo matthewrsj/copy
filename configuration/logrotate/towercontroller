@@ -3,6 +3,7 @@
     missingok
     rotate 30
     compress
+    copytruncate
     notifempty
     create
 }
