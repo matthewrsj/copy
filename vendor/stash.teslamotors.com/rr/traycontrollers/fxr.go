@@ -118,46 +118,43 @@ func (fl *FXRLayout) GetNeighbor(coord Coordinates) *FXR {
 // GetForTrays gets enough fixtures for the available trays, if it can
 func (fl *FXRLayout) GetForTrays(n int) []*FXR {
 	if n == 2 {
-		for i, col := range fl.layout {
-			for j := range col {
-				c := Coordinates{
-					Col: i + 1,
-					Lvl: j + 1,
-				}
+		// if we get two we first look through the whole tower for neighbors
+		// to do this loop over one column. Only need to do one since we are
+		// looking for both to be available, and can check GetNeighbor for the
+		// corresponding column on the other level
+		col := fl.layout[0]
+		for j := range col {
+			var current, neighbor *FXR
 
-				current := fl.Get(c)
-
-				if current == nil || current.InUse {
-					continue
-				}
-
-				neighbor := fl.GetNeighbor(c)
-				if neighbor == nil || neighbor.InUse {
-					continue
-				}
-
-				return []*FXR{current, neighbor}
+			c := Coordinates{
+				Col: 1, // coordinates are one-indexed
+				Lvl: j + 1,
 			}
+
+			if current = fl.Get(c); current == nil || current.InUse {
+				continue
+			}
+
+			if neighbor = fl.GetNeighbor(c); neighbor == nil || neighbor.InUse {
+				continue
+			}
+
+			// found two available next to each other, two tray place
+			return []*FXR{current, neighbor}
 		}
 	}
 
 	var nfxr []*FXR
 
-	for i, col := range fl.layout {
-		for j := range col {
-			c := Coordinates{
-				Col: i + 1,
-				Lvl: j + 1,
-			}
-
-			current := fl.Get(c)
-			if current == nil || current.InUse {
-				continue
-			}
-
-			nfxr = append(nfxr, current)
-			if len(nfxr) == n {
-				return nfxr
+	// prioritize lower levels (shortest route for crane)
+	// this means we loop over level then column instead of column then level.
+	for i := 1; i <= NumLevel; i++ {
+		for j := 1; j <= NumCol; j++ {
+			if current := fl.Get(Coordinates{Col: j, Lvl: i}); current != nil && !current.InUse {
+				nfxr = append(nfxr, current)
+				if len(nfxr) == n {
+					return nfxr
+				}
 			}
 		}
 	}
