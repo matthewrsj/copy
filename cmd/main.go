@@ -148,6 +148,9 @@ func main() {
 		backoff.NewConstantBackOff(time.Second*5),
 	)
 
+	// handle incoming posts to reset faulted fixtures
+	towercontroller.HandleResetFixtureFault(publisher, sugar, registry)
+
 	u := url.URL{Scheme: "ws", Host: *wsAddr, Path: protostream.WSEndpoint}
 
 	sugar.Info("starting state machine")
