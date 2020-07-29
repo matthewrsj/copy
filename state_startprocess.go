@@ -54,13 +54,18 @@ func (s *StartProcess) action() {
 
 	for _, step := range s.steps {
 		twr2Fxr.Recipe.Steps = append(twr2Fxr.Recipe.Steps, &pb.RecipeStep{
-			Mode:          modeStringToEnum(step.Mode),
-			ChargeCurrent: step.ChargeCurrentAmps,
-			MaxCurrent:    step.MaxCurrentAmps,
-			CutOffVoltage: step.CutOffVoltage,
-			CutOffCurrent: step.CutOffCurrent,
-			CellDropOutV:  step.CellDropOutVoltage,
-			StepTimeout:   step.StepTimeoutSeconds,
+			Mode:            modeStringToEnum(step.Mode),
+			ChargeCurrent:   step.ChargeCurrentAmps,
+			MaxCurrent:      step.MaxCurrentAmps,
+			CutoffVoltage:   step.CutOffVoltage,
+			CutoffCurrent:   step.CutOffCurrent,
+			CutoffDv:        step.CutOffDV,
+			StepTimeout:     step.StepTimeoutSeconds,
+			ChargePower:     step.ChargePower,
+			CutoffAh:        step.CutOffAH,
+			EndingStyle:     step.EndingStyle,
+			VCellMinQuality: step.VCellMinQuality,
+			VCellMaxQuality: step.VCellMaxQuality,
 		})
 	}
 

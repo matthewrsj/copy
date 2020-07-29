@@ -3,17 +3,24 @@ package traycontrollers
 import (
 	"encoding/json"
 	"sort"
+
+	pb "stash.teslamotors.com/rr/towerproto"
 )
 
 // Step defines an individual recipe step
 type Step struct {
-	Mode               string  `json:"mode"`
-	ChargeCurrentAmps  float32 `json:"charge_current"`
-	MaxCurrentAmps     float32 `json:"max_current"` // amps limited to this value charge/discharge
-	CutOffVoltage      float32 `json:"cut_off_voltage"`
-	CutOffCurrent      float32 `json:"cut_off_current"`
-	CellDropOutVoltage float32 `json:"cell_drop_out_v"`
-	StepTimeoutSeconds float32 `json:"step_timeout"`
+	Mode               string                    `json:"mode"`
+	ChargeCurrentAmps  float32                   `json:"charge_current"`
+	MaxCurrentAmps     float32                   `json:"max_current"` // amps limited to this value charge/discharge
+	CutOffVoltage      float32                   `json:"cutoff_voltage"`
+	CutOffCurrent      float32                   `json:"cutoff_current"`
+	CutOffDV           float32                   `json:"cutoff_dv"`
+	ChargePower        float32                   `json:"charge_power"`
+	CutOffAH           float32                   `json:"cutoff_ah"`
+	EndingStyle        pb.RecipeStep_EndingStyle `json:"ending_style"`
+	VCellMinQuality    float32                   `json:"v_cell_min_quality"`
+	VCellMaxQuality    float32                   `json:"v_cell_max_quality"`
+	StepTimeoutSeconds float32                   `json:"step_timeout"`
 }
 
 /*
@@ -25,27 +32,42 @@ TC/FXRs need a slice of steps in step order, so drop the keys and just make a sl
 		"mode": "FORM_REQ_CC",
 		"charge_current": 8.67,
 		"max_current": 9.0,
-		"cut_off_voltage": 4.1,
-		"cut_off_current": 0.0,
-		"cell_drop_out_v": 0.0,
+		"cutoff_voltage": 4.1,
+		"cutoff_current": 0.0,
+		"cutoff_dv": 0.0,
+		"charge_power": 4.5,
+		"cutoff_ah": 0.0,
+		"ending_style: 1,
+		"v_cell_min_quality": 0.1,
+		"v_cell_max_quality": 4.0,
 		"step_timeout": 10800
 	},
 	"STEP01": {
 		"mode": "FORM_REQ_CV",
 		"charge_current": 8.7,
 		"max_current": 9.0,
-		"cut_off_voltage": 4.1,
-		"cut_off_current": 1.3,
-		"cell_drop_out_v": 0.0,
+		"cutoff_voltage": 4.1,
+		"cutoff_current": 0.0,
+		"cutoff_dv": 0.0,
+		"charge_power": 4.5,
+		"cutoff_ah": 0.0,
+		"ending_style: 1,
+		"v_cell_min_quality": 0.1,
+		"v_cell_max_quality": 4.0,
 		"step_timeout": 10800
 	},
 	"STEP02": {
 		"mode": "FORM_REQ_CC",
 		"charge_current": -8.67,
 		"max_current": 8.67,
-		"cut_off_voltage": 3.3,
-		"cut_off_current": 0.0,
-		"cell_drop_out_v": 0.0,
+		"cutoff_voltage": 4.1,
+		"cutoff_current": 0.0,
+		"cutoff_dv": 0.0,
+		"charge_power": 4.5,
+		"cutoff_ah": 0.0,
+		"ending_style: 1,
+		"v_cell_min_quality": 0.1,
+		"v_cell_max_quality": 4.0,
 		"step_timeout": 9000
 	}
 }

@@ -1,4 +1,4 @@
-syntax = "proto3";
+syntax            = "proto3";
 option go_package = "tower";
 
 message StibAlert {
@@ -13,11 +13,11 @@ message StibAlert {
     STIB_a007_unused                    = 7;
     STIB_a008_unused                    = 8;
     STIB_a009_unused                    = 9;
-    STIB_a010_unused                    = 10;
+    STIB_a010_EnumerationWriteFail      = 10;
     STIB_a011_AllegroHwOC               = 11;
     STIB_a012_ComparatorHwOC            = 12;
     STIB_a013_SwOC                      = 13;
-    STIB_a014_BusU                      = 14;
+    STIB_a014_BusUV                     = 14;
     STIB_a015_BusOV                     = 15;
     STIB_a016_StringOV                  = 16;
     STIB_a017_StringUV                  = 17;
@@ -44,10 +44,10 @@ message StibAlert {
     STIB_a038_FormationCheckFailed      = 38;
     STIB_a039_unused                    = 39;
     STIB_a040_unused                    = 40;
-    STIB_a041_CIBDataInvalid_1          = 41;
-    STIB_a042_CIBDataInvalid_2          = 42;
+    STIB_a041_CIBDataInvalid            = 41;
     STIB_a043_CIBNotConnected           = 43;
     STIB_a044_CIBCellSwitchWriteFail    = 44;
+    STIB_a045_CIB_NegVoltageProtection  = 45;
   }
 
   message a004_CpuOverRun {
@@ -56,37 +56,137 @@ message StibAlert {
     float f_100Hz_time_max = 3; // us
   }
 
+  message a010_EnumerationWriteFail {}
+
+  message a020_VoltageMatchingTimeout {
+    float  string_voltage = 1; // V
+    float  voltage_target = 2; // V
+    uint32 cell_state_req = 3;
+  }
+
+  message a024_irefCorrectionIrrational {
+    float cib_iout  = 1; // A
+    float conv_iout = 2; // A
+    float iphase_1  = 3; // A
+    float iphase_2  = 4; // A
+  }
+
+  message a028_AppliedCurrentIsSaturated { bool AppliedCurrentIsSaturated = 1; }
+
+  message a029_CellSafetyCheckFailed {
+    uint32 cell_index   = 1;
+    float  cell_voltage = 2; // V
+    float  cib_iout     = 3; // A
+  }
+
+  message a030_CellQualityCheckFailed {
+    uint32 cell_index   = 1;
+    float  cell_voltage = 2; // V
+    float  cib_iout     = 3; // A
+  }
+
   message a031_CellOV {
     uint32 cell_index   = 1;
     float  cell_voltage = 2; // V
+  }
+
+  message a032_CellUV {
+    uint32 cell_index   = 1;
+    float  cell_voltage = 2; // V
+  }
+
+  message a034_PogoVIrrational {
+    uint32 cell_index   = 1;
+    float  cell_voltage = 2; // V
+    float  pogo_voltage = 3; // V
+    float  cib_iout     = 4; // A
+    float  pogo_r       = 5; // Ohm
+  }
+
+  message a045_CIB_NegVoltageProtection {
+    uint32 node_index   = 1;
+    float  node_voltage = 2; // V
+    float  pogo_voltage = 3; // V
+    float  current      = 4; // A
+    uint32 switches     = 5;
+  }
+
+  message a036_CellTempTooHigh {
+    uint32 thermistor_index = 1;
+    float  thermistor_T     = 2; // degC
+  }
+
+  message a041_CIBDataInvalid {
+    bool  REFONoff                = 1;
+    bool  celldata_adc_delayed    = 2;
+    bool  aux_adc_delayed         = 3;
+    bool  celldata_pec_invalid    = 4;
+    bool  aux_data_pec_invalid    = 5;
+    bool  command_counter_invalid = 6;
+    bool  read_dma_failed         = 7;
+    bool  vref2_invalid           = 8;
+    float vref2                   = 9; // V
+    bool  Iref_invalid            = 10;
+    float Iref                    = 11; // V
+    bool  tdie_invalid            = 12;
+    float tdie                    = 13; // V
+    bool  va_invalid              = 14;
+    float va                      = 15; // V
+    bool  vd_invalid              = 16;
+    float vd                      = 17; // V
+  }
+
+  message a044_CIBCellSwitchWriteFail { uint32 cell_switch_data = 1; }
+
+  message a037_FormationTimeout {
+    uint32 form_state  = 1;
+    uint32 step_time_s = 2; // s
+  }
+
+  message a038_FormationCheckFailed {
+    uint32 form_state   = 1;
+    uint32 alert_reason = 2;
   }
 
   AlertId alert_id   = 1;
   uint32  stib_index = 2;
 
   oneof AlertData {
-    a004_CpuOverRun a004 = 4;
-    a031_CellOV     a031 = 31;
+    a004_CpuOverRun                a004 = 4;
+    a010_EnumerationWriteFail      a010 = 10;
+    a020_VoltageMatchingTimeout    a020 = 20;
+    a024_irefCorrectionIrrational  a024 = 24;
+    a028_AppliedCurrentIsSaturated a028 = 28;
+    a029_CellSafetyCheckFailed     a029 = 29;
+    a030_CellQualityCheckFailed    a030 = 30;
+    a031_CellOV                    a031 = 31;
+    a032_CellUV                    a032 = 32;
+    a034_PogoVIrrational           a034 = 34;
+    a036_CellTempTooHigh           a036 = 36;
+    a037_FormationTimeout          a037 = 37;
+    a038_FormationCheckFailed      a038 = 38;
+    a041_CIBDataInvalid            a041 = 41;
+    a044_CIBCellSwitchWriteFail    a044 = 44;
+    a045_CIB_NegVoltageProtection  a045 = 45;
   }
 }
 
 message FibAlert {
   enum AlertId {
-      FIB_NONE                           = 0;
-      FIB_a001_SwAppBoot                 = 1;
-      FIB_a002_watchdogExpired           = 2;
-      FIB_a003_internalFault             = 3;  
-    }
+    FIB_NONE                 = 0;
+    FIB_a001_SwAppBoot       = 1;
+    FIB_a002_watchdogExpired = 2;
+    FIB_a003_internalFault   = 3;
+  }
 
   message a002_watchdogExpired {
     float TaskId = 1; // us
     float AppCRC = 2; // us
   }
 
-  message a003_internalFault {
-  }
+  message a003_internalFault {}
 
-  AlertId alert_id   = 1;
+  AlertId alert_id = 1;
 
   oneof AlertData {
     a002_watchdogExpired a002 = 2;
@@ -96,43 +196,98 @@ message FibAlert {
 
 message FxrAlert {
   enum AlertId {
-      FXR_NONE                           = 0;
-      FXR_a001_SwAppBoot                 = 1;
-      FXR_a002_watchdogExpired           = 2;
-      FXR_a003_internalFault             = 3;  
-    }
+    FXR_NONE                           = 0;
+    FXR_a001_SwAppBoot                 = 1;
+    FXR_a002_watchdogExpired           = 2;
+    FXR_a003_internalFault             = 3;
+    FXR_a004_STIB00_MIA                = 4;
+    FXR_a005_STIB01_MIA                = 5;
+    FXR_a006_STIB02_MIA                = 6;
+    FXR_a007_STIB03_MIA                = 7;
+    FXR_a008_FIB_MIA                   = 8;
+    FXR_a009_isoDiagCheckFail          = 9;
+    FXR_a010_isolationFault            = 10;
+    FXR_a011_isolationDegradationFault = 11;
+    FXR_a012_enumerationWriteFail      = 12;
+    FXR_a013_appGitHashMismatch        = 13;
+  }
 
   message a002_watchdogExpired {
     float TaskId = 1; // us
     float AppCRC = 2; // us
   }
 
-  message a003_internalFault {
+  message a003_internalFault {}
+
+  message a004_STIB00_MIA {}
+
+  message a005_STIB01_MIA {}
+
+  message a006_STIB02_MIA {}
+
+  message a007_STIB03_MIA {}
+
+  message a008_FIB_MIA {}
+
+  message a009_isoDiagCheckFail {
+    bool chassisToVBusShorted = 1;
+    bool chassisToGndShorted  = 2;
+    bool chassisNotConnected  = 3;
+    bool busOutOfSpec         = 4;
   }
+
+  message a010_isolationFault {
+    float isoResistanceHigh = 1;
+    float isoResistanceLow  = 2;
+  }
+
+  message a011_isolationDegradationFault {
+    float isoResistanceHigh = 1;
+    float isoResistanceLow  = 2;
+  }
+
+  message a012_enumerationWriteFail {}
+
+  message a013_appGitHashMismatch {
+    bool fibAppGitHashMismatch    = 1;
+    bool stib00AppGitHashMismatch = 2;
+    bool stib01AppGitHashMismatch = 3;
+    bool stib02AppGitHashMismatch = 4;
+    bool stib03AppGitHashMismatch = 5;
+  }
+
 
   AlertId alert_id   = 1;
 
   oneof AlertData {
-    a002_watchdogExpired a002 = 2;
-    a003_internalFault   a003 = 3;
+    a002_watchdogExpired           a002 = 2;
+    a003_internalFault             a003 = 3;
+    a004_STIB00_MIA                a004 = 4;
+    a005_STIB01_MIA                a005 = 5;
+    a006_STIB02_MIA                a006 = 6;
+    a007_STIB03_MIA                a007 = 7;
+    a008_FIB_MIA                   a008 = 8;
+    a009_isoDiagCheckFail          a009 = 9;
+    a010_isolationFault            a010 = 10;
+    a011_isolationDegradationFault a011 = 11;
+    a012_enumerationWriteFail      a012 = 12;
+    a013_appGitHashMismatch        a013 = 13;
   }
 }
 
 message AlertLog {
   oneof EcuAlert {
-    FxrAlert fxr_alert  = 1;
+    FxrAlert  fxr_alert  = 1;
     FibAlert  fib_alert  = 2;
     StibAlert stib_alert = 3;
   }
 }
 
-message AlertMatrix {
-    repeated uint32 alert_matrices = 1;
-}
+message AlertMatrix { repeated uint32 alert_matrices = 1; }
 
 message Alerts {
   oneof AlertDetail {
-    AlertLog log = 1;
-    AlertMatrix matrix  = 2;
+    AlertLog    log    = 1;
+    AlertMatrix matrix = 2;
   }
 }

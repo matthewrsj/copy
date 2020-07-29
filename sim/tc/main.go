@@ -73,9 +73,9 @@ func main() {
 			Mode:          mode,
 			ChargeCurrent: ing.ChargeCurrentAmps,
 			MaxCurrent:    ing.MaxCurrentAmps,
-			CutOffVoltage: ing.CutOffVoltage,
-			CutOffCurrent: ing.CutOffCurrent,
-			CellDropOutV:  ing.CellDropOutVoltage,
+			CutoffVoltage: ing.CutOffVoltage,
+			CutoffCurrent: ing.CutOffCurrent,
+			CutoffDv:      ing.CutOffDV,
 			StepTimeout:   ing.StepTimeoutSeconds,
 		})
 	}

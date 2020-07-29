@@ -115,51 +115,77 @@ func (fl *FXRLayout) GetNeighbor(coord Coordinates) *FXR {
 	return fl.Get(nc)
 }
 
-// GetForTrays gets enough fixtures for the available trays, if it can
-func (fl *FXRLayout) GetForTrays(n int) []*FXR {
-	if n == 2 {
-		// if we get two we first look through the whole tower for neighbors
-		// to do this loop over one column. Only need to do one since we are
-		// looking for both to be available, and can check GetNeighbor for the
-		// corresponding column on the other level
-		col := fl.layout[0]
-		for j := range col {
-			var current, neighbor *FXR
+// GetTwoFXRs returns two FXRs in order of physical front/back location
+// in the case where there is not a front/back fixture they are returned in
+// order of lower/higher fixtures.
+// nolint:gocognit // the algorithm is a simple one if all in one place
+func (fl *FXRLayout) GetTwoFXRs() (front, back *FXR) {
+	var (
+		col1Lowest, col2Lowest             *FXR
+		overallLowest, overallSecondLowest *FXR
+	)
 
-			c := Coordinates{
-				Col: 1, // coordinates are one-indexed
-				Lvl: j + 1,
+	col := fl.layout[0]
+	c := Coordinates{Col: 1}
+
+	for lvl := range col {
+		c.Lvl = lvl + 1
+
+		current, neighbor := fl.Get(c), fl.GetNeighbor(c)
+
+		if current != nil && !current.InUse {
+			if overallLowest == nil {
+				overallLowest = current
+			} else if overallSecondLowest == nil {
+				overallSecondLowest = current
 			}
 
-			if current = fl.Get(c); current == nil || current.InUse {
-				continue
+			if col1Lowest == nil {
+				col1Lowest = current
+			}
+		}
+
+		if neighbor != nil && !neighbor.InUse {
+			if overallLowest == nil {
+				overallLowest = current
+			} else if overallSecondLowest == nil {
+				overallSecondLowest = current
 			}
 
-			if neighbor = fl.GetNeighbor(c); neighbor == nil || neighbor.InUse {
-				continue
+			if col2Lowest == nil {
+				col2Lowest = neighbor
 			}
+		}
 
+		if current != nil && !current.InUse && neighbor != nil && !neighbor.InUse {
 			// found two available next to each other, two tray place
-			return []*FXR{current, neighbor}
+			// return col2 first as this is the most forward tray
+			return neighbor, current
 		}
 	}
 
-	var nfxr []*FXR
+	if col1Lowest != nil && col2Lowest != nil {
+		// return col2 first as this is the most forward tray
+		return col2Lowest, col1Lowest
+	}
 
+	return overallLowest, overallSecondLowest
+}
+
+// GetOneFXR returns the lowest and rear-most fixture available
+func (fl *FXRLayout) GetOneFXR() *FXR {
 	// prioritize lower levels (shortest route for crane)
 	// this means we loop over level then column instead of column then level.
 	for i := 1; i <= NumLevel; i++ {
 		for j := 1; j <= NumCol; j++ {
 			if current := fl.Get(Coordinates{Col: j, Lvl: i}); current != nil && !current.InUse {
-				nfxr = append(nfxr, current)
-				if len(nfxr) == n {
-					return nfxr
-				}
+				return current
 			}
 		}
 	}
 
-	return nfxr
+	// nothing found
+	return nil
 }
 
 // GetAvail returns the number of available FXRs in the system

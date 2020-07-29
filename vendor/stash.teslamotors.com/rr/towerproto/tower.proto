@@ -1,4 +1,4 @@
-syntax = "proto3";
+syntax            = "proto3";
 option go_package = "tower";
 
 // https://confluence.teslamotors.com/x/fFElIg
@@ -36,17 +36,45 @@ message Genealogy {
   uint64 pcba_id       = 7;
   uint64 usage_id      = 8;
   uint64 assembly_id   = 9;
+  uint64 app_githash   = 10;
+}
+
+enum IsoState {
+  ISO_STATE_UNKNOWN_UNSPECIFIED = 0;
+  ISO_STATE_INIT                = 1;
+  ISO_STATE_CLOSE_SW            = 2;
+  ISO_STATE_OPEN_SW             = 3;
+  ISO_STATE_COMPUTE             = 4;
+}
+
+enum IsoError {
+  ISO_ERROR_UNKNOWN_UNSPECIFIED            = 0;
+  ISO_ERROR_BUS_OUT_OF_SPEC                = 1;
+  ISO_ERROR_CHASSIS_TO_BUS_SHORTED         = 2;
+  ISO_ERROR_CHASSIS_TO_GND_SHORTED         = 3;
+  ISO_ERROR_CHASSIS_NOT_CONNECTED          = 4;
+  ISO_ERROR_RESISTANCE_DEGRADATION_WARNING = 5;
+  ISO_ERROR_RESISTANCE_TOO_LOW_FAULT       = 6;
+  ISO_ERROR_RESISTANCE_NOT_AVAILABLE       = 7;
 }
 
 message FxrSensors {
-  float bus_voltage          = 1; // 80V bus
-  bool  cc_enable_input      = 2; // comms harness digital input
-  float v_bus_24             = 3;
-  bool  position_switch_up   = 4;
-  bool  position_switch_down = 5;
-  float micro_temp           = 6;
-  float v_rail_5v            = 7;
-  float v_rail_3v3           = 8;
+  float v_bus_hv                  = 1;  // 80V bus
+  float v_bus_24                  = 3;  // 24V bus voltage
+  bool  position_switch_closed    = 4;  // switch indicating fixture is raised (closed)
+  bool  position_switch_open      = 5;  // switch indicating fixture is lowered (open)
+  float micro_temp                = 6;  // microcontroller internal temperature sensor (DegC)
+  float v_rail_5v                 = 7;  // regulated 5v voltage sense (V)
+  float v_rail_3v3                = 8;  // regulated 3.3v voltage sense (V)
+  bool  power_supply_fault        = 9;  // 80V to 24V power supply fault
+  bool  stib_fib_efuse_fault      = 10; // 24V logic power to STIBs/FIB overcurrent
+  bool  fan_efuse_fault           = 11; // overcurrent from 24V fan output
+  float i_fan_24                  = 12; // fan current draw (A)
+  float i_stib_fib_24             = 13; // 24V logic current draw (A)
+  float v_solenoid_24             = 14; // solenoid drive output voltage sense (V)
+  bool  enumeration_uart_loopback = 15; // enumeration RX/TX pins detected as loopback
+  bool  enumeration_uart_received = 16; // enumeration received via UART
+  bool  enumeration_gpio_valid    = 17; // enumeration set via GPIO PCBA
 }
 
 message FxrInternal {
@@ -60,15 +88,28 @@ message FxrInternal {
 message FxrOutputs {
   bool stib_enable_line     = 1;
   bool fixture_close_enable = 2;
-  bool cc_enable_output     = 3; // comms harness digital output
+  bool stib_fib_power_on    = 3;
+  bool fan_power_on         = 4;
+}
+
+message Isolation {
+  IsoState iso_state           = 1; // isolation statemachine
+  float    iso_vchassis_sw_off = 2; // chassis voltage when top balancer off
+  float    iso_vchassis_sw_on  = 3; // chassis voltage when top balancer on
+  float    iso_vbus_sw_off     = 4; // Bus voltage when top balancer off
+  float    iso_vbus_sw_on      = 5; // Bus voltage when top balancer on
+  float    iso_resistance_high = 6; // isolation Resistance between VBus and chassis
+  float    iso_resistance_low  = 7; // isolation Resistance between chassis and Vbus return
+  IsoError iso_error           = 8; // Isolation faults
 }
 
 message Fxr {
-  FxrSensors      sensors        = 1;
-  FxrInternal     internal       = 2;
-  FxrOutputs      outputs        = 3;
-  Genealogy       genealogy      = 4;
-  AlertMatrix alert_matrices     = 5;
+  FxrSensors  sensors        = 1;
+  FxrInternal internal       = 2;
+  FxrOutputs  outputs        = 3;
+  Genealogy   genealogy      = 4;
+  AlertMatrix alert_matrices = 5;
+  Isolation   isolation      = 6;
 }
 
 message FibSensors {
@@ -116,11 +157,11 @@ message Fan {
 }
 
 message Fib {
-  FibSensors      sensors        = 1;
-  FibInternal     internal       = 2;
-  Genealogy       genealogy      = 3;
-  repeated Fan    fans           = 4; // always 9 fans
-  AlertMatrix     alert_matrices = 5;
+  FibSensors   sensors        = 1;
+  FibInternal  internal       = 2;
+  Genealogy    genealogy      = 3;
+  repeated Fan fans           = 4; // always 9 fans
+  AlertMatrix  alert_matrices = 5;
 }
 
 enum StibDCDCState {
@@ -169,11 +210,11 @@ message StibInternal {
 }
 
 message Stib {
-  StibSensors     sensors        = 1;
-  StibStatistics  statistics     = 2;
-  Genealogy       genealogy      = 3;
-  StibInternal    internal       = 4;
-  AlertMatrix alert_matrices = 5;
+  StibSensors    sensors        = 1;
+  StibStatistics statistics     = 2;
+  Genealogy      genealogy      = 3;
+  StibInternal   internal       = 4;
+  AlertMatrix    alert_matrices = 5;
 }
 
 enum CellStatus {
@@ -225,10 +266,10 @@ message FixtureOperational {
 }
 
 message FixtureDiagnostic {
-  Fxr           fxr   = 1;
-  Fib           fib   = 2;
-  repeated Stib stibs = 3; // 4 stibs
-  uint32 isotp_rx_complete_msg_received = 5;
+  Fxr           fxr                            = 1;
+  Fib           fib                            = 2;
+  repeated Stib stibs                          = 3; // 4 stibs
+  uint32        isotp_rx_complete_msg_received = 5;
 }
 
 message FixtureToTower {
@@ -240,7 +281,7 @@ message FixtureToTower {
   string traybarcode    = 3;
   string fixturebarcode = 4;
   string process_step   = 5;
-  int64 transaction_id = 6;
+  int64  transaction_id = 6;
 }
 
 message RecipeStep {
@@ -252,13 +293,24 @@ message RecipeStep {
     FORM_MODE_CP                  = 4;
     FORM_MODE_DCR_PULSE           = 5;
   }
-  FormMode mode            = 1;
-  float    charge_current  = 2;
-  float    max_current     = 3;
-  float    cut_off_voltage = 4;
-  float    cut_off_current = 5;
-  float    cell_drop_out_v = 6;
-  float    step_timeout    = 7;
+  enum EndingStyle {
+    ENDING_STYLE_UNKNOWN_UNSPECIFIED = 0;
+    ENDING_STYLE_CELL_BYPASS_ENABLE  = 1;
+    ENDING_STYLE_CELL_BYPASS_DISABLE = 2;
+    ENDING_STYLE_CUTOFF_BY_AH        = 3;
+  }
+  FormMode    mode               = 1;
+  float       charge_current     = 2;
+  float       max_current        = 3;
+  float       cutoff_voltage     = 4;
+  float       cutoff_current     = 5;
+  float       cutoff_dv          = 6;
+  float       step_timeout       = 7;
+  float       charge_power       = 8;
+  float       cutoff_ah          = 9;
+  EndingStyle ending_style       = 10;
+  float       v_cell_min_quality = 11;
+  float       v_cell_max_quality = 12;
 }
 
 enum FormRequest {
@@ -270,19 +322,19 @@ enum FormRequest {
 }
 
 message Recipe {
-  repeated RecipeStep steps        = 1;
-  repeated uint32     cell_masks   = 2;
+  repeated RecipeStep steps       = 1;
+  repeated uint32     cell_masks  = 2;
   FormRequest         formrequest = 3;
 }
 
 message SystemInfo {
   string traybarcode    = 1;
   string fixturebarcode = 2;
-  string process_step    = 3;
+  string process_step   = 3;
 }
 
 message TowerToFixture {
-  Recipe     recipe  = 1;
-  SystemInfo sysinfo = 2;
-  int64 transaction_id = 3;
+  Recipe     recipe         = 1;
+  SystemInfo sysinfo        = 2;
+  int64      transaction_id = 3;
 }

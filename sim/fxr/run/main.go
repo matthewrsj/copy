@@ -91,16 +91,19 @@ func main() {
 			Diag: &pb.FixtureDiagnostic{
 				Fxr: &pb.Fxr{
 					Sensors: &pb.FxrSensors{
-						BusVoltage:         15,
-						CcEnableInput:      false,
-						VBus_24:            23.87,
-						PositionSwitchUp:   false,
-						PositionSwitchDown: false,
+						VBusHv:               1,
+						VBus_24:              2,
+						PositionSwitchClosed: true,
+						MicroTemp:            3,
+						VRail_5V:             4,
+						VRail_3V3:            5,
+						IFan_24:              6,
+						IStibFib_24:          7,
+						VSolenoid_24:         8,
 					},
 					Outputs: &pb.FxrOutputs{
 						StibEnableLine:     true,
 						FixtureCloseEnable: true,
-						CcEnableOutput:     false,
 					},
 				},
 			},
