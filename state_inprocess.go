@@ -2,7 +2,6 @@ package towercontroller
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
@@ -57,17 +56,6 @@ func (i *InProcess) action() {
 		}
 
 		i.childLogger.Debugw("got FixtureToTower message", "msg", msg.String())
-
-		fxbcBroadcast, err := traycontrollers.NewFixtureBarcode(msg.GetFixturebarcode())
-		if err != nil {
-			i.childLogger.Warn(fmt.Errorf("parse fixture position: %v", err))
-			continue
-		}
-
-		if fxbcBroadcast.Fxn != i.fxbc.Fxn {
-			i.childLogger.Warnf("got fixture status for different fixture %s", fxbcBroadcast.Fxn)
-			continue
-		}
 
 		op, ok := msg.GetContent().(*pb.FixtureToTower_Op)
 		if !ok {
