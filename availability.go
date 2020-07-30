@@ -107,11 +107,19 @@ func HandleAvailable(configPath string, logger *zap.SugaredLogger, registry map[
 
 						cl.Debugw("fixture status rxd, checking if available", "status", msg.GetOp().GetStatus().String())
 
+						var reserved bool
+						switch fxrInfo.Avail.Status() {
+						case StatusWaitingForReservation, StatusUnknown:
+							reserved = false
+						default:
+							reserved = true
+						}
+
 						avail <- namedAvail{
 							name: location,
 							avail: traycontrollers.FXRAvailable{
 								Status:   msg.GetOp().GetStatus().String(),
-								Reserved: fxrInfo.Avail.Status() == StatusWaitingForLoad,
+								Reserved: reserved,
 							},
 						}
 
