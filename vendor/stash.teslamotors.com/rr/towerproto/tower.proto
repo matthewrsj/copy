@@ -242,12 +242,13 @@ message Cell {
 
 enum FixtureStatus {
   FIXTURE_STATUS_UNKNOWN_UNSPECIFIED = 0;
-  FIXTURE_STATUS_IDLE                = 1;
-  FIXTURE_STATUS_READY               = 2; // same as ready but tray present
-  FIXTURE_STATUS_ACTIVE              = 3;
-  FIXTURE_STATUS_FAULTED             = 4;
-  FIXTURE_STATUS_COMPLETE            = 5; // complete, tray still in place
-  FIXTURE_STATUS_UPDATING            = 6; // discuss if we need this
+  FIXTURE_STATUS_INIT                = 1; // Fixture is not ready for a tray yet
+  FIXTURE_STATUS_IDLE                = 2; // Fixture is ready for a tray
+  FIXTURE_STATUS_READY               = 3; // Fixture has a tray and is ready to receive a recipe
+  FIXTURE_STATUS_ACTIVE              = 4; // Fixture is running a formation cycle on the tray
+  FIXTURE_STATUS_FAULTED             = 5; // Fixture is faulted
+  FIXTURE_STATUS_COMPLETE            = 6; // Fixture is done with the formation cycle, tray is still present
+  FIXTURE_STATUS_UPDATING            = 7; // Fixture is updating firmware - not used
 }
 
 enum FixturePosition {
@@ -258,11 +259,21 @@ enum FixturePosition {
   FIXTURE_POSITION_INVALID             = 4;
 }
 
+enum EquipmentStatus {
+  EQUIPMENT_STATUS_UNKNOWN_UNSPECIFIED = 0;
+  EQUIPMENT_STATUS_NEEDS_COMMISSIONING = 1; // initial value or when commanded to recommission
+  EQUIPMENT_STATUS_NEEDS_MAINTENANCE   = 2; // When self test fails or when set by TC
+  EQUIPMENT_STATUS_NEEDS_APPROVAL      = 3; // When self test cycle has run , waiting for approval from operator
+  EQUIPMENT_STATUS_IN_OPERATION        = 4; // When operator approves self test cycle, ready for production
+}
+
 message FixtureOperational {
-  FixtureStatus   status         = 1;
-  FixturePosition position       = 2;
-  repeated Cell   cells          = 3;
-  uint32          step_executing = 4; // 1 based current process step index
+  FixtureStatus   status           = 1;
+  FixturePosition position         = 2;
+  repeated Cell   cells            = 3;
+  uint32          step_executing   = 4; // 1 based current process step index
+  EquipmentStatus equipment_status = 5;
+  bool            tray_present     = 6; // tray is present (independent of fixture status)
 }
 
 message FixtureDiagnostic {
@@ -333,8 +344,16 @@ message SystemInfo {
   string process_step   = 3;
 }
 
+enum EquipmentRequest {
+  EQUIPMENT_REQUEST_UNKNOWN_UNSPECIFIED = 0;
+  EQUIPMENT_REQUEST_SELF_TEST_APPROVED  = 1; // operator has reviewed self test data, put fixture into production
+  EQUIPMENT_REQUEST_MAINTENANCE         = 2; // put fixture in maintenance mode
+  EQUIPMENT_REQUEST_RECOMMISSIONING     = 3; // reset fixture hardware status to require commissioning
+}
+
 message TowerToFixture {
-  Recipe     recipe         = 1;
-  SystemInfo sysinfo        = 2;
-  int64      transaction_id = 3;
+  Recipe           recipe            = 1;
+  SystemInfo       sysinfo           = 2;
+  int64            transaction_id    = 3;
+  EquipmentRequest equipment_request = 4;
 }

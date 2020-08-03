@@ -63,7 +63,7 @@ func (s *StartProcess) action() {
 			StepTimeout:     step.StepTimeoutSeconds,
 			ChargePower:     step.ChargePower,
 			CutoffAh:        step.CutOffAH,
-			EndingStyle:     step.EndingStyle,
+			EndingStyle:     endingStyleStringToEnum(step.EndingStyle),
 			VCellMinQuality: step.VCellMinQuality,
 			VCellMaxQuality: step.VCellMaxQuality,
 		})

@@ -114,3 +114,12 @@ func modeStringToEnum(input string) pb.RecipeStep_FormMode {
 
 	return pb.RecipeStep_FormMode(fm)
 }
+
+func endingStyleStringToEnum(input string) pb.RecipeStep_EndingStyle {
+	fm, ok := pb.RecipeStep_EndingStyle_value[input]
+	if !ok {
+		return pb.RecipeStep_ENDING_STYLE_UNKNOWN_UNSPECIFIED
+	}
+
+	return pb.RecipeStep_EndingStyle(fm)
+}

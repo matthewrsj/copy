@@ -58,7 +58,7 @@ func main() {
 		"cutoff_dv": 0.0,
 		"charge_power": 4.5,
 		"cutoff_ah": 0.0,
-		"ending_style": 1,
+		"ending_style": "ENDING_STYLE_CELL_BYPASS_ENABLE",
 		"v_cell_min_quality": 0.1,
 		"v_cell_max_quality": 4.0,
 		"step_timeout": 10800
@@ -72,7 +72,7 @@ func main() {
 		"cutoff_dv": 0.0,
 		"charge_power": 4.5,
 		"cutoff_ah": 0.0,
-		"ending_style": 1,
+		"ending_style": "ENDING_STYLE_CELL_BYPASS_ENABLE",
 		"v_cell_min_quality": 0.1,
 		"v_cell_max_quality": 4.0,
 		"step_timeout": 10800
@@ -86,7 +86,7 @@ func main() {
 		"cutoff_dv": 0.0,
 		"charge_power": 4.5,
 		"cutoff_ah": 0.0,
-		"ending_style": 1,
+		"ending_style": "ENDING_STYLE_CELL_BYPASS_ENABLE",
 		"v_cell_min_quality": 0.1,
 		"v_cell_max_quality": 4.0,
 		"step_timeout": 9000

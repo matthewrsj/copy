@@ -210,6 +210,11 @@ message FxrAlert {
     FXR_a011_isolationDegradationFault = 11;
     FXR_a012_enumerationWriteFail      = 12;
     FXR_a013_appGitHashMismatch        = 13;
+    FXR_a014_state_machine_fault       = 14;
+    FXR_a015_fixture_position_fault    = 15;
+    FXR_a016_stibs_faulted             = 16;
+    FXR_a017_tray_missing              = 17;
+    FXR_a018_stib_step_timeout         = 18;
   }
 
   message a002_watchdogExpired {
@@ -256,8 +261,21 @@ message FxrAlert {
     bool stib03AppGitHashMismatch = 5;
   }
 
+  message a014_state_machine_fault { float state_machine_state = 1; }
 
-  AlertId alert_id   = 1;
+  message a015_fixture_position_fault {
+    float fixture_position    = 1;
+    float state_machine_state = 2;
+    float fixture_state       = 3;
+  }
+
+  message a016_stibs_faulted {}
+
+  message a017_tray_missing { float state_machine_state = 1; }
+
+  message a018_stib_step_timeout {}
+
+  AlertId alert_id = 1;
 
   oneof AlertData {
     a002_watchdogExpired           a002 = 2;
@@ -272,6 +290,11 @@ message FxrAlert {
     a011_isolationDegradationFault a011 = 11;
     a012_enumerationWriteFail      a012 = 12;
     a013_appGitHashMismatch        a013 = 13;
+    a014_state_machine_fault       a014 = 14;
+    a015_fixture_position_fault    a015 = 15;
+    a016_stibs_faulted             a016 = 16;
+    a017_tray_missing              a017 = 17;
+    a018_stib_step_timeout         a018 = 18;
   }
 }
 

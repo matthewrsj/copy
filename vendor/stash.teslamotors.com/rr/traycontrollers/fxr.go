@@ -147,9 +147,9 @@ func (fl *FXRLayout) GetTwoFXRs() (front, back *FXR) {
 
 		if neighbor != nil && !neighbor.InUse {
 			if overallLowest == nil {
-				overallLowest = current
+				overallLowest = neighbor
 			} else if overallSecondLowest == nil {
-				overallSecondLowest = current
+				overallSecondLowest = neighbor
 			}
 
 			if col2Lowest == nil {
@@ -164,12 +164,56 @@ func (fl *FXRLayout) GetTwoFXRs() (front, back *FXR) {
 		}
 	}
 
-	if col1Lowest != nil && col2Lowest != nil {
-		// return col2 first as this is the most forward tray
-		return col2Lowest, col1Lowest
+	// col2 first as this is the most forward tray
+	return getMinimumTravelDistance(col2Lowest, col1Lowest, overallLowest, overallSecondLowest)
+}
+
+const _maximumEfficientTravelHeight = 3
+
+// getMinimumTravelDistance calculates the most efficient travel distance between two pairs of
+// FXRs. On one hand we have the lowest from each column, on the other hand we have the overall
+// first and second lowest. Because of basic trigonometry it is not always more efficient to
+// request place on lowest from each column.
+//
+// If the height diff between the lowest on each column is greater than the height diff between the
+// two absolute lowest plus the maximum height at which the crane can efficiently travel.
+// Calculated using pythagorean theorem.
+// sqrt(a^2 + b^2) = c where a is the distance between levels (14")
+//                           b is the distance between columns (43")
+//                           c is the travel distance of the crane to perform a place
+// It is only efficient to place one in each column if the height difference for that place is
+// 3 or less levels different from the overall lowest and overall second lowest, even though
+// those require lateral movement.
+//
+// A more direct calculation is with the ratio between column/level differences normalized to level
+//     sqrt(1^2 + 2.8^2) = 3.03
+// which shows that a difference of 3 units of level is the threshold upon which we should make these
+// decisions.
+//
+// This is not calculated on the fly, instead a constant _maximumEfficientTravelHeight was introduced.
+func getMinimumTravelDistance(frontLowest, backLowest, overallLowest, overallSecondLowest *FXR) (front, back *FXR) {
+	// if either of these are nil we can't use these, use overall
+	if frontLowest == nil || backLowest == nil {
+		return overallLowest, overallSecondLowest
 	}
 
-	return overallLowest, overallSecondLowest
+	// if they are different columns we've already optimized for lowest with front/backLowest
+	if overallLowest.Coord.Col != overallSecondLowest.Coord.Col {
+		return frontLowest, backLowest
+	}
+
+	diffByColumn := frontLowest.Coord.Lvl - backLowest.Coord.Lvl
+	if diffByColumn < 0 {
+		diffByColumn *= -1
+	}
+
+	diffByLevel := overallSecondLowest.Coord.Lvl - overallLowest.Coord.Lvl // no need to abs this
+
+	if diffByLevel <= diffByColumn-_maximumEfficientTravelHeight {
+		return overallLowest, overallSecondLowest
+	}
+
+	return frontLowest, backLowest
 }
 
 // GetOneFXR returns the lowest and rear-most fixture available
