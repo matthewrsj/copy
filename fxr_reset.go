@@ -67,7 +67,7 @@ func HandleResetFixtureFault(publisher *protostream.Socket, logger *zap.SugaredL
 		for begin := time.Now(); time.Since(begin) < _resetFaultTimeout; {
 			select {
 			case msg := <-fxrInfo.SC:
-				cl.Debug("got message, checking if fixture is available")
+				cl.Debug("got message, checking if fixture is faulted")
 
 				var event protostream.ProtoMessage
 				if err = json.Unmarshal(msg.Msg.Body, &event); err != nil {
@@ -75,7 +75,7 @@ func HandleResetFixtureFault(publisher *protostream.Socket, logger *zap.SugaredL
 					return
 				}
 
-				cl.Debug("received message from FXR, unmarshalling to check if it is available")
+				cl.Debug("received message from FXR, unmarshalling to check if it is faulted")
 
 				var pMsg pb.FixtureToTower
 
@@ -143,7 +143,7 @@ func HandleResetFixtureFault(publisher *protostream.Socket, logger *zap.SugaredL
 			return
 		}
 
-		cl.Debug("published fault reset request")
+		cl.Info("published fault reset request")
 
 		w.WriteHeader(http.StatusOK)
 	})

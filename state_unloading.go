@@ -57,7 +57,7 @@ func (u *Unloading) action() {
 
 		status := msg.GetOp().GetStatus()
 
-		u.childLogger.Infow("received status", "status", status.String())
+		u.childLogger.Debugw("received status", "status", status.String())
 
 		// fixture will stay in fault, don't wait for it to go to idle before we go back to idle
 		if status == pb.FixtureStatus_FIXTURE_STATUS_IDLE || status == pb.FixtureStatus_FIXTURE_STATUS_FAULTED {
