@@ -9,7 +9,7 @@ location:
 
 cell_api:
   base_swift: https://celltest-kato.mo.tesla.services/module/api/v0.1
-  base: http://10.179.219.11:8618/module/api/v0.1
+  base: https://cellapi-rr.us-sjc25-prd-factory.k8s.tesla.com:31443/module/api/v0.1
   endpoints:
     cell_map: /trays/%s/cells                        # tray_serial
     process_status: /trays/%s/%s/%s                  # tray_serial|process|status

@@ -4,6 +4,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"flag"
 	"log"
 	"net/http"
@@ -58,6 +59,8 @@ func main() {
 	if *manual {
 		base = conf.CellAPI.BaseSWIFT
 	}
+
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 
 	caClient := cellapi.NewClient(base,
 		cellapi.WithNextProcessStepFmtEndpoint(conf.CellAPI.Endpoints.NextProcStepFmt),

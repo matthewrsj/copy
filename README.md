@@ -9,7 +9,12 @@ In the root of the repo run
 
 ```bash
 docker-compose build
-docker-compose run towercontroller
+cp configuration/system/daemon.json /etc/docker
+cp configuration/system/towercontroller.service /etc/systemd/system
+systemctl daemon-reload
+systemctl start towercontroller
+systemctl enable towercontroller
+# follow logrotate instructions in configuration/logrotate/README.md
 ```
 
 ## System-level Port Strategy
