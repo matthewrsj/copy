@@ -155,6 +155,8 @@ func main() {
 
 	// handle incoming posts to reset faulted fixtures
 	towercontroller.HandleResetFixtureFault(publisher, sugar, registry)
+	// handle incoming posts to remove fixture reservation
+	towercontroller.HandleUnreserveFixture(sugar, registry)
 
 	u := url.URL{Scheme: "ws", Host: *wsAddr, Path: protostream.WSEndpoint}
 

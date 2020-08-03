@@ -38,6 +38,7 @@ type WaitForLoad struct {
 
 func (w *WaitForLoad) action() {
 	w.fxrInfo.Avail.Set(StatusWaitingForLoad)
+	w.resetToIdle = false
 
 	w.Logger.Infow("waiting for load complete message from C/D controller", "fixture", w.fxbc)
 
@@ -48,6 +49,11 @@ func (w *WaitForLoad) action() {
 	select {
 	case <-time.After(waitForLoadTimeout):
 		w.Logger.Warnw("waitforload: timed out waiting for tray", "timeout", waitForLoadTimeout.String())
+		w.resetToIdle = true
+
+		return
+	case <-w.fxrInfo.Unreserve:
+		w.Logger.Warn("waitforload: reservation manually removed")
 		w.resetToIdle = true
 
 		return
@@ -103,7 +109,7 @@ func (w *WaitForLoad) Next() statemachine.State {
 
 	switch {
 	case w.err != nil || w.resetToIdle:
-		w.Logger.Warnw("going back to idle state", "error", w.err.Error(), "reservation_cleared", w.resetToIdle)
+		w.Logger.Warnw("going back to idle state", "error", w.err, "reservation_cleared", w.resetToIdle)
 
 		next = &Idle{
 			Config:        w.Config,

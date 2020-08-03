@@ -9,11 +9,12 @@ import (
 
 // FixtureInfo contains the feeds for messages from the C/D Controller
 type FixtureInfo struct {
-	Name  string
-	PFD   chan traycontrollers.PreparedForDelivery
-	LDC   chan traycontrollers.FXRLoad
-	SC    <-chan *protostream.Message
-	Avail ReadyStatus
+	Name      string
+	PFD       chan traycontrollers.PreparedForDelivery
+	LDC       chan traycontrollers.FXRLoad
+	SC        <-chan *protostream.Message
+	Unreserve chan struct{}
+	Avail     ReadyStatus
 }
 
 // ReadyStatus indicates the status of the fixture
