@@ -2,6 +2,7 @@ package towercontroller
 
 import (
 	"fmt"
+	"time"
 
 	"go.uber.org/zap"
 	"stash.teslamotors.com/ctet/statemachine/v2"
@@ -28,6 +29,7 @@ type WaitForLoad struct {
 	recipeVersion   int
 	manual          bool
 	mockCellAPI     bool
+	resetToIdle     bool
 
 	fxrInfo *FixtureInfo
 
@@ -38,7 +40,19 @@ func (w *WaitForLoad) action() {
 	w.fxrInfo.Avail.Set(StatusWaitingForLoad)
 
 	w.Logger.Infow("waiting for load complete message from C/D controller", "fixture", w.fxbc)
-	fxrLoad := <-w.fxrInfo.LDC
+
+	var fxrLoad traycontrollers.FXRLoad
+
+	const waitForLoadTimeout = time.Minute * 10
+
+	select {
+	case <-time.After(waitForLoadTimeout):
+		w.Logger.Warnw("waitforload: timed out waiting for tray", "timeout", waitForLoadTimeout.String())
+		w.resetToIdle = true
+
+		return
+	case fxrLoad = <-w.fxrInfo.LDC:
+	}
 
 	fxrID := fmt.Sprintf("%s-%s%s-%02d-%02d", w.Config.Loc.Line, w.Config.Loc.Process, w.Config.Loc.Aisle, fxrLoad.Column, fxrLoad.Level)
 
@@ -88,8 +102,8 @@ func (w *WaitForLoad) Next() statemachine.State {
 	var next statemachine.State
 
 	switch {
-	case w.err != nil:
-		w.Logger.Warnw("going back to idle state", "error", w.err)
+	case w.err != nil || w.resetToIdle:
+		w.Logger.Warnw("going back to idle state", "error", w.err.Error(), "reservation_cleared", w.resetToIdle)
 
 		next = &Idle{
 			Config:        w.Config,
