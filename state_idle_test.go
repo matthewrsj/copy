@@ -11,9 +11,14 @@ import (
 
 func TestIdle_Next(t *testing.T) {
 	i := &Idle{
-		Logger:  zap.NewExample().Sugar(),
-		FXRInfo: &FixtureInfo{},
-		next:    &WaitForLoad{},
+		Logger: zap.NewExample().Sugar(),
+		FXRInfo: &FixtureInfo{
+			Name: "01-01",
+		},
+		Config: Configuration{
+			AllowedFixtures: []string{"01-01"},
+		},
+		next: &WaitForLoad{},
 	}
 	assert.Equal(t, "WaitForLoad", statemachine.NameOf(i.Next()))
 }
@@ -35,7 +40,8 @@ func TestIdle_Actions(t *testing.T) {
 		},
 		Logger: zap.NewExample().Sugar(),
 		FXRInfo: &FixtureInfo{
-			PFD: pfdC,
+			Name: "01-01",
+			PFD:  pfdC,
 		},
 	}
 

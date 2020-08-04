@@ -30,7 +30,9 @@ func HandleAvailable(configPath string, logger *zap.SugaredLogger, registry map[
 			err  error
 		)
 
-		if conf, err = LoadConfig(configPath); err != nil {
+		if _globalConfiguration != nil {
+			conf = *_globalConfiguration
+		} else if conf, err = LoadConfig(configPath); err != nil {
 			logger.Errorw("read configuration file", "error", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 

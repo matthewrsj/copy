@@ -34,6 +34,8 @@ github.com/envoyproxy/go-control-plane v0.9.4/go.mod h1:6rpuAdCZL397s3pYoYcLgu1m
 github.com/envoyproxy/protoc-gen-validate v0.1.0/go.mod h1:iSmxcyjqTsJpI2R4NaDN7+kN2VEUnK/pcBlmesArF7c=
 github.com/fatih/color v1.9.0 h1:8xPHl4/q1VyqGIPif1F+1V3Y3lSmrq01EabUW3CoW5s=
 github.com/fatih/color v1.9.0/go.mod h1:eQcE1qtQxscV5RaZvpXrrb8Drkc3/DdQ+uUYCNjL+zU=
+github.com/fsnotify/fsnotify v1.4.9 h1:hsms1Qyu0jgnwNXIxa+/V/PDsU6CfLf6CNO8H7IWoS4=
+github.com/fsnotify/fsnotify v1.4.9/go.mod h1:znqG4EE+3YCdAaPaxE2ZRY/06pZUdp0tY4IgpuI1SZQ=
 github.com/gdamore/optopia v0.2.0/go.mod h1:YKYEwo5C1Pa617H7NlPcmQXl+vG6YnSSNB44n8dNL0Q=
 github.com/go-kit/kit v0.8.0/go.mod h1:xBxKIO96dXMWWy0MnWVtmwkA9/13aqxPnvrjFYMA2as=
 github.com/go-kit/kit v0.9.0/go.mod h1:xBxKIO96dXMWWy0MnWVtmwkA9/13aqxPnvrjFYMA2as=
@@ -184,6 +186,7 @@ golang.org/x/sys v0.0.0-20190215142949-d0b11bdaac8a/go.mod h1:STP8DvDyc/dI5b8T5h
 golang.org/x/sys v0.0.0-20190222072716-a9d3bda3a223/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
 golang.org/x/sys v0.0.0-20190412213103-97732733099d/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20190422165155-953cdadca894/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+golang.org/x/sys v0.0.0-20191005200804-aed5e4c7ecf9/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20191026070338-33540a1f6037 h1:YyJpGZS1sBuBCzLAR1VEpK193GlqGZbnPFnPV/5Rsb4=
 golang.org/x/sys v0.0.0-20191026070338-33540a1f6037/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20200106162015-b016eb3dc98e/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
@@ -255,13 +258,9 @@ stash.teslamotors.com/rr/cellapi v0.0.3 h1:ZzWP2T4TeKF+dZucOkPmT3qrJPZ7CGD1G6qjV
 stash.teslamotors.com/rr/cellapi v0.0.3/go.mod h1:ew9szdkYauU5DsA2AjqBLShLuZK+5EohBMRszCF1xfI=
 stash.teslamotors.com/rr/protostream v0.0.3 h1:PeNVdHeIlqW2Y7SzM3YEnFlkT7NUxpMGtTRtDIDTEVA=
 stash.teslamotors.com/rr/protostream v0.0.3/go.mod h1:6mZUASeRL4olurJOuiuEvZya/3WJ0TPL6P6AHJiXyI0=
-stash.teslamotors.com/rr/towerproto v0.0.5 h1:5YkvjCXQHCvQW3na2RfsQPgj8w65JCR4evbPo9yryTk=
-stash.teslamotors.com/rr/towerproto v0.0.5/go.mod h1:FDbAtKBEKCStkYKJSOamESQ6NjyN7zmV9HAqydiJQs4=
 stash.teslamotors.com/rr/towerproto v0.0.7 h1:E4FbZL4+tcS0lm0Q3yrCECM/kOObu3ilvAjrOAYnHSw=
 stash.teslamotors.com/rr/towerproto v0.0.7/go.mod h1:FDbAtKBEKCStkYKJSOamESQ6NjyN7zmV9HAqydiJQs4=
 stash.teslamotors.com/rr/towerproto v0.0.9 h1:sb82IglmdWzOO1KnuvAeB2vp0JWlHLYwLHGllzBmUww=
 stash.teslamotors.com/rr/towerproto v0.0.9/go.mod h1:FDbAtKBEKCStkYKJSOamESQ6NjyN7zmV9HAqydiJQs4=
-stash.teslamotors.com/rr/traycontrollers v0.0.9 h1:VJnEnBURax5c9MX2Gl1Wln+wsgXmNjzrh4SeN2xGvbs=
-stash.teslamotors.com/rr/traycontrollers v0.0.9/go.mod h1:OdDCBrkuSagRTM7Piw1nl03ttKIwMR6toSfS3bDykfY=
 stash.teslamotors.com/rr/traycontrollers v0.1.0 h1:AS/d2NJh67hYkdOMohknAJtpz3FJIWTLhRtv43muZTI=
 stash.teslamotors.com/rr/traycontrollers v0.1.0/go.mod h1:utLBZni2cf+SNexCpOXHLjxdacbRNsjNyJ/1gkx/ios=

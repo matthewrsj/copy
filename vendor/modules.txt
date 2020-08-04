@@ -17,6 +17,9 @@ github.com/davecgh/go-spew/spew
 # github.com/fatih/color v1.9.0
 ## explicit
 github.com/fatih/color
+# github.com/fsnotify/fsnotify v1.4.9
+## explicit
+github.com/fsnotify/fsnotify
 # github.com/golang/protobuf v1.4.2
 github.com/golang/protobuf/proto
 github.com/golang/protobuf/ptypes

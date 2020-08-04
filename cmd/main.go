@@ -54,6 +54,8 @@ func main() {
 		log.Fatalf("load configuration: %v", err)
 	}
 
+	go towercontroller.MonitorConfig(sugar, *configFile, &conf)
+
 	// use normal base URL unless we are running SWIFT (manual) mode
 	base := conf.CellAPI.Base
 	if *manual {

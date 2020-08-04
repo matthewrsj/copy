@@ -3,6 +3,7 @@ package towercontroller
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
@@ -174,8 +175,10 @@ func (i *Idle) Actions() []func() {
 
 // Next returns the state to run after this one
 func (i *Idle) Next() statemachine.State {
-	if i.err != nil {
-		i.Logger.Warnw("going back to idle state", "error", i.err)
+	fxrAllowed := fixtureIsAllowed(i.FXRInfo.Name, i.Config.AllowedFixtures)
+
+	if i.err != nil || !fxrAllowed {
+		i.Logger.Warnw("going back to idle state", "error", i.err, "fixture_allowed", fxrAllowed)
 		i.err = nil
 		i.next = i
 	}
@@ -192,11 +195,41 @@ type inProgressInfo struct {
 	trayBarcode    string
 }
 
+func fixtureIsAllowed(fixture string, allowedFixtures []string) bool {
+	for _, fxr := range allowedFixtures {
+		if fxr == fixture {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (i *Idle) monitorForStatus(done <-chan struct{}, active chan<- inProgressInfo, complete chan<- inProgressInfo) {
 	defer close(active)
 	defer close(complete)
 
 	for {
+		// copy over the configuration, in case it has changed
+		// this is a very cheap operation so better to just do it
+		// every iteration (about once/second/FXR)
+		if _globalConfiguration != nil {
+			i.Config = *_globalConfiguration
+		}
+
+		// quick check so we don't loop forever when fixture not allowed
+		select {
+		case <-done:
+			return
+		default:
+		}
+
+		if !fixtureIsAllowed(i.FXRInfo.Name, i.Config.AllowedFixtures) {
+			// fixture not allowed, check again in a second
+			time.Sleep(time.Second)
+			continue
+		}
+
 		select {
 		case <-done:
 			return
