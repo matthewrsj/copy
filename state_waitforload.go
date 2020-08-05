@@ -2,7 +2,6 @@ package towercontroller
 
 import (
 	"fmt"
-	"time"
 
 	"go.uber.org/zap"
 	"stash.teslamotors.com/ctet/statemachine/v2"
@@ -44,14 +43,7 @@ func (w *WaitForLoad) action() {
 
 	var fxrLoad traycontrollers.FXRLoad
 
-	const waitForLoadTimeout = time.Minute * 10
-
 	select {
-	case <-time.After(waitForLoadTimeout):
-		w.Logger.Warnw("waitforload: timed out waiting for tray", "timeout", waitForLoadTimeout.String())
-		w.resetToIdle = true
-
-		return
 	case <-w.fxrInfo.Unreserve:
 		w.Logger.Warn("waitforload: reservation manually removed")
 		w.resetToIdle = true
