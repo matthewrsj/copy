@@ -114,7 +114,8 @@ func main() {
 	msgOp := &pb.FixtureToTower{
 		Content: &pb.FixtureToTower_Op{
 			Op: &pb.FixtureOperational{
-				Position: pb.FixturePosition_FIXTURE_POSITION_OPEN,
+				Position:        pb.FixturePosition_FIXTURE_POSITION_OPEN,
+				EquipmentStatus: pb.EquipmentStatus_EQUIPMENT_STATUS_IN_OPERATION,
 			},
 		},
 	}
@@ -137,7 +138,8 @@ func main() {
 					msg := pb.FixtureToTower{
 						Content: &pb.FixtureToTower_Op{
 							Op: &pb.FixtureOperational{
-								Status: pb.FixtureStatus_FIXTURE_STATUS_IDLE,
+								Status:          pb.FixtureStatus_FIXTURE_STATUS_IDLE,
+								EquipmentStatus: pb.EquipmentStatus_EQUIPMENT_STATUS_IN_OPERATION,
 							},
 						},
 						Fixturebarcode: fmt.Sprintf("CM2-63010-%s", did.name),

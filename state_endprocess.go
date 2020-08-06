@@ -47,9 +47,12 @@ func (e *EndProcess) action() {
 		if !e.mockCellAPI {
 			e.childLogger.Debugw("UpdateProcessStatus", "process_name", e.processStepName)
 
-			if err := e.CellAPIClient.UpdateProcessStatus(e.tbc.SN, e.processStepName, cellapi.StatusEnd); err != nil {
-				// keep trying the other transactions
-				e.childLogger.Warn(err)
+			// only try to close the process step if this is a normal recipe
+			if e.processStepName != traycontrollers.CommissionSelfTestRecipeName {
+				if err := e.CellAPIClient.UpdateProcessStatus(e.tbc.SN, e.processStepName, cellapi.StatusEnd); err != nil {
+					// keep trying the other transactions
+					e.childLogger.Warn(err)
+				}
 			}
 		} else {
 			e.childLogger.Warn("cell API mocked, skipping UpdateProcessStatus")

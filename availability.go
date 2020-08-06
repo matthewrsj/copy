@@ -61,9 +61,18 @@ func HandleAvailable(configPath string, logger *zap.SugaredLogger, registry map[
 		for _, n := range conf.AllowedFixtures {
 			go func(n string) {
 				defer wg.Done()
+
 				location := fmt.Sprintf("%s-%s%s-%s", conf.Loc.Line, conf.Loc.Process, conf.Loc.Aisle, n)
 				cl := logger.With("fixture", location)
 				cl.Debug("checking availability on fixture")
+
+				zeroAvail := namedAvail{
+					name: location,
+					avail: traycontrollers.FXRAvailable{
+						Status:          pb.FixtureStatus_FIXTURE_STATUS_UNKNOWN_UNSPECIFIED.String(),
+						EquipmentStatus: pb.EquipmentStatus_EQUIPMENT_STATUS_UNKNOWN_UNSPECIFIED.String(),
+					},
+				}
 
 				// nolint:govet // allow shadow of err declaration for go routine scope
 				var (
@@ -74,12 +83,7 @@ func HandleAvailable(configPath string, logger *zap.SugaredLogger, registry map[
 				fxrInfo, ok := registry[n]
 				if !ok {
 					cl.Warn("fixture not in registry")
-					avail <- namedAvail{
-						name: location,
-						avail: traycontrollers.FXRAvailable{
-							Status: pb.FixtureStatus_FIXTURE_STATUS_UNKNOWN_UNSPECIFIED.String(),
-						},
-					}
+					avail <- zeroAvail
 
 					return
 				}
@@ -120,18 +124,15 @@ func HandleAvailable(configPath string, logger *zap.SugaredLogger, registry map[
 						avail <- namedAvail{
 							name: location,
 							avail: traycontrollers.FXRAvailable{
-								Status:   msg.GetOp().GetStatus().String(),
-								Reserved: reserved,
+								Status:          msg.GetOp().GetStatus().String(),
+								EquipmentStatus: msg.GetOp().GetEquipmentStatus().String(),
+								Reserved:        reserved,
 							},
 						}
 
 						return
 					case <-time.After(_availabilityTimeout):
-						avail <- namedAvail{name: location,
-							avail: traycontrollers.FXRAvailable{
-								Status: pb.FixtureStatus_FIXTURE_STATUS_UNKNOWN_UNSPECIFIED.String(),
-							},
-						}
+						avail <- zeroAvail
 						return
 					}
 				}

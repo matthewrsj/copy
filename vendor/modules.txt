@@ -210,6 +210,6 @@ stash.teslamotors.com/rr/protostream
 # stash.teslamotors.com/rr/towerproto v0.0.9
 ## explicit
 stash.teslamotors.com/rr/towerproto
-# stash.teslamotors.com/rr/traycontrollers v0.1.0
+# stash.teslamotors.com/rr/traycontrollers v0.1.0 => /home/parallels/projects/traycontrollers
 ## explicit
 stash.teslamotors.com/rr/traycontrollers

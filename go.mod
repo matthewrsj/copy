@@ -23,3 +23,5 @@ require (
 	stash.teslamotors.com/rr/towerproto v0.0.9
 	stash.teslamotors.com/rr/traycontrollers v0.1.0
 )
+
+replace stash.teslamotors.com/rr/traycontrollers v0.1.0 => /home/parallels/projects/traycontrollers

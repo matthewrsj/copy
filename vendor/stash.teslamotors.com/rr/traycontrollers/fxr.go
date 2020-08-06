@@ -11,22 +11,10 @@ import (
 
 // FXR is the status of an individual fixture
 type FXR struct {
-	Status pb.FixtureStatus
-	InUse  bool
-	Coord  Coordinates
-}
-
-func (f *FXR) String() string {
-	if f == nil {
-		return "nil"
-	}
-
-	inUse := "in use"
-	if !f.InUse {
-		inUse = "not " + inUse
-	}
-
-	return fmt.Sprintf("%s ; %s", inUse, f.Status.String())
+	Status          pb.FixtureStatus
+	EquipmentStatus pb.EquipmentStatus
+	Free            bool
+	Coord           Coordinates
 }
 
 // GetForward returns the forward FXR from the crane's perspective
@@ -133,7 +121,7 @@ func (fl *FXRLayout) GetTwoFXRs() (front, back *FXR) {
 
 		current, neighbor := fl.Get(c), fl.GetNeighbor(c)
 
-		if current != nil && !current.InUse {
+		if current != nil && current.Free {
 			if overallLowest == nil {
 				overallLowest = current
 			} else if overallSecondLowest == nil {
@@ -145,7 +133,7 @@ func (fl *FXRLayout) GetTwoFXRs() (front, back *FXR) {
 			}
 		}
 
-		if neighbor != nil && !neighbor.InUse {
+		if neighbor != nil && neighbor.Free {
 			if overallLowest == nil {
 				overallLowest = neighbor
 			} else if overallSecondLowest == nil {
@@ -157,7 +145,7 @@ func (fl *FXRLayout) GetTwoFXRs() (front, back *FXR) {
 			}
 		}
 
-		if current != nil && !current.InUse && neighbor != nil && !neighbor.InUse {
+		if current != nil && current.Free && neighbor != nil && neighbor.Free {
 			// found two available next to each other, two tray place
 			// return col2 first as this is the most forward tray
 			return neighbor, current
@@ -222,7 +210,7 @@ func (fl *FXRLayout) GetOneFXR() *FXR {
 	// this means we loop over level then column instead of column then level.
 	for i := 1; i <= NumLevel; i++ {
 		for j := 1; j <= NumCol; j++ {
-			if current := fl.Get(Coordinates{Col: j, Lvl: i}); current != nil && !current.InUse {
+			if current := fl.Get(Coordinates{Col: j, Lvl: i}); current != nil && current.Free {
 				return current
 			}
 		}
@@ -238,7 +226,7 @@ func (fl *FXRLayout) GetAvail() int {
 
 	for _, col := range fl.layout {
 		for _, f := range col {
-			if f != nil && !f.InUse {
+			if f != nil && f.Free {
 				avail++
 			}
 		}
@@ -278,8 +266,8 @@ func (fl *FXRLayout) String() string {
 
 		ss = append(ss,
 			[]string{
-				fmt.Sprintf("col: %d, lvl: %d, status: %s, in-use: %v", left.Coord.Col, left.Coord.Lvl, left.Status, left.InUse),
-				fmt.Sprintf("col: %d, lvl: %d, status: %s, in-use: %v", right.Coord.Col, right.Coord.Lvl, right.Status, right.InUse),
+				fmt.Sprintf("col: %d, lvl: %d, status: %s, free: %v", left.Coord.Col, left.Coord.Lvl, left.Status, left.Free),
+				fmt.Sprintf("col: %d, lvl: %d, status: %s, free: %v", right.Coord.Col, right.Coord.Lvl, right.Status, right.Free),
 			}...,
 		)
 	}
