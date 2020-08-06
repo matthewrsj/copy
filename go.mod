@@ -11,6 +11,7 @@ require (
 	github.com/phayes/freeport v0.0.0-20180830031419-95f893ade6f2
 	github.com/stretchr/testify v1.6.1
 	go.uber.org/zap v1.15.0
+	google.golang.org/grpc v1.29.1
 	google.golang.org/protobuf v1.23.0
 	gopkg.in/yaml.v2 v2.3.0
 	nanomsg.org/go/mangos/v2 v2.0.8
