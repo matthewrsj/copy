@@ -129,12 +129,6 @@ func main() {
 	// handle incoming posts to preparedForDelivery
 	towercontroller.HandlePreparedForDelivery(conf, sugar, registry)
 
-	go func() {
-		if err = http.ListenAndServe(*localAddr, nil); err != nil {
-			sugar.Errorw("http.ListenAndServe", "error", err)
-		}
-	}()
-
 	var publisher *protostream.Socket
 
 	pubU := url.URL{Scheme: "ws", Host: protostream.DefaultListenerAddress, Path: protostream.WSEndpoint}
@@ -153,10 +147,18 @@ func main() {
 		backoff.NewConstantBackOff(time.Second*5),
 	)
 
-	// handle incoming posts to reset faulted fixtures
-	towercontroller.HandleResetFixtureFault(publisher, sugar, registry)
+	// handle incoming posts to send form and equipment requests
+	towercontroller.HandleSendFormRequest(publisher, sugar, registry)
+	towercontroller.HandleSendEquipmentRequest(publisher, sugar, registry)
 	// handle incoming posts to remove fixture reservation
 	towercontroller.HandleUnreserveFixture(sugar, registry)
+
+	// start towercontroller server
+	go func() {
+		if err = http.ListenAndServe(*localAddr, nil); err != nil {
+			sugar.Errorw("http.ListenAndServe", "error", err)
+		}
+	}()
 
 	u := url.URL{Scheme: "ws", Host: *wsAddr, Path: protostream.WSEndpoint}
 

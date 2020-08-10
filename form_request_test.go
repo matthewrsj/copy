@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 	"testing"
@@ -19,7 +18,7 @@ import (
 	pb "stash.teslamotors.com/rr/towerproto"
 )
 
-func TestHandleResetFixtureFault(t *testing.T) {
+func TestHandleSendFormRequest(t *testing.T) {
 	wsPort, err := freeport.GetFreePort()
 	if err != nil {
 		t.Fatal(err)
@@ -46,14 +45,12 @@ func TestHandleResetFixtureFault(t *testing.T) {
 		},
 	}
 
-	go HandleResetFixtureFault(s, zap.NewExample().Sugar(), registry)
+	go HandleSendFormRequest(s, zap.NewExample().Sugar(), registry)
 
 	port, err := freeport.GetFreePort()
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	log.Println(port)
 
 	go func() {
 		if err = http.ListenAndServe(fmt.Sprintf(":%d", port), nil); err != nil {
@@ -102,14 +99,17 @@ func TestHandleResetFixtureFault(t *testing.T) {
 		close(rxd)
 	}()
 
-	rfRequest := ResetFault{FixtureID: "01-01"}
+	rfRequest := RequestForm{
+		FixtureID:   "01-01",
+		FormRequest: pb.FormRequest_FORM_REQUEST_FAULT_RESET.String(),
+	}
 
 	buf, err = json.Marshal(rfRequest)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	resp, err := http.Post(fmt.Sprintf("http://localhost:%d%s", port, _resetFaultEndpoint), "application/json", bytes.NewReader(buf))
+	resp, err := http.Post(fmt.Sprintf("http://localhost:%d%s", port, _sendFormRequestEndpoint), "application/json", bytes.NewReader(buf))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -123,7 +123,7 @@ func TestHandleResetFixtureFault(t *testing.T) {
 	select {
 	case <-rxd:
 	case <-time.After(time.Second * 4):
-		t.Fatal("did not receive fault reset in 4 seconds")
+		t.Fatal("did not receive form requeset in 4 seconds")
 	}
 
 	var pMsg protostream.ProtoMessage

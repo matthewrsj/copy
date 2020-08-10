@@ -31,8 +31,8 @@ func HandleUnreserveFixture(logger *zap.SugaredLogger, registry map[string]*Fixt
 			return
 		}
 
-		// reuse ResetFault body
-		var rf ResetFault
+		// reuse RequestForm body
+		var rf RequestForm
 
 		if err = json.Unmarshal(jb, &rf); err != nil {
 			cl.Errorw("unmarshal request body", "error", err)

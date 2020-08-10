@@ -41,7 +41,7 @@ func TestHandleUnreserveFixture(t *testing.T) {
 		}
 	}()
 
-	unResReq := ResetFault{FixtureID: "01-01"}
+	unResReq := RequestForm{FixtureID: "01-01"}
 
 	buf, err := json.Marshal(unResReq)
 	if err != nil {
