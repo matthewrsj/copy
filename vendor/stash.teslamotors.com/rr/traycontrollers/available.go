@@ -17,6 +17,7 @@ type FXRAvailable struct {
 	Status          string `json:"status"`
 	EquipmentStatus string `json:"equipment_status"`
 	Reserved        bool   `json:"reserved"`
+	Allowed         bool   `json:"allowed"`
 }
 
 // ToFXRLayout converts the availability info to a FXRLayout
@@ -85,5 +86,5 @@ func fxrEquipmentIsMatchedAndReady(fa FXRAvailable, es pb.EquipmentStatus) bool 
 
 	return pb.FixtureStatus(s) == pb.FixtureStatus_FIXTURE_STATUS_IDLE &&
 		pb.EquipmentStatus(e) == es &&
-		!fa.Reserved
+		!fa.Reserved && fa.Allowed
 }

@@ -262,3 +262,5 @@ stash.teslamotors.com/rr/towerproto v0.0.7 h1:E4FbZL4+tcS0lm0Q3yrCECM/kOObu3ilvA
 stash.teslamotors.com/rr/towerproto v0.0.7/go.mod h1:FDbAtKBEKCStkYKJSOamESQ6NjyN7zmV9HAqydiJQs4=
 stash.teslamotors.com/rr/towerproto v0.0.9 h1:sb82IglmdWzOO1KnuvAeB2vp0JWlHLYwLHGllzBmUww=
 stash.teslamotors.com/rr/towerproto v0.0.9/go.mod h1:FDbAtKBEKCStkYKJSOamESQ6NjyN7zmV9HAqydiJQs4=
+stash.teslamotors.com/rr/traycontrollers v0.1.2 h1:DMsCX+6NUSxLBc6bxjxdqFwVoEjVXxCaqEGcmhxWNGU=
+stash.teslamotors.com/rr/traycontrollers v0.1.2/go.mod h1:utLBZni2cf+SNexCpOXHLjxdacbRNsjNyJ/1gkx/ios=

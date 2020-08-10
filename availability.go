@@ -16,7 +16,8 @@ import (
 
 const (
 	_availabilityEndpoint = "/avail"
-	_availabilityTimeout  = time.Second * 3
+	_availabilityTimeout  = time.Second * 2
+	_allowedQueryKey      = "allowed"
 )
 
 // HandleAvailable is the handler for the endpoint reporting availability of fixtures
@@ -39,6 +40,14 @@ func HandleAvailable(configPath string, logger *zap.SugaredLogger, registry map[
 			return
 		}
 
+		respondAvailable := conf.AllFixtures
+
+		values := r.URL.Query()
+		allowedOnly := values.Get(_allowedQueryKey)
+		if allowedOnly == "true" {
+			respondAvailable = conf.AllowedFixtures
+		}
+
 		type namedAvail struct {
 			name  string
 			avail traycontrollers.FXRAvailable
@@ -56,9 +65,9 @@ func HandleAvailable(configPath string, logger *zap.SugaredLogger, registry map[
 			close(done)
 		}()
 
-		wg.Add(len(conf.AllowedFixtures))
+		wg.Add(len(respondAvailable))
 
-		for _, n := range conf.AllowedFixtures {
+		for _, n := range respondAvailable {
 			go func(n string) {
 				defer wg.Done()
 
@@ -71,6 +80,7 @@ func HandleAvailable(configPath string, logger *zap.SugaredLogger, registry map[
 					avail: traycontrollers.FXRAvailable{
 						Status:          pb.FixtureStatus_FIXTURE_STATUS_UNKNOWN_UNSPECIFIED.String(),
 						EquipmentStatus: pb.EquipmentStatus_EQUIPMENT_STATUS_UNKNOWN_UNSPECIFIED.String(),
+						Allowed:         fixtureIsAllowed(n, conf.AllowedFixtures),
 					},
 				}
 
@@ -127,6 +137,7 @@ func HandleAvailable(configPath string, logger *zap.SugaredLogger, registry map[
 								Status:          msg.GetOp().GetStatus().String(),
 								EquipmentStatus: msg.GetOp().GetEquipmentStatus().String(),
 								Reserved:        reserved,
+								Allowed:         fixtureIsAllowed(n, conf.AllowedFixtures),
 							},
 						}
 
@@ -163,6 +174,6 @@ func HandleAvailable(configPath string, logger *zap.SugaredLogger, registry map[
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 
-		logger.Infow("sent response to request to /avail", "response", body)
+		logger.Info("sent response to request to /avail")
 	})
 }
