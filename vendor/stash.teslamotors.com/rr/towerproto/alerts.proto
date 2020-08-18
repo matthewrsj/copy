@@ -302,7 +302,9 @@ message FxrAlert {
   }
 
   message a020_thermal_event_level_0 {
-      float threshold = 1;
+      float threshold  = 1;
+      bool stib_mia    = 2;
+      bool cib_offline = 3;
   }
 
   message a021_thermal_event_level_1 {

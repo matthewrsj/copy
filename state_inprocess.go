@@ -29,6 +29,8 @@ type InProcess struct {
 	fixtureFault    bool
 	manual          bool
 	mockCellAPI     bool
+	returnToIdle    bool
+	alarmed         pb.FireAlarmStatus
 	cells           map[string]cellapi.CellData
 	cellResponse    []*pb.Cell
 	recipeVersion   int
@@ -69,6 +71,23 @@ func (i *InProcess) action() {
 
 			if i.fixtureFault = s == pb.FixtureStatus_FIXTURE_STATUS_FAULTED; i.fixtureFault {
 				msg += "; fixture faulted"
+
+				if op.Op.GetFireAlarmStatus() != pb.FireAlarmStatus_FIRE_ALARM_UNKNOWN_UNSPECIFIED {
+					// fire alarm, tell CDC
+					// this is in-band because it will try _forever_ until it succeeds,
+					// but we don't want to go to unload step because it will queue another job for the crane
+					// to unload this tray, but we want the next operation on this tray to be a fire
+					// suppression activity.
+					i.returnToIdle = true // return to idle whether or not we successfully sounded alarm
+					if err := soundTheAlarm(i.Config, op.Op.GetFireAlarmStatus(), i.fxrInfo.Name, i.childLogger); err != nil {
+						// basically couldn't marshal the request. Return to idle where we will keep trying for as
+						// long as the alarm exists
+						return
+					}
+
+					// successfully alarmed, return to idle but set alarmed to true so we don't keep alarming
+					i.alarmed = op.Op.GetFireAlarmStatus()
+				}
 			}
 
 			i.childLogger.Info(msg)
@@ -91,24 +110,40 @@ func (i *InProcess) Actions() []func() {
 
 // Next returns the next state to run
 func (i *InProcess) Next() statemachine.State {
-	next := &EndProcess{
-		Config:          i.Config,
-		Logger:          i.Logger,
-		CellAPIClient:   i.CellAPIClient,
-		Publisher:       i.Publisher,
-		SubscribeChan:   i.SubscribeChan,
-		childLogger:     i.childLogger,
-		tbc:             i.tbc,
-		fxbc:            i.fxbc,
-		processStepName: i.processStepName,
-		fixtureFault:    i.fixtureFault,
-		cellResponse:    i.cellResponse,
-		cells:           i.cells,
-		manual:          i.manual,
-		mockCellAPI:     i.mockCellAPI,
-		recipeVersion:   i.recipeVersion,
-		fxrInfo:         i.fxrInfo,
+	var next statemachine.State
+	if i.returnToIdle {
+		next = &Idle{
+			Config:        i.Config,
+			Logger:        i.Logger,
+			CellAPIClient: i.CellAPIClient,
+			Publisher:     i.Publisher,
+			SubscribeChan: i.SubscribeChan,
+			Manual:        i.manual,
+			MockCellAPI:   i.mockCellAPI,
+			FXRInfo:       i.fxrInfo,
+			alarmed:       i.alarmed,
+		}
+	} else {
+		next = &EndProcess{
+			Config:          i.Config,
+			Logger:          i.Logger,
+			CellAPIClient:   i.CellAPIClient,
+			Publisher:       i.Publisher,
+			SubscribeChan:   i.SubscribeChan,
+			childLogger:     i.childLogger,
+			tbc:             i.tbc,
+			fxbc:            i.fxbc,
+			processStepName: i.processStepName,
+			fixtureFault:    i.fixtureFault,
+			cellResponse:    i.cellResponse,
+			cells:           i.cells,
+			manual:          i.manual,
+			mockCellAPI:     i.mockCellAPI,
+			recipeVersion:   i.recipeVersion,
+			fxrInfo:         i.fxrInfo,
+		}
 	}
+
 	i.childLogger.Debugw("transitioning to next state", "next", statemachine.NameOf(next))
 
 	return next

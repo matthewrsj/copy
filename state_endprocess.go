@@ -71,15 +71,17 @@ func (e *EndProcess) action() {
 
 	if e.manual {
 		e.setCellStatusesSWIFT()
-	} else {
+	} else if e.processStepName != traycontrollers.CommissionSelfTestRecipeName {
 		e.setCellStatuses()
 	}
 
 	if !e.manual && !e.mockCellAPI {
 		e.childLogger.Infow("closing process step", "recipe_name", e.processStepName, "recipe_version", e.recipeVersion)
 
-		if err := e.CellAPIClient.CloseProcessStep(e.tbc.SN, e.processStepName, e.recipeVersion); err != nil {
-			e.childLogger.Error("close process status", "error", err)
+		if e.processStepName != traycontrollers.CommissionSelfTestRecipeName {
+			if err := e.CellAPIClient.CloseProcessStep(e.tbc.SN, e.processStepName, e.recipeVersion); err != nil {
+				e.childLogger.Error("close process status", "error", err)
+			}
 		}
 	}
 

@@ -207,7 +207,7 @@ stash.teslamotors.com/rr/cellapi
 # stash.teslamotors.com/rr/protostream v0.0.3
 ## explicit
 stash.teslamotors.com/rr/protostream
-# stash.teslamotors.com/rr/towerproto v0.0.11
+# stash.teslamotors.com/rr/towerproto v0.0.12
 ## explicit
 stash.teslamotors.com/rr/towerproto
 # stash.teslamotors.com/rr/traycontrollers v0.1.3

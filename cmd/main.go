@@ -150,6 +150,8 @@ func main() {
 	// handle incoming posts to send form and equipment requests
 	towercontroller.HandleSendFormRequest(publisher, sugar, registry)
 	towercontroller.HandleSendEquipmentRequest(publisher, sugar, registry)
+	// handle incoming posts to broadcast to fixtures
+	towercontroller.HandleBroadcastRequest(publisher, sugar, registry)
 	// handle incoming posts to remove fixture reservation
 	towercontroller.HandleUnreserveFixture(sugar, registry)
 
