@@ -1,1 +1,1 @@
-0 1 * * * /usr/sbin/logrotate /etc/logrotate.conf --state /home/mfgtest/logrotate-state
+0 1 * * * /usr/sbin/logrotate /etc/logrotate.conf --state /home/celladmin/logrotate-state

@@ -4,11 +4,12 @@ Requires=docker.service network-online.target canup.service protostream.service
 After=docker.service network-online.target canup.service protostream.service
 
 [Service]
-WorkingDirectory=/home/mfgtest/projects/towercontroller
+WorkingDirectory=/etc/towercontroller.d
 Type=simple
 TimeoutStartSec=15
 Restart=always
-ExecStart=/usr/bin/docker-compose up --remove-orphans --force-recreate
+ExecStartPre=/usr/bin/docker pull artifactory.teslamotors.com:2132/formation-docker-local/towercontrollerapp:latest
+ExecStart=/usr/bin/docker-compose up --remove-orphans --no-build
 ExecStop=/usr/bin/docker-compose down --remove-orphans
 
 [Install]

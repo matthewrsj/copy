@@ -2,7 +2,7 @@ version: '3.7'
 
 services:
   towercontroller:
-    image: towercontrollerapp
+    image: artifactory.teslamotors.com:2132/formation-docker-local/towercontrollerapp
     build:
       context: .
       dockerfile: Dockerfile.app

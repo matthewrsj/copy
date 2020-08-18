@@ -2,7 +2,7 @@
 Description=CAN ISOTP UP
 
 [Service]
-ExecStart=/home/mfgtest/projects/towercontroller/canup.sh
+ExecStart=/opt/canup/canup.sh
 
 [Install]
 WantedBy=multi-user.target
