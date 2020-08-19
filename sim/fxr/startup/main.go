@@ -111,7 +111,7 @@ func main() {
 				Fixturebarcode: ctx.fxbc,
 				Traybarcode:    ctx.tbc,
 				ProcessStep:    ctx.pstep,
-				TransactionId:  1,
+				TransactionId:  "1",
 			}
 
 			pkt, err := proto.Marshal(msgOp)

@@ -23,10 +23,10 @@ type ProcessStep struct {
 
 	childLogger     *zap.SugaredLogger
 	processStepName string
+	transactID      string
 	tbc             traycontrollers.TrayBarcode
 	fxbc            traycontrollers.FixtureBarcode
 	steps           traycontrollers.StepConfiguration
-	transactID      int64
 	recipeVersion   int
 	inProgress      bool
 	manual          bool

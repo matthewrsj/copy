@@ -10,7 +10,7 @@ message StibAlert {
     STIB_a004_CpuOverRun                = 4;
     STIB_a005_CANBusReset               = 5;
     STIB_a006_STIBrx_MIA                = 6;
-    STIB_a007_unused                    = 7;
+    STIB_a007_TaskStackOverrun          = 7;
     STIB_a008_unused                    = 8;
     STIB_a009_unused                    = 9;
     STIB_a010_EnumerationWriteFail      = 10;
@@ -54,6 +54,16 @@ message StibAlert {
     float ISR_time_max     = 1; // us
     float f_1kHz_time_max  = 2; // us
     float f_100Hz_time_max = 3; // us
+  }
+
+  message a007_TaskStackOverrun {
+    bool Task_Proto_Stack_Overrun       = 1;
+    bool Task_Default1kHz_Stack_Overrun = 2;
+    bool Task_1Hz_Stack_Overrun         = 3;
+    bool Task_10ms_Stack_Overrun        = 4;
+    bool Task_CANtx_Stack_Overrun       = 5;
+    bool Task_OSIdle_Stack_Overrun      = 6;
+    bool Task_OSTimer_Stack_Overrun     = 7;
   }
 
   message a010_EnumerationWriteFail {}
@@ -153,6 +163,7 @@ message StibAlert {
 
   oneof AlertData {
     a004_CpuOverRun                a004 = 4;
+    a007_TaskStackOverrun          a007 = 7;
     a010_EnumerationWriteFail      a010 = 10;
     a020_VoltageMatchingTimeout    a020 = 20;
     a024_irefCorrectionIrrational  a024 = 24;
@@ -215,6 +226,9 @@ message FxrAlert {
     FXR_a016_stibs_faulted             = 16;
     FXR_a017_tray_missing              = 17;
     FXR_a018_stib_step_timeout         = 18;
+    FXR_a019_fixture_pos_sm_faulted    = 19;
+    FXR_a020_thermal_event_level_0     = 20;
+    FXR_a021_thermal_event_level_1     = 21;
   }
 
   message a002_watchdogExpired {
@@ -275,6 +289,26 @@ message FxrAlert {
 
   message a018_stib_step_timeout {}
 
+  message a019_fixture_pos_sm_faulted {
+    enum fault_reason {
+      not_open_in_open_st     = 0;
+      not_closed_in_closed_st = 1;
+      timeout_while_opening   = 2;
+      timeout_while_closing   = 3;
+    }
+    float        sm_state             = 1;
+    float        fixture_position     = 2;
+    fault_reason fixture_fault_reason = 3;
+  }
+
+  message a020_thermal_event_level_0 {
+      float threshold = 1;
+  }
+
+  message a021_thermal_event_level_1 {
+      float threshold = 1;
+  }
+
   AlertId alert_id = 1;
 
   oneof AlertData {
@@ -295,6 +329,9 @@ message FxrAlert {
     a016_stibs_faulted             a016 = 16;
     a017_tray_missing              a017 = 17;
     a018_stib_step_timeout         a018 = 18;
+    a019_fixture_pos_sm_faulted    a019 = 19;
+    a020_thermal_event_level_0     a020 = 20;
+    a021_thermal_event_level_1     a021 = 21;
   }
 }
 

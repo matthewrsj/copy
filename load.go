@@ -33,8 +33,8 @@ func HandleLoad(conf Configuration, logger *zap.SugaredLogger, registry map[stri
 			return
 		}
 
-		if loadRequest.TransactionID <= 0 {
-			err = fmt.Errorf("invalid transaction ID %d, must be greater than 0", loadRequest.TransactionID)
+		if loadRequest.TransactionID == "" {
+			err = fmt.Errorf("invalid transaction ID %s, must be greater than 0", loadRequest.TransactionID)
 			logger.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 

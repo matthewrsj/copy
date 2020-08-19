@@ -9,9 +9,12 @@ SystemInfo.traybarcode max_size:30
 SystemInfo.fixturebarcode max_size:60
 SystemInfo.process_step max_size:60
 
+TowerToFixture.transaction_id max_size:30
+
 FixtureToTower.traybarcode max_size:30
 FixtureToTower.fixturebarcode max_size:60
 FixtureToTower.process_step max_size:60
+FixtureToTower.transaction_id max_size:30
 
 Recipe.steps max_count:20
 Recipe.cell_masks max_count:2

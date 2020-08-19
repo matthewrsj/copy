@@ -185,7 +185,7 @@ func main() {
 						continue
 					}
 
-					if msgt2f.TransactionId <= 0 {
+					if msgt2f.TransactionId == "" {
 						log.Println("invalid transaction ID", msgt2f.TransactionId)
 						continue
 					}

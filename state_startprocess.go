@@ -26,7 +26,7 @@ type StartProcess struct {
 
 	childLogger     *zap.SugaredLogger
 	processStepName string
-	transactID      int64
+	transactID      string
 	tbc             traycontrollers.TrayBarcode
 	fxbc            traycontrollers.FixtureBarcode
 	steps           traycontrollers.StepConfiguration

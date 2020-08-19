@@ -99,7 +99,7 @@ waitForUpdate:
 			TransactID:      fxrLoad.TransactionID,
 		})
 	case ip := <-active:
-		if ip.transactionID <= 0 {
+		if ip.transactionID == "" {
 			goto waitForUpdate
 		}
 
@@ -133,7 +133,7 @@ waitForUpdate:
 		}
 
 	case ip := <-complete:
-		if ip.transactionID <= 0 {
+		if ip.transactionID == "" {
 			goto waitForUpdate
 		}
 
@@ -189,7 +189,7 @@ func (i *Idle) Next() statemachine.State {
 }
 
 type inProgressInfo struct {
-	transactionID  int64
+	transactionID  string
 	processStep    string
 	fixtureBarcode string
 	trayBarcode    string

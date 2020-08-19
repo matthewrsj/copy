@@ -19,7 +19,7 @@ type Barcodes struct {
 	ManualMode      bool
 	MockCellAPI     bool
 
-	TransactID    int64
+	TransactID    string
 	RecipeName    string
 	RecipeVersion int
 	StepConf      traycontrollers.StepConfiguration

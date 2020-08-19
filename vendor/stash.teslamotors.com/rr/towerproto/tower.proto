@@ -103,6 +103,15 @@ message Isolation {
   IsoError iso_error           = 8; // Isolation faults
 }
 
+message Position {
+  float fixture_closing_time = 1;
+  float fixture_opening_time = 2;
+}
+
+message Filesystem {
+  sint32 last_error_code = 1; // either 0 for OK or negative number, see lfs_error
+}
+
 message Fxr {
   FxrSensors  sensors        = 1;
   FxrInternal internal       = 2;
@@ -110,6 +119,8 @@ message Fxr {
   Genealogy   genealogy      = 4;
   AlertMatrix alert_matrices = 5;
   Isolation   isolation      = 6;
+  Filesystem  filesystem     = 7;
+  Position    position       = 8;
 }
 
 message FibSensors {
@@ -183,20 +194,40 @@ enum StibFormState {
   STIB_FORM_STATE_VMATCH                   = 2;
   STIB_FORM_STATE_CC                       = 3;
   STIB_FORM_STATE_CV                       = 4;
-  STIB_FORM_STATE_DCR_PULSE                = 5;
-  STIB_FORM_STATE_FINISHED                 = 6;
-  STIB_FORM_STATE_DIRECT_CONTROL           = 7;
-  STIB_FORM_STATE_DELAY                    = 8;
-  STIB_FORM_STATE_CELL_SW                  = 9;
-  STIB_FORM_STATE_FAULT                    = 10;
+  STIB_FORM_STATE_CP                       = 5;
+  STIB_FORM_STATE_DCR_PULSE                = 6;
+  STIB_FORM_STATE_FINISHED                 = 7;
+  STIB_FORM_STATE_DIRECT_CONTROL           = 8;
+  STIB_FORM_STATE_DELAY                    = 9;
+  STIB_FORM_STATE_CELL_SW                  = 10;
+  STIB_FORM_STATE_FAULT                    = 11;
 }
 
 message StibSensors {
-  float bus_voltage       = 1;
-  float string_voltage    = 2;
-  float string_current    = 3;
-  float temperature_sense = 4;
-  float pcb_temp          = 6;
+  float bus_voltage     = 1;
+  float string_voltage  = 2;
+  float string_current  = 3;
+  float phase_1_temp    = 4;
+  float phase_2_temp    = 5;
+  float shunt_temp      = 6;
+  float pcb_temp        = 7;
+  float phase_1_current = 8;
+  float phase_2_current = 9;
+  float shunt_current   = 10;
+  float v_bus_24        = 11;
+  bool  cib_online      = 12;
+}
+
+message CibSensors {
+  float string_current = 1;
+  float die_temp       = 2;
+  float v_ref_2        = 3; // Vref2 3V internal reference voltage in LION chip
+  float v_rail_5v      = 4;
+}
+
+message StibOutputs {
+  float phase_1_duty = 1;
+  float phase_2_duty = 2;
 }
 
 message StibStatistics {
@@ -205,8 +236,9 @@ message StibStatistics {
 }
 
 message StibInternal {
-  StibDCDCState dcdc_state = 1;
-  StibFormState form_state = 2;
+  StibDCDCState dcdc_state     = 1;
+  StibFormState form_state     = 2;
+  StibDCDCState dcdc_state_req = 3;
 }
 
 message Stib {
@@ -215,6 +247,8 @@ message Stib {
   Genealogy      genealogy      = 3;
   StibInternal   internal       = 4;
   AlertMatrix    alert_matrices = 5;
+  CibSensors     cib_sensors    = 6;
+  StibOutputs    outputs        = 7;
 }
 
 enum CellStatus {
@@ -267,13 +301,20 @@ enum EquipmentStatus {
   EQUIPMENT_STATUS_IN_OPERATION        = 4; // When operator approves self test cycle, ready for production
 }
 
+enum FireAlarmStatus {
+  FIRE_ALARM_UNKNOWN_UNSPECIFIED = 0; // No heat spots detected by the fixture
+  FIRE_ALARM_LEVEL_0             = 1; // Two or more sensors detecting higher temperatures
+  FIRE_ALARM_LEVEL_1             = 2; // Two or more sensors detecting very high temperatures
+}
+
 message FixtureOperational {
-  FixtureStatus   status           = 1;
-  FixturePosition position         = 2;
-  repeated Cell   cells            = 3;
-  uint32          step_executing   = 4; // 1 based current process step index
-  EquipmentStatus equipment_status = 5;
-  bool            tray_present     = 6; // tray is present (independent of fixture status)
+  FixtureStatus   status            = 1;
+  FixturePosition position          = 2;
+  repeated Cell   cells             = 3;
+  uint32          step_executing    = 4; // 1 based current process step index
+  EquipmentStatus equipment_status  = 5;
+  bool            tray_present      = 6; // tray is present (independent of fixture status)
+  FireAlarmStatus fire_alarm_status = 7;
 }
 
 message FixtureDiagnostic {
@@ -292,7 +333,7 @@ message FixtureToTower {
   string traybarcode    = 3;
   string fixturebarcode = 4;
   string process_step   = 5;
-  int64  transaction_id = 6;
+  string transaction_id = 6;
 }
 
 message RecipeStep {
@@ -354,6 +395,6 @@ enum EquipmentRequest {
 message TowerToFixture {
   Recipe           recipe            = 1;
   SystemInfo       sysinfo           = 2;
-  int64            transaction_id    = 3;
+  string           transaction_id    = 3;
   EquipmentRequest equipment_request = 4;
 }

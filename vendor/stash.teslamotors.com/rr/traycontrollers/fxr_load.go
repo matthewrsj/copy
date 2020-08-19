@@ -2,7 +2,7 @@ package traycontrollers
 
 // FXRLoad is used to post to the TC that a tray is loaded
 type FXRLoad struct {
-	TransactionID int64             `json:"transaction_id"`
+	TransactionID string            `json:"transaction_id"`
 	Column        int               `json:"column"`
 	Level         int               `json:"level"`
 	TrayID        string            `json:"tray"`

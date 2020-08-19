@@ -24,7 +24,7 @@ type WaitForLoad struct {
 	fxbc            traycontrollers.FixtureBarcode
 	steps           traycontrollers.StepConfiguration
 	processStepName string
-	transactID      int64
+	transactID      string
 	recipeVersion   int
 	manual          bool
 	mockCellAPI     bool
