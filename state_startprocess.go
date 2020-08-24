@@ -31,7 +31,6 @@ type StartProcess struct {
 	fxbc            traycontrollers.FixtureBarcode
 	steps           traycontrollers.StepConfiguration
 	cells           map[string]cellapi.CellData
-	canErr          error
 	manual          bool
 	mockCellAPI     bool
 	recipeVersion   int
@@ -94,15 +93,8 @@ func (s *StartProcess) action() {
 
 	twr2Fxr.Recipe.CellMasks = newCellMask(present)
 
-	var data []byte
-
-	if data, s.canErr = proto.Marshal(&twr2Fxr); s.canErr != nil {
-		fatalError(s, s.childLogger, s.canErr)
-		return
-	}
-
 	// performHandshake blocks until the FXR acknowledges receipt of recipe
-	s.performHandshake(data)
+	s.performHandshake(&twr2Fxr)
 
 	if s.manual {
 		if !s.mockCellAPI {
@@ -148,23 +140,12 @@ func (s *StartProcess) Next() statemachine.State {
 	return next
 }
 
-func (s *StartProcess) performHandshake(data []byte) {
+func (s *StartProcess) performHandshake(msg proto.Message) {
 	for {
 		s.childLogger.Info("attempting handshake with FXR")
 
-		sendEvent := protostream.ProtoMessage{
-			Location: IDFromFXR(s.fxbc),
-			Body:     data,
-		}
-
-		jb, err := json.Marshal(sendEvent)
-		if err != nil {
-			s.childLogger.Warnw("unable to marshal data to send to protostream", "error", err)
-			continue
-		}
-
-		if err := s.Publisher.PublishTo(IDFromFXR(s.fxbc), jb); err != nil {
-			s.childLogger.Warnw("unable to send data to protostream", "error", err)
+		if err := sendProtoMessage(s.Publisher, msg, IDFromFXR(s.fxbc)); err != nil {
+			s.childLogger.Warnw("failed to send proto message, retrying", "error", err)
 			continue
 		}
 

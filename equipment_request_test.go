@@ -66,17 +66,7 @@ func TestHandleSendEquipmentRequest(t *testing.T) {
 		},
 	}
 
-	buf, err := proto.Marshal(status)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	event := &protostream.ProtoMessage{
-		Location: "01-01",
-		Body:     buf,
-	}
-
-	eventBuf, err := json.Marshal(event)
+	buf, err := marshalProtoEvent(status, "01-01")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -84,7 +74,7 @@ func TestHandleSendEquipmentRequest(t *testing.T) {
 	go func() {
 		sc <- &protostream.Message{
 			Msg: &mangos.Message{
-				Body: eventBuf,
+				Body: buf,
 			},
 		}
 	}()

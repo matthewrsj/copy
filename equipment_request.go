@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"go.uber.org/zap"
-	"google.golang.org/protobuf/proto"
 	"stash.teslamotors.com/rr/protostream"
 	pb "stash.teslamotors.com/rr/towerproto"
 )
@@ -73,29 +72,8 @@ func HandleSendEquipmentRequest(publisher *protostream.Socket, logger *zap.Sugar
 			EquipmentRequest: pb.EquipmentRequest(equipReq),
 		}
 
-		rb, err := proto.Marshal(&sendMsg)
-		if err != nil {
-			cl.Errorw("unable to marshal equipment request", "error", err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-
-			return
-		}
-
-		sendEvent := protostream.ProtoMessage{
-			Location: fxrInfo.Name,
-			Body:     rb,
-		}
-
-		sendBody, err := json.Marshal(sendEvent)
-		if err != nil {
-			cl.Errorw("unable to marshal data to send to protostream", "error", err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-
-			return
-		}
-
-		if err := publisher.PublishTo(fxrInfo.Name, sendBody); err != nil {
-			cl.Errorw("unable to send data to protostream", "error", err)
+		if err := sendProtoMessage(publisher, &sendMsg, fxrInfo.Name); err != nil {
+			cl.Errorw("unable to send equipment request", "error", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 
 			return
