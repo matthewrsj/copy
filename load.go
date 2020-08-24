@@ -13,8 +13,8 @@ import (
 const _loadEndpoint = "/load"
 
 // HandleLoad handles requests the the load endpoint
-func HandleLoad(conf Configuration, logger *zap.SugaredLogger, registry map[string]*FixtureInfo) {
-	http.HandleFunc(_loadEndpoint, func(w http.ResponseWriter, r *http.Request) {
+func HandleLoad(mux *http.ServeMux, conf Configuration, logger *zap.SugaredLogger, registry map[string]*FixtureInfo) {
+	mux.HandleFunc(_loadEndpoint, func(w http.ResponseWriter, r *http.Request) {
 		logger.Infow("got request to /load", "remote", r.RemoteAddr)
 
 		b, err := ioutil.ReadAll(r.Body)

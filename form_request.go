@@ -22,8 +22,8 @@ type RequestForm struct {
 // HandleSendFormRequest accepts POST requests to send a form request to a fixture.
 // Common use-case for this is to reset a faulted fixture.
 // nolint:gocognit // no reason to split this out
-func HandleSendFormRequest(publisher *protostream.Socket, logger *zap.SugaredLogger, registry map[string]*FixtureInfo) {
-	http.HandleFunc(_sendFormRequestEndpoint, func(w http.ResponseWriter, r *http.Request) {
+func HandleSendFormRequest(mux *http.ServeMux, publisher *protostream.Socket, logger *zap.SugaredLogger, registry map[string]*FixtureInfo) {
+	mux.HandleFunc(_sendFormRequestEndpoint, func(w http.ResponseWriter, r *http.Request) {
 		logger.Infow(fmt.Sprintf("got request to %s", _sendFormRequestEndpoint))
 
 		cl := logger.With("endpoint", _sendFormRequestEndpoint)

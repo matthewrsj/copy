@@ -13,8 +13,8 @@ import (
 const _preparedForDeliveryEndpoint = "/preparedForDelivery"
 
 // HandlePreparedForDelivery handles incoming prepared for delivery messages
-func HandlePreparedForDelivery(conf Configuration, logger *zap.SugaredLogger, registry map[string]*FixtureInfo) {
-	http.HandleFunc(_preparedForDeliveryEndpoint, func(w http.ResponseWriter, r *http.Request) {
+func HandlePreparedForDelivery(mux *http.ServeMux, logger *zap.SugaredLogger, registry map[string]*FixtureInfo) {
+	mux.HandleFunc(_preparedForDeliveryEndpoint, func(w http.ResponseWriter, r *http.Request) {
 		logger.Infow(fmt.Sprintf("got request to %s", _preparedForDeliveryEndpoint))
 
 		b, err := ioutil.ReadAll(r.Body)

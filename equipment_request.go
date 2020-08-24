@@ -21,8 +21,8 @@ type RequestEquipment struct {
 
 // HandleSendEquipmentRequest accepts POST requests to send an equipment request to a fixture.
 // Common use-case for this is to approve a commission self test on a fixture.
-func HandleSendEquipmentRequest(publisher *protostream.Socket, logger *zap.SugaredLogger, registry map[string]*FixtureInfo) {
-	http.HandleFunc(_sendEquipmentRequestEndpoint, func(w http.ResponseWriter, r *http.Request) {
+func HandleSendEquipmentRequest(mux *http.ServeMux, publisher *protostream.Socket, logger *zap.SugaredLogger, registry map[string]*FixtureInfo) {
+	mux.HandleFunc(_sendEquipmentRequestEndpoint, func(w http.ResponseWriter, r *http.Request) {
 		logger.Infow(fmt.Sprintf("got request to %s", _sendEquipmentRequestEndpoint))
 
 		cl := logger.With("endpoint", _sendEquipmentRequestEndpoint)

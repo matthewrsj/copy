@@ -22,8 +22,8 @@ const (
 
 // HandleAvailable is the handler for the endpoint reporting availability of fixtures
 // nolint:gocognit,funlen // ignore
-func HandleAvailable(configPath string, logger *zap.SugaredLogger, registry map[string]*FixtureInfo) {
-	http.HandleFunc(_availabilityEndpoint, func(w http.ResponseWriter, r *http.Request) {
+func HandleAvailable(mux *http.ServeMux, configPath string, logger *zap.SugaredLogger, registry map[string]*FixtureInfo) {
+	mux.HandleFunc(_availabilityEndpoint, func(w http.ResponseWriter, r *http.Request) {
 		logger.Infow("got request to /avail", "remote", r.RemoteAddr)
 
 		var (

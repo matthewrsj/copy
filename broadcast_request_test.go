@@ -2,6 +2,7 @@ package towercontroller
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -46,17 +47,28 @@ func TestHandleBroadcastRequest(t *testing.T) {
 		},
 	}
 
-	go HandleBroadcastRequest(s, zap.NewExample().Sugar(), registry)
+	mux := http.NewServeMux()
+
+	go HandleBroadcastRequest(mux, s, zap.NewExample().Sugar(), registry)
 
 	port, err := freeport.GetFreePort()
 	if err != nil {
 		t.Fatal(err)
 	}
 
+	srv := http.Server{
+		Addr:    fmt.Sprintf(":%d", port),
+		Handler: mux,
+	}
+
 	go func() {
-		if err = http.ListenAndServe(fmt.Sprintf(":%d", port), nil); err != nil {
+		if err = srv.ListenAndServe(); err != http.ErrServerClosed {
 			t.Error(err)
 		}
+	}()
+
+	defer func() {
+		_ = srv.Shutdown(context.Background())
 	}()
 
 	rxd := make(chan struct{})

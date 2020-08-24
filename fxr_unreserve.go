@@ -12,8 +12,8 @@ import (
 const _unreserveEndpoint = "/unreserve"
 
 // HandleUnreserveFixture accepts POST requests to manually un-reserve a reserved fixture
-func HandleUnreserveFixture(logger *zap.SugaredLogger, registry map[string]*FixtureInfo) {
-	http.HandleFunc(_unreserveEndpoint, func(w http.ResponseWriter, r *http.Request) {
+func HandleUnreserveFixture(mux *http.ServeMux, logger *zap.SugaredLogger, registry map[string]*FixtureInfo) {
+	mux.HandleFunc(_unreserveEndpoint, func(w http.ResponseWriter, r *http.Request) {
 		logger.Infow(fmt.Sprintf("got request to %s", _unreserveEndpoint))
 
 		cl := logger.With("endpoint", _unreserveEndpoint)

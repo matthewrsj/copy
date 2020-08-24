@@ -4,11 +4,15 @@
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"flag"
 	"log"
 	"net/http"
 	"net/url"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/cenkalti/backoff"
@@ -22,10 +26,11 @@ import (
 )
 
 const (
-	_logLvlDef   = zapcore.InfoLevel
-	_logFileDef  = "logs/towercontroller/statemachine.log"
-	_confFileDef = "/etc/towercontroller.d/statemachine.yaml"
-	_localDef    = "0.0.0.0:13163"
+	_logLvlDef    = zapcore.InfoLevel
+	_logFileDef   = "logs/towercontroller/statemachine.log"
+	_confFileDef  = "/etc/towercontroller.d/statemachine.yaml"
+	_localDef     = "0.0.0.0:13163"
+	_localUserDef = "0.0.0.0:13173"
 )
 
 // nolint:funlen // main func
@@ -33,7 +38,8 @@ func main() {
 	logLvl := zap.LevelFlag("loglvl", _logLvlDef, "log level for zap logger")
 	logFile := flag.String("logf", _logFileDef, "path to the log file")
 	configFile := flag.String("conf", _confFileDef, "path to the configuration file")
-	localAddr := flag.String("local", _localDef, "local address")
+	localAddr := flag.String("local", _localDef, "local address for operational API")
+	localUserAddr := flag.String("local-usr", _localUserDef, "local address for user API")
 	manual := flag.Bool("manual", false, "turn on manual mode (i.e. for SWIFT line)")
 	mockCellAPI := flag.Bool("mockapi", false, "mock Cell API interactions")
 	wsAddr := flag.String("wsaddr", protostream.DefaultWebsocketAddress, "websocket address for proto")
@@ -122,13 +128,8 @@ func main() {
 			SC:   lc,
 		}
 	}
-	// handle incoming requests on availability
-	towercontroller.HandleAvailable(*configFile, sugar, registry)
-	// handle incoming posts to load
-	towercontroller.HandleLoad(conf, sugar, registry)
-	// handle incoming posts to preparedForDelivery
-	towercontroller.HandlePreparedForDelivery(conf, sugar, registry)
 
+	// create publisher socket over which to communicate with FXRs via protostream
 	var publisher *protostream.Socket
 
 	pubU := url.URL{Scheme: "ws", Host: protostream.DefaultListenerAddress, Path: protostream.WSEndpoint}
@@ -147,18 +148,54 @@ func main() {
 		backoff.NewConstantBackOff(time.Second*5),
 	)
 
-	// handle incoming posts to send form and equipment requests
-	towercontroller.HandleSendFormRequest(publisher, sugar, registry)
-	towercontroller.HandleSendEquipmentRequest(publisher, sugar, registry)
-	// handle incoming posts to broadcast to fixtures
-	towercontroller.HandleBroadcastRequest(publisher, sugar, registry)
-	// handle incoming posts to remove fixture reservation
-	towercontroller.HandleUnreserveFixture(sugar, registry)
+	// operational API is handled by the opsMux
+	opsMux := http.NewServeMux()
 
-	// start towercontroller server
-	go func() {
-		if err = http.ListenAndServe(*localAddr, nil); err != nil {
-			sugar.Errorw("http.ListenAndServe", "error", err)
+	// handle incoming requests on availability
+	towercontroller.HandleAvailable(opsMux, *configFile, sugar, registry)
+	// handle incoming posts to load
+	towercontroller.HandleLoad(opsMux, conf, sugar, registry)
+	// handle incoming posts to preparedForDelivery
+	towercontroller.HandlePreparedForDelivery(opsMux, sugar, registry)
+	// handle incoming posts to broadcast to fixtures
+	towercontroller.HandleBroadcastRequest(opsMux, publisher, sugar, registry)
+
+	// user API is handled by the userMux
+	userMux := http.NewServeMux()
+
+	// handle incoming posts to send form and equipment requests
+	towercontroller.HandleSendFormRequest(userMux, publisher, sugar, registry)
+	towercontroller.HandleSendEquipmentRequest(userMux, publisher, sugar, registry)
+	// handle incoming posts to remove fixture reservation
+	towercontroller.HandleUnreserveFixture(userMux, sugar, registry)
+
+	opsServer := http.Server{
+		Addr:    *localAddr,
+		Handler: opsMux,
+	}
+
+	userServer := http.Server{
+		Addr:    *localUserAddr,
+		Handler: userMux,
+	}
+
+	for _, srv := range []*http.Server{&opsServer, &userServer} {
+		go func(srv *http.Server) {
+			if err = srv.ListenAndServe(); err != http.ErrServerClosed {
+				sugar.Errorw("server ListenAndServe", "error", err)
+			}
+		}(srv)
+	}
+
+	defer func() {
+		// nolint:govet // don't need to cancel this, as the timeout is respected by Shtudown
+		to, _ := context.WithTimeout(context.Background(), time.Second*5)
+		if err = opsServer.Shutdown(to); err != nil {
+			sugar.Errorw("unable to gracefully shut down ops server", "error", err)
+		}
+
+		if err = userServer.Shutdown(to); err != nil {
+			sugar.Errorw("unable to gracefully shut down user server", "error", err)
 		}
 	}()
 
@@ -202,6 +239,15 @@ func main() {
 		}(name)
 	}
 
-	// TODO: pass a context or done channel to shut down the SM
-	select {}
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs,
+		syscall.SIGTERM, // ^C
+		syscall.SIGINT,  // kill
+		syscall.SIGQUIT, // QUIT
+		syscall.SIGABRT, // ABORT
+		syscall.SIGHUP,  // parent closing
+	)
+
+	// block until a signal is received
+	<-sigs // deferred server shutdowns will be called
 }

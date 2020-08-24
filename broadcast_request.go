@@ -14,8 +14,8 @@ import (
 )
 
 // HandleBroadcastRequest handles incoming broadcast requests from the CD Controller
-func HandleBroadcastRequest(publisher *protostream.Socket, logger *zap.SugaredLogger, registry map[string]*FixtureInfo) {
-	http.HandleFunc(traycontrollers.BroadcastEndpoint, func(w http.ResponseWriter, r *http.Request) {
+func HandleBroadcastRequest(mux *http.ServeMux, publisher *protostream.Socket, logger *zap.SugaredLogger, registry map[string]*FixtureInfo) {
+	mux.HandleFunc(traycontrollers.BroadcastEndpoint, func(w http.ResponseWriter, r *http.Request) {
 		cl := logger.With("endpoint", traycontrollers.BroadcastEndpoint)
 		cl.Infow("got request to endpoint")
 
