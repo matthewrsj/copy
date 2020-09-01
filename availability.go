@@ -16,7 +16,7 @@ import (
 
 const (
 	_availabilityEndpoint = "/avail"
-	_availabilityTimeout  = time.Second * 2
+	_availabilityTimeout  = time.Second * 3
 	_allowedQueryKey      = "allowed"
 )
 
