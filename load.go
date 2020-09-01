@@ -2,6 +2,7 @@ package towercontroller
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -34,7 +35,7 @@ func HandleLoad(mux *http.ServeMux, conf Configuration, logger *zap.SugaredLogge
 		}
 
 		if loadRequest.TransactionID == "" {
-			err = fmt.Errorf("invalid transaction ID %s, must be greater than 0", loadRequest.TransactionID)
+			err = errors.New("invalid empty transaction ID")
 			logger.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 

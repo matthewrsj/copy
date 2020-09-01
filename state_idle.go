@@ -3,6 +3,8 @@ package towercontroller
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -249,10 +251,30 @@ func (i *Idle) monitorForStatus(done <-chan struct{}, active chan<- inProgressIn
 				continue
 			}
 
+			splits := strings.Split(i.FXRInfo.Name, "-")
+			if len(splits) != 2 { // expect COL-LVL
+				i.Logger.Warnw("invalid fixture name", "name", i.FXRInfo.Name)
+				continue
+			}
+
+			col, err := strconv.Atoi(splits[0])
+			if err != nil {
+				i.Logger.Debugw("unable to parse fixture name", "name", i.FXRInfo.Name)
+				continue
+			}
+
+			lvl, err := strconv.Atoi(splits[1])
+			if err != nil {
+				i.Logger.Debugw("unable to parse fixture name", "name", i.FXRInfo.Name)
+				continue
+			}
+
+			fxrID := fmt.Sprintf("%s-%s%s-%02d-%02d", i.Config.Loc.Line, i.Config.Loc.Process, i.Config.Loc.Aisle, col, lvl)
+
 			ipInfo := inProgressInfo{
 				transactionID:  msg.GetTransactionId(),
 				processStep:    msg.GetProcessStep(),
-				fixtureBarcode: msg.GetFixturebarcode(),
+				fixtureBarcode: fxrID,
 				trayBarcode:    msg.GetTraybarcode(),
 			}
 
