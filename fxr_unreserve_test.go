@@ -62,7 +62,7 @@ func TestHandleUnreserveFixture(t *testing.T) {
 
 	var wg sync.WaitGroup
 
-	wg.Add(1)
+	wg.Add(2)
 
 	go func(wg *sync.WaitGroup) {
 		defer wg.Done()

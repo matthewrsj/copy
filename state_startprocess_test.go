@@ -82,13 +82,22 @@ func TestStartProcess_Action(t *testing.T) {
 	)
 	defer pub.Unpatch()
 
-	msg, err := marshalMessage(&pb.FixtureToTower{})
+	msg, err := marshalMessage(&pb.FixtureToTower{
+		Content: &pb.FixtureToTower_Op{
+			Op: &pb.FixtureOperational{
+				Status: pb.FixtureStatus_FIXTURE_STATUS_READY,
+			},
+		},
+	})
+
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	go func() {
-		sc <- msg
+		for i := 0; i < 2; i++ {
+			sc <- msg
+		}
 	}()
 
 	defer func() {

@@ -2,8 +2,8 @@
 package towercontroller
 
 import (
-	"encoding/json"
 	"fmt"
+	"time"
 
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
@@ -34,10 +34,13 @@ type StartProcess struct {
 	smFatal         bool
 	manual          bool
 	mockCellAPI     bool
+	timeout         bool
 	recipeVersion   int
 
 	fxrInfo *FixtureInfo
 }
+
+const _readinessTimeoutLen = time.Minute
 
 func (s *StartProcess) action() {
 	s.childLogger.Info("sending recipe and other information to FXR")
@@ -113,8 +116,6 @@ func (s *StartProcess) action() {
 			s.childLogger.Warn("cell API mocked, skipping UpdateProcessStatus")
 		}
 	}
-
-	s.childLogger.Info("sent recipe and other information to FXR")
 }
 
 // Actions returns the action functions for this state
@@ -139,6 +140,23 @@ func (s *StartProcess) Next() statemachine.State {
 			Manual:        s.manual,
 			MockCellAPI:   s.mockCellAPI,
 			FXRInfo:       s.fxrInfo,
+		}
+	case s.timeout:
+		next = &EndProcess{
+			Config:          s.Config,
+			Logger:          s.Logger,
+			CellAPIClient:   s.CellAPIClient,
+			Publisher:       s.Publisher,
+			SubscribeChan:   s.SubscribeChan,
+			childLogger:     s.childLogger,
+			tbc:             s.tbc,
+			fxbc:            s.fxbc,
+			cells:           s.cells,
+			processStepName: s.processStepName,
+			manual:          s.manual,
+			mockCellAPI:     s.mockCellAPI,
+			recipeVersion:   s.recipeVersion,
+			fxrInfo:         s.fxrInfo,
 		}
 	default:
 		next = &InProcess{
@@ -165,35 +183,55 @@ func (s *StartProcess) Next() statemachine.State {
 }
 
 func (s *StartProcess) performHandshake(msg proto.Message) {
-	for {
-		s.childLogger.Info("attempting handshake with FXR")
+	start := time.Now()
 
-		if err := sendProtoMessage(s.Publisher, msg, IDFromFXR(s.fxbc)); err != nil {
-			s.childLogger.Warnw("failed to send proto message, retrying", "error", err)
-			continue
+	for {
+		if time.Since(start) > _readinessTimeoutLen {
+			s.timeout = true
 		}
+
+		s.childLogger.Info("checking that FXR is ready to handshake")
 
 		s.childLogger.Debug("reading from subscribeChan")
 		lMsg := <-s.SubscribeChan
 		s.childLogger.Debug("received message from subscribeChan")
 
-		var event protostream.ProtoMessage
+		rMsg, err := unmarshalProtoMessage(lMsg)
+		if err != nil {
+			s.childLogger.Errorw("unmarshal proto message: %v", err)
+			break
+		}
 
-		if err := json.Unmarshal(lMsg.Msg.Body, &event); err != nil {
-			s.childLogger.Debugw("unmarshal JSON frame", "error", err, "bytes", string(lMsg.Msg.Body))
+		if rMsg.GetOp() == nil {
+			s.childLogger.Debugw("got non-operational message, checking next one", "msg", rMsg.String())
 			continue
 		}
 
-		var msg pb.FixtureToTower
-		if err := proto.Unmarshal(event.Body, &msg); err != nil {
-			s.childLogger.Warnw("unable to unmarshal data from FXR", "error", err)
+		if rMsg.GetOp().GetStatus() != pb.FixtureStatus_FIXTURE_STATUS_READY {
+			s.childLogger.Infow("FXR not yet ready for recipe", "status", rMsg.GetOp().GetStatus())
 			continue
 		}
 
-		if msg.TransactionId != s.transactID {
+		s.childLogger.Info("attempting handshake with FXR")
+
+		if err = sendProtoMessage(s.Publisher, msg, IDFromFXR(s.fxbc)); err != nil {
+			s.childLogger.Warnw("failed to send proto message, retrying", "error", err)
+			continue
+		}
+
+		s.childLogger.Debug("reading from subscribeChan")
+		lMsg = <-s.SubscribeChan
+		s.childLogger.Debug("received message from subscribeChan")
+
+		if rMsg, err = unmarshalProtoMessage(lMsg); err != nil {
+			s.childLogger.Errorw("unmarshal proto message: %v", err)
+			continue
+		}
+
+		if rMsg.TransactionId != s.transactID {
 			s.childLogger.Warnw(
 				"transaction ID from FXR did not match transaction ID sent",
-				"fxr_transaction_id", msg.TransactionId, "sent_transaction_id", s.transactID,
+				"fxr_transaction_id", rMsg.TransactionId, "sent_transaction_id", s.transactID,
 			)
 
 			continue
@@ -201,4 +239,6 @@ func (s *StartProcess) performHandshake(msg proto.Message) {
 
 		break
 	}
+
+	s.childLogger.Info("sent recipe and other information to FXR")
 }

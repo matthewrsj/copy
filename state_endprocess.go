@@ -117,6 +117,11 @@ func (e *EndProcess) action() {
 		return
 	}
 
+	// wait for FXR to report open before calling for unload
+	e.childLogger.Info("waiting for fixture to report open position")
+	e.waitForOpen()
+	e.childLogger.Info("sending unload request")
+
 	resp, err := http.Post(e.Config.Remote+_unloadEndpoint, "application/json", bytes.NewReader(b))
 	if err != nil {
 		e.childLogger.Errorw("post unload request", "error", err)
@@ -325,5 +330,20 @@ func (e *EndProcess) setCellStatuses() {
 		}
 	} else {
 		e.childLogger.Warn("cell API mocked, skipping SetCellStatuses")
+	}
+}
+
+// waitForOpen reads from SubscribeChan until fixture position is open
+func (e *EndProcess) waitForOpen() {
+	for lMsg := range e.SubscribeChan {
+		msg, err := unmarshalProtoMessage(lMsg)
+		if err != nil {
+			e.childLogger.Errorw("unmarshal proto message: %v", err)
+			continue
+		}
+
+		if msg.GetOp().GetPosition() == pb.FixturePosition_FIXTURE_POSITION_OPEN {
+			break
+		}
 	}
 }

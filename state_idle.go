@@ -1,14 +1,12 @@
 package towercontroller
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
 
 	"go.uber.org/zap"
-	"google.golang.org/protobuf/proto"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cellapi"
 	"stash.teslamotors.com/rr/protostream"
@@ -239,15 +237,9 @@ func (i *Idle) monitorForStatus(done <-chan struct{}, active chan<- inProgressIn
 		case <-done:
 			return
 		case lMsg := <-i.SubscribeChan:
-			var event protostream.ProtoMessage
-			if err := json.Unmarshal(lMsg.Msg.Body, &event); err != nil {
-				i.Logger.Debugw("unmarshal JSON frame", "error", err, "bytes", string(lMsg.Msg.Body))
-				continue
-			}
-
-			var msg pb.FixtureToTower
-			if err := proto.Unmarshal(event.Body, &msg); err != nil {
-				i.Logger.Debugw("unable to unmarshal message (may be wrong type)", "error", err)
+			msg, err := unmarshalProtoMessage(lMsg)
+			if err != nil {
+				i.Logger.Errorw("unmarshal proto message: %v", err)
 				continue
 			}
 

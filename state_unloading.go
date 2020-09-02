@@ -1,10 +1,7 @@
 package towercontroller
 
 import (
-	"encoding/json"
-
 	"go.uber.org/zap"
-	"google.golang.org/protobuf/proto"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cellapi"
 	"stash.teslamotors.com/rr/protostream"
@@ -37,16 +34,9 @@ func (u *Unloading) action() {
 	for lMsg := range u.SubscribeChan {
 		u.childLogger.Debugw("unloading: got message", "message", lMsg.Msg)
 
-		var event protostream.ProtoMessage
-		if err := json.Unmarshal(lMsg.Msg.Body, &event); err != nil {
-			u.childLogger.Debugw("unmarshal JSON frame", "error", err, "bytes", string(lMsg.Msg.Body))
-			continue
-		}
-
-		msg := &pb.FixtureToTower{}
-
-		if err := proto.Unmarshal(event.Body, msg); err != nil {
-			u.childLogger.Infow("expecting FixtureToTower message", "error", err)
+		msg, err := unmarshalProtoMessage(lMsg)
+		if err != nil {
+			u.childLogger.Errorw("unload proto message: %v", err)
 			continue
 		}
 

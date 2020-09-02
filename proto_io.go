@@ -6,6 +6,7 @@ import (
 
 	"google.golang.org/protobuf/proto"
 	"stash.teslamotors.com/rr/protostream"
+	pb "stash.teslamotors.com/rr/towerproto"
 )
 
 func marshalProtoEvent(msg proto.Message, fxrName string) ([]byte, error) {
@@ -38,4 +39,20 @@ func sendProtoMessage(publisher *protostream.Socket, msg proto.Message, fxrName 
 	}
 
 	return nil
+}
+
+func unmarshalProtoMessage(lMsg *protostream.Message) (*pb.FixtureToTower, error) {
+	var msg pb.FixtureToTower
+
+	var event protostream.ProtoMessage
+
+	if err := json.Unmarshal(lMsg.Msg.Body, &event); err != nil {
+		return nil, fmt.Errorf("unmarshal json frame: %v, bytes: %s", err, string(lMsg.Msg.Body))
+	}
+
+	if err := proto.Unmarshal(event.Body, &msg); err != nil {
+		return nil, fmt.Errorf("unable to unmarshal data from FXR: %v", err)
+	}
+
+	return &msg, nil
 }

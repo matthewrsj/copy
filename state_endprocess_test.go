@@ -3,20 +3,24 @@ package towercontroller
 import (
 	"reflect"
 	"testing"
+	"time"
 
 	"bou.ke/monkey"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cellapi"
+	"stash.teslamotors.com/rr/protostream"
 	pb "stash.teslamotors.com/rr/towerproto"
 	"stash.teslamotors.com/rr/traycontrollers"
 )
 
 func TestEndProcess_Action(t *testing.T) {
+	sc := make(chan *protostream.Message)
 	exp := 1
 	as := (&EndProcess{
-		childLogger: zap.NewExample().Sugar(),
+		SubscribeChan: sc,
+		childLogger:   zap.NewExample().Sugar(),
 		Config: Configuration{
 			CellMap: map[string][]string{
 				"A": {"A01", "A02"},
@@ -86,6 +90,25 @@ func TestEndProcess_Action(t *testing.T) {
 		},
 	)
 	defer scs.Unpatch()
+
+	msg, err := marshalMessage(&pb.FixtureToTower{
+		Content: &pb.FixtureToTower_Op{
+			Op: &pb.FixtureOperational{
+				Position: pb.FixturePosition_FIXTURE_POSITION_OPEN,
+			},
+		},
+	})
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	go func() {
+		for i := 0; i < 5; i++ {
+			time.Sleep(time.Second)
+			sc <- msg
+		}
+	}()
 
 	for _, a := range as {
 		a() // if a panic occurs it will be caught by the deferred func
@@ -172,8 +195,10 @@ func TestEndProcess_ActionSWIFT(t *testing.T) {
 }
 
 func TestEndProcess_ActionBadOrientation(t *testing.T) {
+	sc := make(chan *protostream.Message)
 	as := (&EndProcess{
-		childLogger: zap.NewExample().Sugar(),
+		SubscribeChan: sc,
+		childLogger:   zap.NewExample().Sugar(),
 		Config: Configuration{
 			CellMap: map[string][]string{
 				"A": {"A01", "A02"},
@@ -231,14 +256,35 @@ func TestEndProcess_ActionBadOrientation(t *testing.T) {
 	)
 	defer ups.Unpatch()
 
+	msg, err := marshalMessage(&pb.FixtureToTower{
+		Content: &pb.FixtureToTower_Op{
+			Op: &pb.FixtureOperational{
+				Position: pb.FixturePosition_FIXTURE_POSITION_OPEN,
+			},
+		},
+	})
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	go func() {
+		for i := 0; i < 5; i++ {
+			time.Sleep(time.Second)
+			sc <- msg
+		}
+	}()
+
 	for _, a := range as {
 		a() // if a panic occurs it will be caught by the deferred func
 	}
 }
 
 func TestEndProcess_ActionShortMap(t *testing.T) {
+	sc := make(chan *protostream.Message)
 	as := (&EndProcess{
-		childLogger: zap.NewExample().Sugar(),
+		SubscribeChan: sc,
+		childLogger:   zap.NewExample().Sugar(),
 		Config: Configuration{
 			CellMap: map[string][]string{
 				"A": {},
@@ -296,15 +342,36 @@ func TestEndProcess_ActionShortMap(t *testing.T) {
 	)
 	defer ups.Unpatch()
 
+	msg, err := marshalMessage(&pb.FixtureToTower{
+		Content: &pb.FixtureToTower_Op{
+			Op: &pb.FixtureOperational{
+				Position: pb.FixturePosition_FIXTURE_POSITION_OPEN,
+			},
+		},
+	})
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	go func() {
+		for i := 0; i < 5; i++ {
+			time.Sleep(time.Second)
+			sc <- msg
+		}
+	}()
+
 	for _, a := range as {
 		a() // if a panic occurs it will be caught by the deferred func
 	}
 }
 
 func TestEndProcess_ActionBadSetCellStatus(t *testing.T) {
+	sc := make(chan *protostream.Message)
 	exp := 1
 	as := (&EndProcess{
-		childLogger: zap.NewExample().Sugar(),
+		SubscribeChan: sc,
+		childLogger:   zap.NewExample().Sugar(),
 		Config: Configuration{
 			CellMap: map[string][]string{
 				"A": {"A01", "A02"},
@@ -374,6 +441,25 @@ func TestEndProcess_ActionBadSetCellStatus(t *testing.T) {
 		},
 	)
 	defer scs.Unpatch()
+
+	msg, err := marshalMessage(&pb.FixtureToTower{
+		Content: &pb.FixtureToTower_Op{
+			Op: &pb.FixtureOperational{
+				Position: pb.FixturePosition_FIXTURE_POSITION_OPEN,
+			},
+		},
+	})
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	go func() {
+		for i := 0; i < 5; i++ {
+			time.Sleep(time.Second)
+			sc <- msg
+		}
+	}()
 
 	for _, a := range as {
 		a() // if a panic occurs it will be caught by the deferred func
