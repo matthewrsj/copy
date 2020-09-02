@@ -28,6 +28,7 @@ type ProcessStep struct {
 	fxbc            traycontrollers.FixtureBarcode
 	steps           traycontrollers.StepConfiguration
 	recipeVersion   int
+	smFatal         bool
 	inProgress      bool
 	manual          bool
 	mockCellAPI     bool
@@ -42,7 +43,9 @@ func (p *ProcessStep) action() {
 
 	bc, ok := p.Context().(Barcodes)
 	if !ok {
-		fatalError(p, p.Logger, fmt.Errorf("state context %v (%T) was not correct type (Barcodes)", p.Context(), p.Context()))
+		p.Logger.Error(fmt.Errorf("state context %v (%T) was not correct type (Barcodes)", p.Context(), p.Context()))
+		p.smFatal = true
+
 		return
 	}
 
@@ -86,6 +89,17 @@ func (p *ProcessStep) Next() statemachine.State {
 	var next statemachine.State
 
 	switch {
+	case p.smFatal:
+		next = &Idle{
+			Config:        p.Config,
+			Logger:        p.Logger,
+			CellAPIClient: p.CellAPIClient,
+			Publisher:     p.Publisher,
+			SubscribeChan: p.SubscribeChan,
+			Manual:        p.manual,
+			MockCellAPI:   p.mockCellAPI,
+			FXRInfo:       p.fxrInfo,
+		}
 	case p.inProgress:
 		// if this tray was discovered to already be in-progress skip right to monitoring the status
 		next = &InProcess{

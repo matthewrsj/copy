@@ -31,6 +31,7 @@ type StartProcess struct {
 	fxbc            traycontrollers.FixtureBarcode
 	steps           traycontrollers.StepConfiguration
 	cells           map[string]cellapi.CellData
+	smFatal         bool
 	manual          bool
 	mockCellAPI     bool
 	recipeVersion   int
@@ -72,7 +73,9 @@ func (s *StartProcess) action() {
 
 	s.cells, err = getCellMap(s.mockCellAPI, s.childLogger, s.CellAPIClient, s.tbc.SN)
 	if err != nil {
-		fatalError(s, s.childLogger, err)
+		s.childLogger.Errorw("get cell map", "error", err)
+		s.smFatal = true
+
 		return
 	}
 
@@ -80,7 +83,9 @@ func (s *StartProcess) action() {
 
 	cellMapConf, ok := s.Config.CellMap[s.tbc.O.String()]
 	if !ok {
-		fatalError(s, s.childLogger, fmt.Errorf("could not find orientation %s in configuration", s.tbc.O))
+		s.childLogger.Error(fmt.Errorf("could not find orientation %s in configuration", s.tbc.O))
+		s.smFatal = true
+
 		return
 	}
 
@@ -99,7 +104,9 @@ func (s *StartProcess) action() {
 	if s.manual {
 		if !s.mockCellAPI {
 			if err := s.CellAPIClient.UpdateProcessStatus(s.tbc.SN, s.processStepName, cellapi.StatusStart); err != nil {
-				fatalError(s, s.childLogger, fmt.Errorf("UpdateProcessStatus: %v", err))
+				s.childLogger.Errorw("UpdateProcessStatus", "error", err)
+				s.smFatal = true
+
 				return
 			}
 		} else {
@@ -119,22 +126,39 @@ func (s *StartProcess) Actions() []func() {
 
 // Next returns the next state to run after this one
 func (s *StartProcess) Next() statemachine.State {
-	next := &InProcess{
-		Config:          s.Config,
-		Logger:          s.Logger,
-		CellAPIClient:   s.CellAPIClient,
-		Publisher:       s.Publisher,
-		SubscribeChan:   s.SubscribeChan,
-		childLogger:     s.childLogger,
-		tbc:             s.tbc,
-		fxbc:            s.fxbc,
-		cells:           s.cells,
-		processStepName: s.processStepName,
-		manual:          s.manual,
-		mockCellAPI:     s.mockCellAPI,
-		recipeVersion:   s.recipeVersion,
-		fxrInfo:         s.fxrInfo,
+	var next statemachine.State
+
+	switch {
+	case s.smFatal:
+		next = &Idle{
+			Config:        s.Config,
+			Logger:        s.Logger,
+			CellAPIClient: s.CellAPIClient,
+			Publisher:     s.Publisher,
+			SubscribeChan: s.SubscribeChan,
+			Manual:        s.manual,
+			MockCellAPI:   s.mockCellAPI,
+			FXRInfo:       s.fxrInfo,
+		}
+	default:
+		next = &InProcess{
+			Config:          s.Config,
+			Logger:          s.Logger,
+			CellAPIClient:   s.CellAPIClient,
+			Publisher:       s.Publisher,
+			SubscribeChan:   s.SubscribeChan,
+			childLogger:     s.childLogger,
+			tbc:             s.tbc,
+			fxbc:            s.fxbc,
+			cells:           s.cells,
+			processStepName: s.processStepName,
+			manual:          s.manual,
+			mockCellAPI:     s.mockCellAPI,
+			recipeVersion:   s.recipeVersion,
+			fxrInfo:         s.fxrInfo,
+		}
 	}
+
 	s.childLogger.Debugw("transitioning to next state", "next", statemachine.NameOf(next))
 
 	return next

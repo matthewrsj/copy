@@ -102,6 +102,13 @@ func TestStartProcess_Action(t *testing.T) {
 	}
 }
 
+func TestStartProcess_FatalNext(t *testing.T) {
+	exp := "Idle"
+	if n := statemachine.NameOf((&StartProcess{childLogger: zap.NewExample().Sugar(), smFatal: true}).Next()); n != exp {
+		t.Errorf("expected next state name to be %s, got %s", exp, n)
+	}
+}
+
 func TestStartProcess_Next(t *testing.T) {
 	exp := "InProcess"
 	if n := statemachine.NameOf((&StartProcess{childLogger: zap.NewExample().Sugar()}).Next()); n != exp {

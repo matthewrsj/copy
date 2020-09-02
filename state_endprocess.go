@@ -33,6 +33,7 @@ type EndProcess struct {
 	cells           map[string]cellapi.CellData
 	cellResponse    []*pb.Cell
 	processStepName string
+	smFatal         bool
 	fixtureFault    bool
 	manual          bool
 	mockCellAPI     bool
@@ -64,7 +65,9 @@ func (e *EndProcess) action() {
 
 		var err error
 		if e.cells, err = getCellMap(e.mockCellAPI, e.childLogger, e.CellAPIClient, e.tbc.SN); err != nil {
-			fatalError(e, e.childLogger, err)
+			e.childLogger.Errorw("get cell map", "error", err)
+			e.smFatal = true
+
 			return
 		}
 	}
@@ -108,13 +111,17 @@ func (e *EndProcess) action() {
 
 	b, err := json.Marshal(tc)
 	if err != nil {
-		fatalError(e, e.childLogger, err)
+		e.childLogger.Errorw("json marshal tray complete", "error", err)
+		e.smFatal = true
+
 		return
 	}
 
 	resp, err := http.Post(e.Config.Remote+_unloadEndpoint, "application/json", bytes.NewReader(b))
 	if err != nil {
-		fatalError(e, e.childLogger, err)
+		e.childLogger.Errorw("post unload request", "error", err)
+		e.smFatal = true
+
 		return
 	}
 
@@ -123,7 +130,9 @@ func (e *EndProcess) action() {
 	}()
 
 	if resp.StatusCode != 200 {
-		fatalError(e, e.childLogger, fmt.Errorf("response NOT OK: %v, %v", resp.StatusCode, resp.Status))
+		e.childLogger.Errorw("http post", "response", fmt.Errorf("response NOT OK: %v, %v", resp.StatusCode, resp.Status))
+		e.smFatal = true
+
 		return
 	}
 
@@ -150,16 +159,32 @@ func (e *EndProcess) Next() statemachine.State {
 		return nil
 	}
 
-	next := &Unloading{
-		Config:        e.Config,
-		Logger:        e.Logger,
-		CellAPIClient: e.CellAPIClient,
-		Publisher:     e.Publisher,
-		SubscribeChan: e.SubscribeChan,
-		childLogger:   e.childLogger,
-		mockCellAPI:   e.mockCellAPI,
-		fxbc:          e.fxbc,
-		fxrInfo:       e.fxrInfo,
+	var next statemachine.State
+
+	switch {
+	case e.smFatal:
+		next = &Idle{
+			Config:        e.Config,
+			Logger:        e.Logger,
+			CellAPIClient: e.CellAPIClient,
+			Publisher:     e.Publisher,
+			SubscribeChan: e.SubscribeChan,
+			Manual:        e.manual,
+			MockCellAPI:   e.mockCellAPI,
+			FXRInfo:       e.fxrInfo,
+		}
+	default:
+		next = &Unloading{
+			Config:        e.Config,
+			Logger:        e.Logger,
+			CellAPIClient: e.CellAPIClient,
+			Publisher:     e.Publisher,
+			SubscribeChan: e.SubscribeChan,
+			childLogger:   e.childLogger,
+			mockCellAPI:   e.mockCellAPI,
+			fxbc:          e.fxbc,
+			fxrInfo:       e.fxrInfo,
+		}
 	}
 
 	e.childLogger.Debugw("transitioning to next state", "next", statemachine.NameOf(next))

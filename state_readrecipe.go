@@ -26,6 +26,7 @@ type ReadRecipe struct {
 	steps           traycontrollers.StepConfiguration
 	recipeVersion   int
 	rcpErr          error
+	smFatal         bool
 	manual          bool
 	mockCellAPI     bool
 	fxrInfo         *FixtureInfo
@@ -35,7 +36,9 @@ func (r *ReadRecipe) action() {
 	r.childLogger.Info("loading recipe for process step")
 
 	if r.steps, r.rcpErr = LoadRecipe(r.Config.RecipeFile, r.Config.IngredientsFile, r.processStepName); r.rcpErr != nil {
-		fatalError(r, r.childLogger, r.rcpErr)
+		r.childLogger.Errorw("load recipe", "error", r.rcpErr)
+		r.smFatal = true
+
 		return
 	}
 
@@ -51,23 +54,40 @@ func (r *ReadRecipe) Actions() []func() {
 
 // Next returns the next state to run after this one
 func (r *ReadRecipe) Next() statemachine.State {
-	next := &StartProcess{
-		Config:          r.Config,
-		Logger:          r.Logger,
-		CellAPIClient:   r.CellAPIClient,
-		Publisher:       r.Publisher,
-		SubscribeChan:   r.SubscribeChan,
-		childLogger:     r.childLogger,
-		processStepName: r.processStepName,
-		transactID:      r.transactID,
-		fxbc:            r.fxbc,
-		tbc:             r.tbc,
-		steps:           r.steps,
-		manual:          r.manual,
-		mockCellAPI:     r.mockCellAPI,
-		recipeVersion:   r.recipeVersion,
-		fxrInfo:         r.fxrInfo,
+	var next statemachine.State
+
+	switch {
+	case r.smFatal:
+		next = &Idle{
+			Config:        r.Config,
+			Logger:        r.Logger,
+			CellAPIClient: r.CellAPIClient,
+			Publisher:     r.Publisher,
+			SubscribeChan: r.SubscribeChan,
+			Manual:        r.manual,
+			MockCellAPI:   r.mockCellAPI,
+			FXRInfo:       r.fxrInfo,
+		}
+	default:
+		next = &StartProcess{
+			Config:          r.Config,
+			Logger:          r.Logger,
+			CellAPIClient:   r.CellAPIClient,
+			Publisher:       r.Publisher,
+			SubscribeChan:   r.SubscribeChan,
+			childLogger:     r.childLogger,
+			processStepName: r.processStepName,
+			transactID:      r.transactID,
+			fxbc:            r.fxbc,
+			tbc:             r.tbc,
+			steps:           r.steps,
+			manual:          r.manual,
+			mockCellAPI:     r.mockCellAPI,
+			recipeVersion:   r.recipeVersion,
+			fxrInfo:         r.fxrInfo,
+		}
 	}
+
 	r.childLogger.Debugw("transitioning to next state", "next", statemachine.NameOf(next))
 
 	return next
