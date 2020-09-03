@@ -1,0 +1,22 @@
+---
+# ansible-playbook -l <host_group> restart-services.yaml -K
+- hosts: all
+  tasks:
+  - name: Restart protostream
+    service:
+      name: protostream.service
+      state: restarted
+    become: yes
+    become_method: sudo
+  - name: Restart towercontroller
+    service:
+      name: towercontroller.service
+      state: restarted
+    become: yes
+    become_method: sudo
+  - name: Restart towerstreamsvc
+    service:
+      name: towerstreamsvc.service
+      state: restarted
+    become: yes
+    become_method: sudo

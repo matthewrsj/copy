@@ -1,0 +1,11 @@
+---
+# ansible-playbook -l <host_group> update-firmware-scripts.yaml
+- hosts: all
+  tasks:
+    - name: Copy Files Over
+      copy:
+        src: ~/Desktop/mass_pro_files
+        dest: /home/celladmin
+        owner: celladmin
+    - name: Change Working Directory
+      command: chdir=/home/celladmin/mass_pro_files bash setup_env.sh

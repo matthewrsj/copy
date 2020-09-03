@@ -1,0 +1,14 @@
+---
+# ansible-playbook -l <host_group> update-firmware-scripts.yaml
+- hosts: all
+  vars:
+    buildVersion: 215
+  tasks:
+    - name: Update CAN0
+      command: chdir=/home/celladmin/mass_pro_files/firmware_update python3 fixture_upd.py -t socket can0 -f https://py-jenkins.teslamotors.com/job/RR/job/firmware/job/master/{{ buildVersion }}/artifact/*zip*/archive.zip --force 1 --boot_path bootloaders/ all
+      async: 2400
+      poll: 60
+    - name: Update CAN1
+      command: chdir=/home/celladmin/mass_pro_files/firmware_update python3 fixture_upd.py -t socket can1 -f https://py-jenkins.teslamotors.com/job/RR/job/firmware/job/master/{{ buildVersion }}/artifact/*zip*/archive.zip --force 1 --boot_path bootloaders/ all
+      async: 2400
+      poll: 60
