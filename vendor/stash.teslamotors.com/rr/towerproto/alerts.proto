@@ -295,6 +295,7 @@ message FxrAlert {
       not_closed_in_closed_st = 1;
       timeout_while_opening   = 2;
       timeout_while_closing   = 3;
+      position_invalid        = 4;
     }
     float        sm_state             = 1;
     float        fixture_position     = 2;
@@ -302,14 +303,12 @@ message FxrAlert {
   }
 
   message a020_thermal_event_level_0 {
-      float threshold  = 1;
-      bool stib_mia    = 2;
-      bool cib_offline = 3;
+    float threshold   = 1;
+    bool  stib_mia    = 2;
+    bool  cib_offline = 3;
   }
 
-  message a021_thermal_event_level_1 {
-      float threshold = 1;
-  }
+  message a021_thermal_event_level_1 { float threshold = 1; }
 
   AlertId alert_id = 1;
 

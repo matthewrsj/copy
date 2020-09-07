@@ -1,10 +1,9 @@
 package towercontroller
 
 import (
-	"encoding/json"
+	"time"
 
 	"go.uber.org/zap"
-	"google.golang.org/protobuf/proto"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cellapi"
 	"stash.teslamotors.com/rr/protostream"
@@ -20,7 +19,6 @@ type InProcess struct {
 	Logger        *zap.SugaredLogger
 	CellAPIClient *cellapi.Client
 	Publisher     *protostream.Socket
-	SubscribeChan <-chan *protostream.Message
 
 	childLogger     *zap.SugaredLogger
 	tbc             traycontrollers.TrayBarcode
@@ -41,62 +39,61 @@ type InProcess struct {
 func (i *InProcess) action() {
 	i.childLogger.Info("monitoring fixture to go to complete or fault")
 
-	for lMsg := range i.SubscribeChan {
-		i.childLogger.Debugw("got message", "message", lMsg.Msg)
+	for { // loop until status updates to COMPLETE/FAULTED
+		// TODO: first look for it to go to IN_PROGRESS
+		//       then COMPLETE/FAULTED
+		//       if it goes back to IDLE it lost the recipe, so unload
+		var (
+			msg *pb.FixtureToTower
+			err error
+		)
 
-		var event protostream.ProtoMessage
-		if err := json.Unmarshal(lMsg.Msg.Body, &event); err != nil {
-			i.Logger.Debugw("unmarshal JSON frame", "error", err, "bytes", string(lMsg.Msg.Body))
+		if msg, err = i.fxrInfo.FixtureState.GetOp(); err != nil {
+			i.childLogger.Warnw("get operational fixture status", "error", err)
+			// wait a second for it to update
+			// TODO: time out this operation. If fixture status doesn't update in a certain amount of time we should
+			//       attempt to unload the tray.
+			time.Sleep(time.Second)
+
 			continue
-		}
-
-		msg := &pb.FixtureToTower{}
-
-		if err := proto.Unmarshal(event.Body, msg); err != nil {
-			i.Logger.Debugw("unmarshal proto", "error", err)
-			return
 		}
 
 		i.childLogger.Debugw("got FixtureToTower message", "msg", msg.String())
 
-		op, ok := msg.GetContent().(*pb.FixtureToTower_Op)
-		if !ok {
-			i.childLogger.Debugf("got different message than we are looking for (%T)", msg.GetContent())
-			continue
-		}
-
-		switch s := op.Op.GetStatus(); s {
+		switch s := msg.GetOp().GetStatus(); s {
 		case pb.FixtureStatus_FIXTURE_STATUS_COMPLETE, pb.FixtureStatus_FIXTURE_STATUS_FAULTED:
-			msg := "fixture done with tray"
+			statusMsg := "fixture done with tray"
 
 			if i.fixtureFault = s == pb.FixtureStatus_FIXTURE_STATUS_FAULTED; i.fixtureFault {
-				msg += "; fixture faulted"
+				statusMsg += "; fixture faulted"
 
-				if op.Op.GetFireAlarmStatus() != pb.FireAlarmStatus_FIRE_ALARM_UNKNOWN_UNSPECIFIED {
+				if msg.GetOp().GetFireAlarmStatus() != pb.FireAlarmStatus_FIRE_ALARM_UNKNOWN_UNSPECIFIED {
 					// fire alarm, tell CDC
 					// this is in-band because it will try _forever_ until it succeeds,
 					// but we don't want to go to unload step because it will queue another job for the crane
 					// to unload this tray, but we want the next operation on this tray to be a fire
 					// suppression activity.
 					i.returnToIdle = true // return to idle whether or not we successfully sounded alarm
-					if err := soundTheAlarm(i.Config, op.Op.GetFireAlarmStatus(), i.fxrInfo.Name, i.childLogger); err != nil {
+					if err := soundTheAlarm(i.Config, msg.GetOp().GetFireAlarmStatus(), i.fxrInfo.Name, i.childLogger); err != nil {
 						// basically couldn't marshal the request. Return to idle where we will keep trying for as
 						// long as the alarm exists
 						return
 					}
 
 					// successfully alarmed, return to idle but set alarmed to true so we don't keep alarming
-					i.alarmed = op.Op.GetFireAlarmStatus()
+					i.alarmed = msg.GetOp().GetFireAlarmStatus()
 				}
 			}
 
-			i.childLogger.Info(msg)
+			i.childLogger.Info(statusMsg)
 
-			i.cellResponse = op.Op.GetCells()
+			i.cellResponse = msg.GetOp().GetCells()
 
 			return
 		default:
 			i.childLogger.Debugw("received fixture_status update", "status", s.String())
+			// give it a second to update
+			time.Sleep(time.Second)
 		}
 	}
 }
@@ -117,7 +114,6 @@ func (i *InProcess) Next() statemachine.State {
 			Logger:        i.Logger,
 			CellAPIClient: i.CellAPIClient,
 			Publisher:     i.Publisher,
-			SubscribeChan: i.SubscribeChan,
 			Manual:        i.manual,
 			MockCellAPI:   i.mockCellAPI,
 			FXRInfo:       i.fxrInfo,
@@ -129,7 +125,6 @@ func (i *InProcess) Next() statemachine.State {
 			Logger:          i.Logger,
 			CellAPIClient:   i.CellAPIClient,
 			Publisher:       i.Publisher,
-			SubscribeChan:   i.SubscribeChan,
 			childLogger:     i.childLogger,
 			tbc:             i.tbc,
 			fxbc:            i.fxbc,

@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 	"stash.teslamotors.com/ctet/statemachine/v2"
+	pb "stash.teslamotors.com/rr/towerproto"
 	"stash.teslamotors.com/rr/traycontrollers"
 )
 
@@ -40,10 +41,13 @@ func TestIdle_Actions(t *testing.T) {
 		},
 		Logger: zap.NewExample().Sugar(),
 		FXRInfo: &FixtureInfo{
-			Name: "01-01",
-			PFD:  pfdC,
+			FixtureState: NewFixtureState(),
+			Name:         "01-01",
+			PFD:          pfdC,
 		},
 	}
+
+	updateInternalFixtureState(i.FXRInfo.FixtureState.operational, &pb.FixtureToTower{})
 
 	as := i.Actions()
 

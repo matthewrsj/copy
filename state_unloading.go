@@ -1,6 +1,8 @@
 package towercontroller
 
 import (
+	"time"
+
 	"go.uber.org/zap"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cellapi"
@@ -17,7 +19,6 @@ type Unloading struct {
 	Logger        *zap.SugaredLogger
 	CellAPIClient *cellapi.Client
 	Publisher     *protostream.Socket
-	SubscribeChan <-chan *protostream.Message
 
 	childLogger *zap.SugaredLogger
 	manual      bool
@@ -31,17 +32,12 @@ type Unloading struct {
 func (u *Unloading) action() {
 	u.fxrInfo.Avail.Set(StatusUnloading)
 
-	for lMsg := range u.SubscribeChan {
-		u.childLogger.Debugw("unloading: got message", "message", lMsg.Msg)
-
-		msg, err := unmarshalProtoMessage(lMsg)
+	for {
+		msg, err := u.fxrInfo.FixtureState.GetOp()
 		if err != nil {
-			u.childLogger.Errorw("unload proto message: %v", err)
-			continue
-		}
+			u.childLogger.Warnw("monitoring for unload; get fixture operational message", "error", err)
+			time.Sleep(time.Second) // give it time to update
 
-		if msg.GetOp() == nil {
-			u.childLogger.Debugw("got non-operational message, checking next one", "msg", msg.String())
 			continue
 		}
 
@@ -54,6 +50,9 @@ func (u *Unloading) action() {
 			u.childLogger.Info("tray unloaded")
 			break
 		}
+
+		// fixture updates anywhere from 1-3 seconds, so delay before checking again
+		time.Sleep(time.Second)
 	}
 }
 
@@ -71,7 +70,6 @@ func (u *Unloading) Next() statemachine.State {
 		Logger:        u.Logger,
 		CellAPIClient: u.CellAPIClient,
 		Publisher:     u.Publisher,
-		SubscribeChan: u.SubscribeChan,
 		Manual:        u.manual,
 		MockCellAPI:   u.mockCellAPI,
 		FXRInfo:       u.fxrInfo,

@@ -138,8 +138,9 @@ func main() {
 					msg := pb.FixtureToTower{
 						Content: &pb.FixtureToTower_Op{
 							Op: &pb.FixtureOperational{
-								Status:          pb.FixtureStatus_FIXTURE_STATUS_IDLE,
+								Status:          pb.FixtureStatus_FIXTURE_STATUS_READY,
 								EquipmentStatus: pb.EquipmentStatus_EQUIPMENT_STATUS_IN_OPERATION,
+								Position:        pb.FixturePosition_FIXTURE_POSITION_OPEN,
 							},
 						},
 						Fixturebarcode: fmt.Sprintf("CM2-63010-%s", did.name),

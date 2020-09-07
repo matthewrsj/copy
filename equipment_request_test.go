@@ -42,7 +42,6 @@ func TestHandleSendEquipmentRequest(t *testing.T) {
 	registry := map[string]*FixtureInfo{
 		"01-01": {
 			Name: "01-01",
-			SC:   sc,
 		},
 	}
 

@@ -93,7 +93,7 @@ golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
-# google.golang.org/genproto v0.0.0-20190819201941-24fa4b261c55
+# google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013
 google.golang.org/genproto/googleapis/rpc/status
 # google.golang.org/grpc v1.29.1
 ## explicit
@@ -137,24 +137,25 @@ google.golang.org/grpc/serviceconfig
 google.golang.org/grpc/stats
 google.golang.org/grpc/status
 google.golang.org/grpc/tap
-# google.golang.org/protobuf v1.23.0
+# google.golang.org/protobuf v1.25.0
 ## explicit
+google.golang.org/protobuf/encoding/protojson
 google.golang.org/protobuf/encoding/prototext
 google.golang.org/protobuf/encoding/protowire
 google.golang.org/protobuf/internal/descfmt
 google.golang.org/protobuf/internal/descopts
 google.golang.org/protobuf/internal/detrand
 google.golang.org/protobuf/internal/encoding/defval
+google.golang.org/protobuf/internal/encoding/json
 google.golang.org/protobuf/internal/encoding/messageset
 google.golang.org/protobuf/internal/encoding/tag
 google.golang.org/protobuf/internal/encoding/text
 google.golang.org/protobuf/internal/errors
-google.golang.org/protobuf/internal/fieldnum
 google.golang.org/protobuf/internal/fieldsort
 google.golang.org/protobuf/internal/filedesc
 google.golang.org/protobuf/internal/filetype
 google.golang.org/protobuf/internal/flags
-google.golang.org/protobuf/internal/genname
+google.golang.org/protobuf/internal/genid
 google.golang.org/protobuf/internal/impl
 google.golang.org/protobuf/internal/mapsort
 google.golang.org/protobuf/internal/pragma
@@ -204,12 +205,12 @@ stash.teslamotors.com/ctet/statemachine/v2
 # stash.teslamotors.com/rr/cellapi v0.0.3
 ## explicit
 stash.teslamotors.com/rr/cellapi
-# stash.teslamotors.com/rr/protostream v0.0.3
+# stash.teslamotors.com/rr/protostream v0.1.3
 ## explicit
 stash.teslamotors.com/rr/protostream
-# stash.teslamotors.com/rr/towerproto v0.0.12
+# stash.teslamotors.com/rr/towerproto v0.0.13
 ## explicit
 stash.teslamotors.com/rr/towerproto
-# stash.teslamotors.com/rr/traycontrollers v0.1.3
+# stash.teslamotors.com/rr/traycontrollers v0.1.3 => /home/parallels/projects/traycontrollers
 ## explicit
 stash.teslamotors.com/rr/traycontrollers

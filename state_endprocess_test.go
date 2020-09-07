@@ -18,9 +18,11 @@ import (
 func TestEndProcess_Action(t *testing.T) {
 	sc := make(chan *protostream.Message)
 	exp := 1
-	as := (&EndProcess{
-		SubscribeChan: sc,
-		childLogger:   zap.NewExample().Sugar(),
+	ep := &EndProcess{
+		fxrInfo: &FixtureInfo{
+			FixtureState: NewFixtureState(),
+		},
+		childLogger: zap.NewExample().Sugar(),
 		Config: Configuration{
 			CellMap: map[string][]string{
 				"A": {"A01", "A02"},
@@ -61,7 +63,17 @@ func TestEndProcess_Action(t *testing.T) {
 			Raw: "11223344A",
 		},
 		fixtureFault: true,
-	}).Actions()
+	}
+
+	updateInternalFixtureState(ep.fxrInfo.FixtureState.operational, &pb.FixtureToTower{
+		Content: &pb.FixtureToTower_Op{
+			Op: &pb.FixtureOperational{
+				Position: pb.FixturePosition_FIXTURE_POSITION_OPEN,
+			},
+		},
+	})
+
+	as := ep.Actions()
 
 	if l := len(as); l != exp {
 		t.Errorf("expected %d actions, got %d", exp, l)
@@ -117,7 +129,10 @@ func TestEndProcess_Action(t *testing.T) {
 
 func TestEndProcess_ActionSWIFT(t *testing.T) {
 	exp := 1
-	as := (&EndProcess{
+	ep := &EndProcess{
+		fxrInfo: &FixtureInfo{
+			FixtureState: NewFixtureState(),
+		},
 		childLogger: zap.NewExample().Sugar(),
 		Config: Configuration{
 			CellMap: map[string][]string{
@@ -159,7 +174,11 @@ func TestEndProcess_ActionSWIFT(t *testing.T) {
 			Raw: "11223344A",
 		},
 		manual: true,
-	}).Actions()
+	}
+
+	updateInternalFixtureState(ep.fxrInfo.FixtureState.operational, &pb.FixtureToTower{})
+
+	as := ep.Actions()
 
 	if l := len(as); l != exp {
 		t.Errorf("expected %d actions, got %d", exp, l)
@@ -196,9 +215,11 @@ func TestEndProcess_ActionSWIFT(t *testing.T) {
 
 func TestEndProcess_ActionBadOrientation(t *testing.T) {
 	sc := make(chan *protostream.Message)
-	as := (&EndProcess{
-		SubscribeChan: sc,
-		childLogger:   zap.NewExample().Sugar(),
+	ep := &EndProcess{
+		fxrInfo: &FixtureInfo{
+			FixtureState: NewFixtureState(),
+		},
+		childLogger: zap.NewExample().Sugar(),
 		Config: Configuration{
 			CellMap: map[string][]string{
 				"A": {"A01", "A02"},
@@ -239,7 +260,17 @@ func TestEndProcess_ActionBadOrientation(t *testing.T) {
 			Raw: "11223344A",
 		},
 		fixtureFault: true,
-	}).Actions()
+	}
+
+	updateInternalFixtureState(ep.fxrInfo.FixtureState.operational, &pb.FixtureToTower{
+		Content: &pb.FixtureToTower_Op{
+			Op: &pb.FixtureOperational{
+				Position: pb.FixturePosition_FIXTURE_POSITION_OPEN,
+			},
+		},
+	})
+
+	as := ep.Actions()
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -282,9 +313,11 @@ func TestEndProcess_ActionBadOrientation(t *testing.T) {
 
 func TestEndProcess_ActionShortMap(t *testing.T) {
 	sc := make(chan *protostream.Message)
-	as := (&EndProcess{
-		SubscribeChan: sc,
-		childLogger:   zap.NewExample().Sugar(),
+	ep := &EndProcess{
+		fxrInfo: &FixtureInfo{
+			FixtureState: NewFixtureState(),
+		},
+		childLogger: zap.NewExample().Sugar(),
 		Config: Configuration{
 			CellMap: map[string][]string{
 				"A": {},
@@ -325,7 +358,17 @@ func TestEndProcess_ActionShortMap(t *testing.T) {
 			Raw: "11223344A",
 		},
 		fixtureFault: true,
-	}).Actions()
+	}
+
+	updateInternalFixtureState(ep.fxrInfo.FixtureState.operational, &pb.FixtureToTower{
+		Content: &pb.FixtureToTower_Op{
+			Op: &pb.FixtureOperational{
+				Position: pb.FixturePosition_FIXTURE_POSITION_OPEN,
+			},
+		},
+	})
+
+	as := ep.Actions()
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -369,9 +412,11 @@ func TestEndProcess_ActionShortMap(t *testing.T) {
 func TestEndProcess_ActionBadSetCellStatus(t *testing.T) {
 	sc := make(chan *protostream.Message)
 	exp := 1
-	as := (&EndProcess{
-		SubscribeChan: sc,
-		childLogger:   zap.NewExample().Sugar(),
+	ep := &EndProcess{
+		fxrInfo: &FixtureInfo{
+			FixtureState: NewFixtureState(),
+		},
+		childLogger: zap.NewExample().Sugar(),
 		Config: Configuration{
 			CellMap: map[string][]string{
 				"A": {"A01", "A02"},
@@ -412,7 +457,17 @@ func TestEndProcess_ActionBadSetCellStatus(t *testing.T) {
 			Raw: "11223344A",
 		},
 		fixtureFault: true,
-	}).Actions()
+	}
+
+	updateInternalFixtureState(ep.fxrInfo.FixtureState.operational, &pb.FixtureToTower{
+		Content: &pb.FixtureToTower_Op{
+			Op: &pb.FixtureOperational{
+				Position: pb.FixturePosition_FIXTURE_POSITION_OPEN,
+			},
+		},
+	})
+
+	as := ep.Actions()
 
 	if l := len(as); l != exp {
 		t.Errorf("expected %d actions, got %d", exp, l)

@@ -14,13 +14,14 @@ import (
 )
 
 func TestStartProcess_Action(t *testing.T) {
-	sc := make(chan *protostream.Message)
 	cmc := make([]string, 64)
 	cmc[0] = "A01"
 	cmc[1] = "A02"
 	spState := StartProcess{
-		SubscribeChan: sc,
-		Publisher:     &protostream.Socket{},
+		fxrInfo: &FixtureInfo{
+			FixtureState: NewFixtureState(),
+		},
+		Publisher: &protostream.Socket{},
 		Config: Configuration{
 			CellMap: map[string][]string{
 				"A": cmc,
@@ -82,23 +83,16 @@ func TestStartProcess_Action(t *testing.T) {
 	)
 	defer pub.Unpatch()
 
-	msg, err := marshalMessage(&pb.FixtureToTower{
-		Content: &pb.FixtureToTower_Op{
-			Op: &pb.FixtureOperational{
-				Status: pb.FixtureStatus_FIXTURE_STATUS_READY,
+	updateInternalFixtureState(
+		spState.fxrInfo.FixtureState.operational,
+		&pb.FixtureToTower{
+			Content: &pb.FixtureToTower_Op{
+				Op: &pb.FixtureOperational{
+					Status: pb.FixtureStatus_FIXTURE_STATUS_READY,
+				},
 			},
 		},
-	})
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	go func() {
-		for i := 0; i < 2; i++ {
-			sc <- msg
-		}
-	}()
+	)
 
 	defer func() {
 		if r := recover(); r != nil {

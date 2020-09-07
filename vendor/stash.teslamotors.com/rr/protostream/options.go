@@ -71,3 +71,11 @@ func WithRecvTimeout(d time.Duration) Option {
 		return nil
 	}
 }
+
+// WithLogDirectory sets the log directory for alert logs
+func WithLogDirectory(logDir string) Option {
+	return func(s *Stream) error {
+		s.logDir = logDir
+		return nil
+	}
+}

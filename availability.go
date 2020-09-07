@@ -5,18 +5,14 @@ import (
 	"fmt"
 	"net/http"
 	"sync"
-	"time"
 
 	"go.uber.org/zap"
-	"google.golang.org/protobuf/proto"
-	"stash.teslamotors.com/rr/protostream"
 	pb "stash.teslamotors.com/rr/towerproto"
 	"stash.teslamotors.com/rr/traycontrollers"
 )
 
 const (
 	_availabilityEndpoint = "/avail"
-	_availabilityTimeout  = time.Second * 3
 	_allowedQueryKey      = "allowed"
 )
 
@@ -84,12 +80,6 @@ func HandleAvailable(mux *http.ServeMux, configPath string, logger *zap.SugaredL
 					},
 				}
 
-				// nolint:govet // allow shadow of err declaration for go routine scope
-				var (
-					err error
-					msg pb.FixtureToTower
-				)
-
 				fxrInfo, ok := registry[n]
 				if !ok {
 					cl.Warn("fixture not in registry")
@@ -98,58 +88,35 @@ func HandleAvailable(mux *http.ServeMux, configPath string, logger *zap.SugaredL
 					return
 				}
 
-				for begin := time.Now(); time.Since(begin) < _availabilityTimeout; {
-					select {
-					case lMsg := <-fxrInfo.SC:
-						cl.Debugw("got message, checking if fixture is available", "message", lMsg.Msg)
+				// nolint:govet // don't care about shadowing above errors, especially when we aren't dealing with concurrency
+				msg, err := fxrInfo.FixtureState.GetOp()
+				if err != nil {
+					cl.Debugw("get fixture operational status", "error", err)
+					// wait a second for it to update
+					avail <- zeroAvail
 
-						var event protostream.ProtoMessage
-						if err = json.Unmarshal(lMsg.Msg.Body, &event); err != nil {
-							cl.Debugw("unmarshal JSON frame", "error", err, "bytes", string(lMsg.Msg.Body))
-							return
-						}
-
-						cl.Debug("received message from FXR, unmarshalling to check if it is available")
-
-						if err = proto.Unmarshal(event.Body, &msg); err != nil {
-							cl.Debugw("not the message we were expecting", "error", err)
-							break
-						}
-
-						if msg.GetOp() == nil {
-							cl.Debugw("look for the next message, this is diagnostic", "msg", msg.String())
-							break
-						}
-
-						cl.Debugw("fixture status rxd, checking if available", "status", msg.GetOp().GetStatus().String())
-
-						var reserved bool
-						switch fxrInfo.Avail.Status() {
-						case StatusWaitingForReservation, StatusUnknown:
-							reserved = false
-						default:
-							reserved = true
-						}
-
-						avail <- namedAvail{
-							name: location,
-							avail: traycontrollers.FXRAvailable{
-								Status:          msg.GetOp().GetStatus().String(),
-								EquipmentStatus: msg.GetOp().GetEquipmentStatus().String(),
-								Reserved:        reserved,
-								Allowed:         fixtureIsAllowed(n, conf.AllowedFixtures),
-							},
-						}
-
-						return
-					case <-time.After(_availabilityTimeout):
-						avail <- zeroAvail
-						return
-					}
+					return
 				}
 
-				cl.Warnw("unable to find fixture status in timeout", "timeout", _availabilityTimeout)
-				avail <- namedAvail{name: location}
+				cl.Debugw("fixture status rxd, checking if available", "status", msg.GetOp().GetStatus().String())
+
+				var reserved bool
+				switch fxrInfo.Avail.Status() {
+				case StatusWaitingForReservation, StatusUnknown:
+					reserved = false
+				default:
+					reserved = true
+				}
+
+				avail <- namedAvail{
+					name: location,
+					avail: traycontrollers.FXRAvailable{
+						Status:          msg.GetOp().GetStatus().String(),
+						EquipmentStatus: msg.GetOp().GetEquipmentStatus().String(),
+						Reserved:        reserved,
+						Allowed:         fixtureIsAllowed(n, conf.AllowedFixtures),
+					},
+				}
 			}(n)
 		}
 

@@ -19,7 +19,6 @@ type ProcessStep struct {
 	Logger        *zap.SugaredLogger
 	CellAPIClient *cellapi.Client
 	Publisher     *protostream.Socket
-	SubscribeChan <-chan *protostream.Message
 
 	childLogger     *zap.SugaredLogger
 	processStepName string
@@ -95,7 +94,6 @@ func (p *ProcessStep) Next() statemachine.State {
 			Logger:        p.Logger,
 			CellAPIClient: p.CellAPIClient,
 			Publisher:     p.Publisher,
-			SubscribeChan: p.SubscribeChan,
 			Manual:        p.manual,
 			MockCellAPI:   p.mockCellAPI,
 			FXRInfo:       p.fxrInfo,
@@ -107,7 +105,6 @@ func (p *ProcessStep) Next() statemachine.State {
 			Logger:          p.Logger,
 			CellAPIClient:   p.CellAPIClient,
 			Publisher:       p.Publisher,
-			SubscribeChan:   p.SubscribeChan,
 			childLogger:     p.childLogger,
 			processStepName: p.processStepName,
 			tbc:             p.tbc,
@@ -124,7 +121,6 @@ func (p *ProcessStep) Next() statemachine.State {
 			Logger:          p.Logger,
 			CellAPIClient:   p.CellAPIClient,
 			Publisher:       p.Publisher,
-			SubscribeChan:   p.SubscribeChan,
 			childLogger:     p.childLogger,
 			processStepName: p.processStepName,
 			transactID:      p.transactID,
@@ -141,7 +137,6 @@ func (p *ProcessStep) Next() statemachine.State {
 			Logger:          p.Logger,
 			CellAPIClient:   p.CellAPIClient,
 			Publisher:       p.Publisher,
-			SubscribeChan:   p.SubscribeChan,
 			childLogger:     p.childLogger,
 			processStepName: p.processStepName,
 			transactID:      p.transactID,

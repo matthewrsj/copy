@@ -22,7 +22,6 @@ type Idle struct {
 	Logger        *zap.SugaredLogger
 	CellAPIClient *cellapi.Client
 	Publisher     *protostream.Socket
-	SubscribeChan <-chan *protostream.Message
 
 	Manual      bool
 	MockCellAPI bool
@@ -61,7 +60,6 @@ waitForUpdate:
 			Logger:        i.Logger,
 			CellAPIClient: i.CellAPIClient,
 			Publisher:     i.Publisher,
-			SubscribeChan: i.SubscribeChan,
 			tbc:           tbc,
 			fxbc:          fxbc,
 			manual:        i.Manual,
@@ -85,7 +83,6 @@ waitForUpdate:
 			Logger:        i.Logger,
 			CellAPIClient: i.CellAPIClient,
 			Publisher:     i.Publisher,
-			SubscribeChan: i.SubscribeChan,
 			mockCellAPI:   i.MockCellAPI,
 			fxrInfo:       i.FXRInfo,
 		}
@@ -125,7 +122,6 @@ waitForUpdate:
 			Logger:          i.Logger,
 			CellAPIClient:   i.CellAPIClient,
 			Publisher:       i.Publisher,
-			SubscribeChan:   i.SubscribeChan,
 			tbc:             tbc,
 			fxbc:            fxbc,
 			processStepName: ip.processStep,
@@ -159,7 +155,6 @@ waitForUpdate:
 			Logger:        i.Logger,
 			CellAPIClient: i.CellAPIClient,
 			Publisher:     i.Publisher,
-			SubscribeChan: i.SubscribeChan,
 			fxbc:          fxbc,
 			mockCellAPI:   i.MockCellAPI,
 			fxrInfo:       i.FXRInfo,
@@ -212,6 +207,24 @@ func (i *Idle) monitorForStatus(done <-chan struct{}, active chan<- inProgressIn
 	defer close(active)
 	defer close(complete)
 
+	splits := strings.Split(i.FXRInfo.Name, "-")
+	if len(splits) != 2 { // expect COL-LVL
+		i.Logger.Errorw("invalid fixture name", "name", i.FXRInfo.Name)
+		return
+	}
+
+	col, err := strconv.Atoi(splits[0])
+	if err != nil {
+		i.Logger.Errorw("unable to parse fixture name", "name", i.FXRInfo.Name)
+		return
+	}
+
+	lvl, err := strconv.Atoi(splits[1])
+	if err != nil {
+		i.Logger.Errorw("unable to parse fixture name", "name", i.FXRInfo.Name)
+		return
+	}
+
 	for {
 		// copy over the configuration, in case it has changed
 		// this is a very cheap operation so better to just do it
@@ -219,6 +232,8 @@ func (i *Idle) monitorForStatus(done <-chan struct{}, active chan<- inProgressIn
 		if _globalConfiguration != nil {
 			i.Config = *_globalConfiguration
 		}
+
+		fxrID := fmt.Sprintf("%s-%s%s-%02d-%02d", i.Config.Loc.Line, i.Config.Loc.Process, i.Config.Loc.Aisle, col, lvl)
 
 		// quick check so we don't loop forever when fixture not allowed
 		select {
@@ -233,77 +248,65 @@ func (i *Idle) monitorForStatus(done <-chan struct{}, active chan<- inProgressIn
 			continue
 		}
 
+		// quick check so we don't loop forever when fixture not allowed
 		select {
 		case <-done:
 			return
-		case lMsg := <-i.SubscribeChan:
-			msg, err := unmarshalProtoMessage(lMsg)
-			if err != nil {
-				i.Logger.Errorw("unmarshal proto message: %v", err)
-				continue
-			}
+		default:
+		}
 
-			splits := strings.Split(i.FXRInfo.Name, "-")
-			if len(splits) != 2 { // expect COL-LVL
-				i.Logger.Warnw("invalid fixture name", "name", i.FXRInfo.Name)
-				continue
-			}
+		msg, err := i.FXRInfo.FixtureState.GetOp()
+		if err != nil {
+			// this is just debug, since it happens right at startup
+			i.Logger.Debugw("monitor for status; get operational message", "error", err)
+			time.Sleep(time.Second) // wait a second for it to update
 
-			col, err := strconv.Atoi(splits[0])
-			if err != nil {
-				i.Logger.Debugw("unable to parse fixture name", "name", i.FXRInfo.Name)
-				continue
-			}
+			continue
+		}
 
-			lvl, err := strconv.Atoi(splits[1])
-			if err != nil {
-				i.Logger.Debugw("unable to parse fixture name", "name", i.FXRInfo.Name)
-				continue
-			}
+		ipInfo := inProgressInfo{
+			transactionID:  msg.GetTransactionId(),
+			processStep:    msg.GetProcessStep(),
+			fixtureBarcode: fxrID,
+			trayBarcode:    msg.GetTraybarcode(),
+		}
 
-			fxrID := fmt.Sprintf("%s-%s%s-%02d-%02d", i.Config.Loc.Line, i.Config.Loc.Process, i.Config.Loc.Aisle, col, lvl)
+		i.Logger.Debugw("fixture status", "fixture", i.FXRInfo.Name, "status", msg.GetOp().GetStatus().String())
 
-			ipInfo := inProgressInfo{
-				transactionID:  msg.GetTransactionId(),
-				processStep:    msg.GetProcessStep(),
-				fixtureBarcode: fxrID,
-				trayBarcode:    msg.GetTraybarcode(),
-			}
+		switch msg.GetOp().GetStatus() {
+		case pb.FixtureStatus_FIXTURE_STATUS_ACTIVE:
+			// go to in-progress
+			active <- ipInfo
 
-			i.Logger.Debugw("fixture status", "fixture", i.FXRInfo.Name, "status", msg.GetOp().GetStatus().String())
+			return
+		case pb.FixtureStatus_FIXTURE_STATUS_COMPLETE:
+			// go to unload
+			complete <- ipInfo
 
-			switch msg.GetOp().GetStatus() {
-			case pb.FixtureStatus_FIXTURE_STATUS_ACTIVE:
-				// go to in-progress
-				active <- ipInfo
+			return
+		case pb.FixtureStatus_FIXTURE_STATUS_FAULTED:
+			if msg.GetOp().GetFireAlarmStatus() != pb.FireAlarmStatus_FIRE_ALARM_UNKNOWN_UNSPECIFIED {
+				i.Logger.Warnw("fire alarm detected from fixture", "fixture", i.FXRInfo.Name, "alarm", msg.GetOp().GetFireAlarmStatus().String())
 
-				return
-			case pb.FixtureStatus_FIXTURE_STATUS_COMPLETE:
-				// go to unload
-				complete <- ipInfo
+				// fire alarm, tell CDC
+				// this is in-band because it will try _forever_ until it succeeds,
+				// but we don't want to go to unload step because it will queue another job for the crane
+				// to unload this tray, but we want the next operation on this tray to be a fire
+				// suppression activity.
+				if i.alarmed < msg.GetOp().GetFireAlarmStatus() { // don't alarm again if we already alarmed in the InProcess state
+					i.Logger.Infow("sounding the fire alarm", "fixture", i.FXRInfo.Name, "alarm", msg.GetOp().GetFireAlarmStatus().String())
 
-				return
-			case pb.FixtureStatus_FIXTURE_STATUS_FAULTED:
-				if msg.GetOp().GetFireAlarmStatus() != pb.FireAlarmStatus_FIRE_ALARM_UNKNOWN_UNSPECIFIED {
-					i.Logger.Warnw("fire alarm detected from fixture", "fixture", i.FXRInfo.Name, "alarm", msg.GetOp().GetFireAlarmStatus().String())
-
-					// fire alarm, tell CDC
-					// this is in-band because it will try _forever_ until it succeeds,
-					// but we don't want to go to unload step because it will queue another job for the crane
-					// to unload this tray, but we want the next operation on this tray to be a fire
-					// suppression activity.
-					if i.alarmed < msg.GetOp().GetFireAlarmStatus() { // don't alarm again if we already alarmed in the InProcess state
-						i.Logger.Infow("sounding the fire alarm", "fixture", i.FXRInfo.Name, "alarm", msg.GetOp().GetFireAlarmStatus().String())
-
-						if err := soundTheAlarm(i.Config, msg.GetOp().GetFireAlarmStatus(), i.FXRInfo.Name, i.Logger); err != nil {
-							i.Logger.Errorw("sound the fire alarm", "error", err)
-							continue // try to send the alarm next time
-						}
-
-						i.alarmed = msg.GetOp().GetFireAlarmStatus()
+					if err := soundTheAlarm(i.Config, msg.GetOp().GetFireAlarmStatus(), i.FXRInfo.Name, i.Logger); err != nil {
+						i.Logger.Errorw("sound the fire alarm", "error", err)
+						continue // try to send the alarm next time
 					}
+
+					i.alarmed = msg.GetOp().GetFireAlarmStatus()
 				}
 			}
+		default:
+			// wait a second for it to update before checking again
+			time.Sleep(time.Second)
 		}
 	}
 }

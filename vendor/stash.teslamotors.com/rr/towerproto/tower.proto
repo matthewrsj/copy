@@ -58,6 +58,30 @@ enum IsoError {
   ISO_ERROR_RESISTANCE_NOT_AVAILABLE       = 7;
 }
 
+enum FixturePositionSmState {
+  FIXTURE_POSITION_ST_INIT_UNSPECIFIED = 0;
+  FIXTURE_POSITION_ST_OPEN             = 1;
+  FIXTURE_POSITION_ST_CLOSING          = 2;
+  FIXTURE_POSITION_ST_CLOSED           = 3;
+  FIXTURE_POSITION_ST_OPENING          = 4;
+  FIXTURE_POSITION_ST_FAULTED          = 5;
+}
+
+enum FixtureControlSmState {
+  FXR_ST_INIT_UNSPECIFIED = 0;
+  FXR_ST_WAIT_READY       = 1;
+  FXR_ST_WAIT_TRAY        = 2;
+  FXR_ST_WAIT_RECIPE      = 3;
+  FXR_ST_CLOSE            = 4;
+  FXR_ST_TX_STEP          = 5;
+  FXR_ST_START_STEP       = 6;
+  FXR_ST_EXECUTING        = 7;
+  FXR_ST_STEP_COMPLETE    = 8;
+  FXR_ST_SEQ_COMPLETE     = 9;
+  FXR_ST_SEQ_INTERRUPTED  = 10;
+  FXR_ST_FAULTED          = 11;
+}
+
 message FxrSensors {
   float v_bus_hv                  = 1;  // 80V bus
   float v_bus_24                  = 3;  // 24V bus voltage
@@ -104,8 +128,9 @@ message Isolation {
 }
 
 message Position {
-  float fixture_closing_time = 1;
-  float fixture_opening_time = 2;
+  float                  fixture_closing_time = 1;
+  float                  fixture_opening_time = 2;
+  FixturePositionSmState state                = 3;
 }
 
 message Filesystem {
@@ -113,14 +138,15 @@ message Filesystem {
 }
 
 message Fxr {
-  FxrSensors  sensors        = 1;
-  FxrInternal internal       = 2;
-  FxrOutputs  outputs        = 3;
-  Genealogy   genealogy      = 4;
-  AlertMatrix alert_matrices = 5;
-  Isolation   isolation      = 6;
-  Filesystem  filesystem     = 7;
-  Position    position       = 8;
+  FxrSensors            sensors        = 1;
+  FxrInternal           internal       = 2;
+  FxrOutputs            outputs        = 3;
+  Genealogy             genealogy      = 4;
+  AlertMatrix           alert_matrices = 5;
+  Isolation             isolation      = 6;
+  Filesystem            filesystem     = 7;
+  Position              position       = 8;
+  FixtureControlSmState state          = 9;
 }
 
 message FibSensors {
@@ -307,14 +333,22 @@ enum FireAlarmStatus {
   FIRE_ALARM_LEVEL_1             = 2; // Two or more sensors detecting very high temperatures
 }
 
+enum IsolationTestStatus {
+  ISOLATION_TEST_STATUS_UNKNOWN_UNSPECIFIED = 0;
+  ISOLATION_TEST_STATUS_ACTIVE              = 1; // isolation resistance measurement active in  fixture
+  ISOLATION_TEST_STATUS_INACTIVE            = 2; // isolation resistance measurement inactive in  fixture
+  ISOLATION_TEST_STATUS_FAULTED = 3; // isolation resistance measurement faulted - maintenance to be triggered
+}
+
 message FixtureOperational {
-  FixtureStatus   status            = 1;
-  FixturePosition position          = 2;
-  repeated Cell   cells             = 3;
-  uint32          step_executing    = 4; // 1 based current process step index
-  EquipmentStatus equipment_status  = 5;
-  bool            tray_present      = 6; // tray is present (independent of fixture status)
-  FireAlarmStatus fire_alarm_status = 7;
+  FixtureStatus       status                = 1;
+  FixturePosition     position              = 2;
+  repeated Cell       cells                 = 3;
+  uint32              step_executing        = 4; // 1 based current process step index
+  EquipmentStatus     equipment_status      = 5;
+  bool                tray_present          = 6; // tray is present (independent of fixture status)
+  FireAlarmStatus     fire_alarm_status     = 7;
+  IsolationTestStatus isolation_test_status = 8;
 }
 
 message FixtureDiagnostic {
@@ -394,9 +428,16 @@ enum EquipmentRequest {
   EQUIPMENT_REQUEST_RECOMMISSIONING     = 3; // reset fixture hardware status to require commissioning
 }
 
+enum IsolationTestRequest {
+  ISOLATION_TEST_REQUEST_UNKNOWN_UNSPECIFIED = 0;
+  ISOLATION_TEST_REQUEST_ENABLE              = 1; // trigger to enable isolation resistance measurement in a fixture
+  ISOLATION_TEST_REQUEST_DISABLE             = 2; // disable active isolation resistance measurement in fixture
+}
+
 message TowerToFixture {
-  Recipe           recipe            = 1;
-  SystemInfo       sysinfo           = 2;
-  string           transaction_id    = 3;
-  EquipmentRequest equipment_request = 4;
+  Recipe               recipe                 = 1;
+  SystemInfo           sysinfo                = 2;
+  string               transaction_id         = 3;
+  EquipmentRequest     equipment_request      = 4;
+  IsolationTestRequest isolation_test_request = 5;
 }

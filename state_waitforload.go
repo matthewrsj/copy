@@ -18,7 +18,6 @@ type WaitForLoad struct {
 	Logger        *zap.SugaredLogger
 	CellAPIClient *cellapi.Client
 	Publisher     *protostream.Socket
-	SubscribeChan <-chan *protostream.Message
 
 	tbc             traycontrollers.TrayBarcode
 	fxbc            traycontrollers.FixtureBarcode
@@ -108,7 +107,6 @@ func (w *WaitForLoad) Next() statemachine.State {
 			Logger:        w.Logger,
 			CellAPIClient: w.CellAPIClient,
 			Publisher:     w.Publisher,
-			SubscribeChan: w.SubscribeChan,
 			Manual:        w.manual,
 			MockCellAPI:   w.mockCellAPI,
 			FXRInfo:       w.fxrInfo,
@@ -119,7 +117,6 @@ func (w *WaitForLoad) Next() statemachine.State {
 			Logger:        w.Logger,
 			CellAPIClient: w.CellAPIClient,
 			Publisher:     w.Publisher,
-			SubscribeChan: w.SubscribeChan,
 			fxrInfo:       w.fxrInfo,
 		}
 

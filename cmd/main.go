@@ -98,6 +98,8 @@ func main() {
 
 	registry := make(map[string]*towercontroller.FixtureInfo)
 
+	ctx, cancel := context.WithCancel(context.Background())
+
 	for _, name := range conf.AllFixtures {
 		u := url.URL{Scheme: "ws", Host: *wsAddr, Path: protostream.WSEndpoint}
 		n := name
@@ -119,13 +121,16 @@ func main() {
 			sugar.Fatalw("create new subscriber", "error", err)
 		}
 
-		lc := sub.Listen()
-
 		registry[name] = &towercontroller.FixtureInfo{
 			Name: name,
 			PFD:  make(chan traycontrollers.PreparedForDelivery),
 			LDC:  make(chan traycontrollers.FXRLoad),
-			SC:   lc,
+			FixtureState: towercontroller.RunNewFixtureState(
+				towercontroller.WithAllDataExpiry(time.Second*5),
+				towercontroller.WithContext(ctx),
+				towercontroller.WithListener(sub),
+				towercontroller.WithLogger(sugar),
+			),
 		}
 	}
 
@@ -199,32 +204,9 @@ func main() {
 		}
 	}()
 
-	u := url.URL{Scheme: "ws", Host: *wsAddr, Path: protostream.WSEndpoint}
-
 	sugar.Info("starting state machine")
 
 	for _, name := range conf.AllFixtures {
-		var subscriber *protostream.Socket
-
-		n := name
-
-		if err = backoff.Retry(
-			func() error {
-				subscriber, err = protostream.NewSubscriberWithSub(u.String(), n)
-				if err != nil {
-					sugar.Errorw("create new subscriber", "error", err)
-					return err
-				}
-
-				return nil
-			},
-			backoff.NewExponentialBackOff(),
-		); err != nil {
-			sugar.Fatalw("create new subscriber", "error", err)
-		}
-
-		lc := subscriber.Listen()
-
 		go func(name string) {
 			statemachine.RunFrom(&towercontroller.Idle{
 				Config:        conf,
@@ -234,7 +216,6 @@ func main() {
 				MockCellAPI:   *mockCellAPI,
 				FXRInfo:       registry[name],
 				Publisher:     publisher,
-				SubscribeChan: lc,
 			})
 		}(name)
 	}
@@ -250,4 +231,5 @@ func main() {
 
 	// block until a signal is received
 	<-sigs // deferred server shutdowns will be called
+	cancel()
 }

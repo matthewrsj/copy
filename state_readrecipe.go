@@ -16,7 +16,6 @@ type ReadRecipe struct {
 	Logger        *zap.SugaredLogger
 	CellAPIClient *cellapi.Client
 	Publisher     *protostream.Socket
-	SubscribeChan <-chan *protostream.Message
 
 	childLogger     *zap.SugaredLogger
 	processStepName string
@@ -63,7 +62,6 @@ func (r *ReadRecipe) Next() statemachine.State {
 			Logger:        r.Logger,
 			CellAPIClient: r.CellAPIClient,
 			Publisher:     r.Publisher,
-			SubscribeChan: r.SubscribeChan,
 			Manual:        r.manual,
 			MockCellAPI:   r.mockCellAPI,
 			FXRInfo:       r.fxrInfo,
@@ -74,7 +72,6 @@ func (r *ReadRecipe) Next() statemachine.State {
 			Logger:          r.Logger,
 			CellAPIClient:   r.CellAPIClient,
 			Publisher:       r.Publisher,
-			SubscribeChan:   r.SubscribeChan,
 			childLogger:     r.childLogger,
 			processStepName: r.processStepName,
 			transactID:      r.transactID,

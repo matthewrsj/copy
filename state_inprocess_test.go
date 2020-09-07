@@ -15,10 +15,11 @@ import (
 )
 
 func TestInProcess_Action(t *testing.T) {
-	sc := make(chan *protostream.Message)
 	exp := 1
 	ipState := &InProcess{
-		SubscribeChan: sc,
+		fxrInfo: &FixtureInfo{
+			FixtureState: NewFixtureState(),
+		},
 		Config: Configuration{
 			AllowedFixtures: []string{"01-01"},
 		},
@@ -42,38 +43,32 @@ func TestInProcess_Action(t *testing.T) {
 		t.Errorf("expected %d actions, got %d", exp, l)
 	}
 
-	msg := &pb.FixtureToTower{
-		Content: &pb.FixtureToTower_Op{
-			Op: &pb.FixtureOperational{
-				Status: pb.FixtureStatus_FIXTURE_STATUS_COMPLETE,
-				Cells: []*pb.Cell{
-					{
-						Cellstatus: pb.CellStatus_CELL_STATUS_COMPLETE,
-						Cellmeasurement: &pb.CellMeasurement{
-							Current: 3.49,
+	updateInternalFixtureState(
+		ipState.fxrInfo.FixtureState.operational,
+		&pb.FixtureToTower{
+			Content: &pb.FixtureToTower_Op{
+				Op: &pb.FixtureOperational{
+					Status: pb.FixtureStatus_FIXTURE_STATUS_COMPLETE,
+					Cells: []*pb.Cell{
+						{
+							Cellstatus: pb.CellStatus_CELL_STATUS_COMPLETE,
+							Cellmeasurement: &pb.CellMeasurement{
+								Current: 3.49,
+							},
 						},
-					},
-					{
-						Cellstatus: pb.CellStatus_CELL_STATUS_COMPLETE,
-						Cellmeasurement: &pb.CellMeasurement{
-							Current: 3.49,
+						{
+							Cellstatus: pb.CellStatus_CELL_STATUS_COMPLETE,
+							Cellmeasurement: &pb.CellMeasurement{
+								Current: 3.49,
+							},
 						},
 					},
 				},
 			},
+			Traybarcode:    "",
+			Fixturebarcode: ipState.fxbc.Raw,
 		},
-		Traybarcode:    "",
-		Fixturebarcode: ipState.fxbc.Raw,
-	}
-
-	event, err := marshalMessage(msg)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	go func() {
-		sc <- event
-	}()
+	)
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -108,10 +103,23 @@ func TestInProcess_ActionNoFixture(t *testing.T) {
 	sc := make(chan *protostream.Message)
 
 	ipState := InProcess{
-		childLogger:   zap.NewExample().Sugar(),
-		SubscribeChan: sc,
+		childLogger: zap.NewExample().Sugar(),
+		fxrInfo: &FixtureInfo{
+			FixtureState: NewFixtureState(),
+		},
 	}
 	as := ipState.Actions()
+
+	updateInternalFixtureState(
+		ipState.fxrInfo.FixtureState.operational,
+		&pb.FixtureToTower{
+			Content: &pb.FixtureToTower_Op{
+				Op: &pb.FixtureOperational{
+					Status: pb.FixtureStatus_FIXTURE_STATUS_COMPLETE,
+				},
+			},
+		},
+	)
 
 	msg, err := marshalMessage(&pb.FixtureToTower{})
 	if err != nil {

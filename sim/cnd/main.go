@@ -194,7 +194,7 @@ func main() {
 		log.Fatal("invalid operation")
 	}
 
-	resp, err := http.Post("http://localhost:13173/asrs"+endPoint, "application/json", bytes.NewReader(jb))
+	resp, err := http.Post("http://localhost:13174/asrs"+endPoint, "application/json", bytes.NewReader(jb))
 	if err != nil {
 		log.Fatal(err)
 	}

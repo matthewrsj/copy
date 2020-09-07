@@ -12,7 +12,7 @@ type TrayBarcode struct {
 	Raw string
 }
 
-const _trayRegex = `^[0-9]{7,}[A-Da-d]$`
+const _trayRegex = `^[0-9A-Za-z \-]{7,}[A-Da-d]$`
 
 // IsValidTrayBarcode returns an error if the input string is not a valid
 // barcode for a tray.

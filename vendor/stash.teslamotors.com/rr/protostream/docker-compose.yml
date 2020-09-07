@@ -2,7 +2,7 @@ version: '3.7'
 
 services:
   protostream:
-    image: protostreamapp
+    image: artifactory.teslamotors.com:2132/formation-docker-local/protostreamapp
     build:
       context: .
       dockerfile: Dockerfile.app

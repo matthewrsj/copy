@@ -22,7 +22,6 @@ type StartProcess struct {
 	Logger        *zap.SugaredLogger
 	CellAPIClient *cellapi.Client
 	Publisher     *protostream.Socket
-	SubscribeChan <-chan *protostream.Message
 
 	childLogger     *zap.SugaredLogger
 	processStepName string
@@ -136,7 +135,6 @@ func (s *StartProcess) Next() statemachine.State {
 			Logger:        s.Logger,
 			CellAPIClient: s.CellAPIClient,
 			Publisher:     s.Publisher,
-			SubscribeChan: s.SubscribeChan,
 			Manual:        s.manual,
 			MockCellAPI:   s.mockCellAPI,
 			FXRInfo:       s.fxrInfo,
@@ -147,7 +145,6 @@ func (s *StartProcess) Next() statemachine.State {
 			Logger:          s.Logger,
 			CellAPIClient:   s.CellAPIClient,
 			Publisher:       s.Publisher,
-			SubscribeChan:   s.SubscribeChan,
 			childLogger:     s.childLogger,
 			tbc:             s.tbc,
 			fxbc:            s.fxbc,
@@ -164,7 +161,6 @@ func (s *StartProcess) Next() statemachine.State {
 			Logger:          s.Logger,
 			CellAPIClient:   s.CellAPIClient,
 			Publisher:       s.Publisher,
-			SubscribeChan:   s.SubscribeChan,
 			childLogger:     s.childLogger,
 			tbc:             s.tbc,
 			fxbc:            s.fxbc,
@@ -192,23 +188,18 @@ func (s *StartProcess) performHandshake(msg proto.Message) {
 
 		s.childLogger.Info("checking that FXR is ready to handshake")
 
-		s.childLogger.Debug("reading from subscribeChan")
-		lMsg := <-s.SubscribeChan
-		s.childLogger.Debug("received message from subscribeChan")
-
-		rMsg, err := unmarshalProtoMessage(lMsg)
+		rMsg, err := s.fxrInfo.FixtureState.GetOp()
 		if err != nil {
-			s.childLogger.Errorw("unmarshal proto message: %v", err)
-			break
-		}
+			s.childLogger.Errorw("get fixture operational message", "error", err)
+			time.Sleep(time.Second) // give it a chance to update
 
-		if rMsg.GetOp() == nil {
-			s.childLogger.Debugw("got non-operational message, checking next one", "msg", rMsg.String())
 			continue
 		}
 
 		if rMsg.GetOp().GetStatus() != pb.FixtureStatus_FIXTURE_STATUS_READY {
 			s.childLogger.Infow("FXR not yet ready for recipe", "status", rMsg.GetOp().GetStatus())
+			time.Sleep(time.Second) // give it a chance to update
+
 			continue
 		}
 
@@ -219,12 +210,13 @@ func (s *StartProcess) performHandshake(msg proto.Message) {
 			continue
 		}
 
-		s.childLogger.Debug("reading from subscribeChan")
-		lMsg = <-s.SubscribeChan
-		s.childLogger.Debug("received message from subscribeChan")
+		time.Sleep(time.Second) // give fixture a chance to update. cycle rate is anywhere from 1-3 seconds
 
-		if rMsg, err = unmarshalProtoMessage(lMsg); err != nil {
-			s.childLogger.Errorw("unmarshal proto message: %v", err)
+		rMsg, err = s.fxrInfo.FixtureState.GetOp()
+		if err != nil {
+			s.childLogger.Warnw("check transaction ID; get fixture operational message", "error", err)
+			time.Sleep(time.Second) // give it a chance to update
+
 			continue
 		}
 
@@ -233,6 +225,7 @@ func (s *StartProcess) performHandshake(msg proto.Message) {
 				"transaction ID from FXR did not match transaction ID sent",
 				"fxr_transaction_id", rMsg.TransactionId, "sent_transaction_id", s.transactID,
 			)
+			time.Sleep(time.Second) // give it a chance to update
 
 			continue
 		}

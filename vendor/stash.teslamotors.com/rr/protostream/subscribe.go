@@ -71,10 +71,22 @@ func (s *Socket) getMessage() <-chan *Message {
 	return c
 }
 
+// AlwaysListen is a listener that always listens on the channel that is returned. It does not
+// fail to write to that channel if there are no listeners, so will block until a listener
+// grabs the value
+func (s *Socket) AlwaysListen() <-chan *Message {
+	return s.listen(true)
+}
+
 // Listen is a listener on the socket returned by Subscribe. Returns a channel
 // which will receive *Messages as they are received. To stop listening tell the
 // socket to Quit()
 func (s *Socket) Listen() <-chan *Message {
+	return s.listen(false)
+}
+
+// nolint:gocognit // internal
+func (s *Socket) listen(alwaysListen bool) <-chan *Message {
 	c := make(chan *Message)
 
 	go func() {
@@ -106,12 +118,16 @@ func (s *Socket) Listen() <-chan *Message {
 
 					m.Msg.Body = bytes.TrimPrefix(m.Msg.Body, []byte(s.prefix))
 
-					// perform a non-blocking write to the channel. We don't want to write (and then block)
-					// to a channel if nothing is reading, because then the data in that channel will become
-					// stale.
-					select {
-					case c <- m: // there's an active reader (this is not buffered)
-					default: // no reader on this channel, don't let the data get stale
+					if alwaysListen {
+						c <- m
+					} else {
+						// perform a non-blocking write to the channel. We don't want to write (and then block)
+						// to a channel if nothing is reading, because then the data in that channel will become
+						// stale.
+						select {
+						case c <- m: // there's an active reader (this is not buffered)
+						default: // no reader on this channel, don't let the data get stale
+						}
 					}
 
 					// we consumed the value off this channel, so we know the

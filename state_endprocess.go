@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"go.uber.org/zap"
 	"stash.teslamotors.com/ctet/statemachine/v2"
@@ -25,7 +26,6 @@ type EndProcess struct {
 	Logger        *zap.SugaredLogger
 	CellAPIClient *cellapi.Client
 	Publisher     *protostream.Socket
-	SubscribeChan <-chan *protostream.Message
 
 	childLogger     *zap.SugaredLogger
 	tbc             traycontrollers.TrayBarcode
@@ -173,7 +173,6 @@ func (e *EndProcess) Next() statemachine.State {
 			Logger:        e.Logger,
 			CellAPIClient: e.CellAPIClient,
 			Publisher:     e.Publisher,
-			SubscribeChan: e.SubscribeChan,
 			Manual:        e.manual,
 			MockCellAPI:   e.mockCellAPI,
 			FXRInfo:       e.fxrInfo,
@@ -184,7 +183,6 @@ func (e *EndProcess) Next() statemachine.State {
 			Logger:        e.Logger,
 			CellAPIClient: e.CellAPIClient,
 			Publisher:     e.Publisher,
-			SubscribeChan: e.SubscribeChan,
 			childLogger:   e.childLogger,
 			mockCellAPI:   e.mockCellAPI,
 			fxbc:          e.fxbc,
@@ -333,17 +331,22 @@ func (e *EndProcess) setCellStatuses() {
 	}
 }
 
-// waitForOpen reads from SubscribeChan until fixture position is open
+// waitForOpen reads from fixture until fixture position is open
 func (e *EndProcess) waitForOpen() {
-	for lMsg := range e.SubscribeChan {
-		msg, err := unmarshalProtoMessage(lMsg)
+	for {
+		msg, err := e.fxrInfo.FixtureState.GetOp()
 		if err != nil {
-			e.childLogger.Errorw("unmarshal proto message: %v", err)
+			e.childLogger.Warnw("wait for open; get fixture operational message", "error", err)
+			time.Sleep(time.Second)
+
 			continue
 		}
 
 		if msg.GetOp().GetPosition() == pb.FixturePosition_FIXTURE_POSITION_OPEN {
 			break
 		}
+
+		// allow it to update
+		time.Sleep(time.Second)
 	}
 }
