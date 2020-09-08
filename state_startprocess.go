@@ -181,13 +181,9 @@ func (s *StartProcess) Next() statemachine.State {
 func (s *StartProcess) performHandshake(msg proto.Message) {
 	start := time.Now()
 
-	for {
-		if time.Since(start) > _readinessTimeoutLen {
-			s.timeout = true
-		}
+	s.childLogger.Info("checking that FXR is ready to handshake")
 
-		s.childLogger.Info("checking that FXR is ready to handshake")
-
+	for time.Since(start) < _readinessTimeoutLen {
 		rMsg, err := s.fxrInfo.FixtureState.GetOp()
 		if err != nil {
 			s.childLogger.Errorw("get fixture operational message", "error", err)
@@ -203,16 +199,32 @@ func (s *StartProcess) performHandshake(msg proto.Message) {
 			continue
 		}
 
+		// if we got this far no timeout
+		s.timeout = false
+
+		break
+	}
+
+	if s.timeout {
+		s.childLogger.Warn("timeout trying to send recipe to FXR")
+		return
+	}
+
+	// reset timeout to true, make below loop turn it off again
+	s.timeout = true
+	start = time.Now()
+
+	for time.Since(start) < _readinessTimeoutLen {
 		s.childLogger.Info("attempting handshake with FXR")
 
-		if err = sendProtoMessage(s.Publisher, msg, IDFromFXR(s.fxbc)); err != nil {
+		if err := sendProtoMessage(s.Publisher, msg, IDFromFXR(s.fxbc)); err != nil {
 			s.childLogger.Warnw("failed to send proto message, retrying", "error", err)
 			continue
 		}
 
 		time.Sleep(time.Second) // give fixture a chance to update. cycle rate is anywhere from 1-3 seconds
 
-		rMsg, err = s.fxrInfo.FixtureState.GetOp()
+		rMsg, err := s.fxrInfo.FixtureState.GetOp()
 		if err != nil {
 			s.childLogger.Warnw("check transaction ID; get fixture operational message", "error", err)
 			time.Sleep(time.Second) // give it a chance to update
@@ -230,8 +242,15 @@ func (s *StartProcess) performHandshake(msg proto.Message) {
 			continue
 		}
 
+		// no timeout if we got here
+		s.timeout = false
+
 		break
 	}
 
-	s.childLogger.Info("sent recipe and other information to FXR")
+	if s.timeout {
+		s.childLogger.Warn("timeout trying to send recipe to FXR")
+	} else {
+		s.childLogger.Info("sent recipe and other information to FXR")
+	}
 }
