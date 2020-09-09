@@ -201,7 +201,7 @@ type trayComplete struct {
 
 func (e *EndProcess) setCellStatusesSWIFT() {
 	// nolint:prealloc // we don't know how long this will be, depends on what the FXR Cells' content is
-	var cpf []cellapi.CellPFDataSWIFT
+	cpf := []cellapi.CellPFDataSWIFT{}
 
 	var failed []string
 
@@ -268,7 +268,7 @@ func (e *EndProcess) setCellStatusesSWIFT() {
 
 func (e *EndProcess) setCellStatuses() {
 	// nolint:prealloc // we don't know how long this will be, depends on what the FXR Cells' content is
-	var cpf []cellapi.CellPFData
+	cpf := []cellapi.CellPFData{}
 
 	var failed []string
 
