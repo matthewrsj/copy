@@ -273,14 +273,17 @@ func (e *EndProcess) setCellStatuses() {
 	// nolint:prealloc // we don't know how long this will be, depends on what the FXR Cells' content is
 	cpf := []cellapi.CellPFData{}
 
+	type cellStats struct {
+		Serial      string `json:"cell_serial"`
+		CellPFToAPI string `json:"cell_pf_to_api"`
+		Status      string `json:"proto_status"`
+	}
+
+	stats := make(map[string]cellStats)
+
 	var failed []string
 
 	for i, cell := range e.cellResponse {
-		// no cell present
-		if cell.GetCellstatus() == pb.CellStatus_CELL_STATUS_NONE_UNSPECIFIED {
-			continue
-		}
-
 		status := cellapi.StatusPassed
 		if cell.GetCellstatus() != pb.CellStatus_CELL_STATUS_COMPLETE {
 			status = cellapi.StatusFailed
@@ -292,8 +295,8 @@ func (e *EndProcess) setCellStatuses() {
 			return
 		}
 
-		if i > len(m) || len(m) == 0 {
-			e.childLogger.Error(fmt.Errorf("invalid cell position index, cell list too large: %d > %d", i, len(m)))
+		if i >= len(m) || len(m) == 0 {
+			e.childLogger.Error(fmt.Errorf("invalid cell position index, cell list too large: %d > %d", i, len(m)-1))
 			return
 		}
 
@@ -303,22 +306,36 @@ func (e *EndProcess) setCellStatuses() {
 			failed = append(failed, position)
 		}
 
-		cell, ok := e.cells[position]
-		if !ok {
-			e.childLogger.Warn(fmt.Errorf("invalid cell position %s, unable to find cell serial", position))
+		cellInfo, ok := e.cells[position]
+		if !ok || cellInfo.IsEmpty {
+			// if it is empty it will be skipped here
+			e.childLogger.Debug("cell position is empty", "position", position)
 			continue
 		}
 
+		stats[position] = cellStats{
+			Serial:      cellInfo.Serial,
+			CellPFToAPI: status,
+			Status:      cell.GetCellstatus().String(),
+		}
+
 		cpf = append(cpf, cellapi.CellPFData{
-			Serial:  cell.Serial,
+			Serial:  cellInfo.Serial,
 			Status:  status,
 			Recipe:  e.processStepName,
 			Version: e.recipeVersion,
 		})
 	}
 
+	statsBuf, err := json.Marshal(stats)
+	if err != nil {
+		statsBuf = []byte(fmt.Sprintf("%v", statsBuf))
+	}
+
+	e.childLogger.Infow("cell data collected from recipe run", "cell_data", string(statsBuf))
+
 	if len(failed) > 0 {
-		e.childLogger.Info(fmt.Sprintf("failed cells: %s", strings.Join(failed, ", ")))
+		e.childLogger.Infow("failed cells", "positions", failed)
 	}
 
 	if !e.mockCellAPI {

@@ -419,7 +419,7 @@ func TestEndProcess_ActionBadSetCellStatus(t *testing.T) {
 		childLogger: zap.NewExample().Sugar(),
 		Config: Configuration{
 			CellMap: map[string][]string{
-				"A": {"A01", "A02"},
+				"A": {"A01", "A02", "A03"},
 			},
 		},
 		CellAPIClient: cellapi.NewClient(""),
