@@ -18,7 +18,7 @@ func TestLoadConfig(t *testing.T) {
 		_ = os.Remove(tf.Name())
 	}()
 
-	if _, err = tf.Write([]byte("recipefile: foo\ningredientsfile: bar")); err != nil {
+	if _, err = tf.Write([]byte("cell_api:\n base: foo")); err != nil {
 		// don't fatal so the defer will be called
 		t.Error(err)
 		return
@@ -33,15 +33,7 @@ func TestLoadConfig(t *testing.T) {
 		return
 	}
 
-	expRF := "foo"
-	if c.RecipeFile != expRF {
-		t.Errorf("RecipeFile expected: %s, got: %s", expRF, c.RecipeFile)
-	}
-
-	expIF := "bar"
-	if c.IngredientsFile != expIF {
-		t.Errorf("IngredientsFile expected: %s, got: %s", expIF, c.IngredientsFile)
-	}
+	assert.Equal(t, "foo", c.CellAPI.Base)
 }
 
 func TestLoadConfigNoFile(t *testing.T) {

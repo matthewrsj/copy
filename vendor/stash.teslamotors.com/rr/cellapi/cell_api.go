@@ -19,17 +19,17 @@ type CellData struct {
 	IsEmpty  bool   `json:"is_empty"`
 }
 
-type CellPFDataSWIFT struct {
-	Serial  string `json:"cell_serial"`
-	Status  string `json:"status"`
-	Process string `json:"process"`
-}
-
 type CellPFData struct {
 	Serial  string `json:"cell_serial"`
 	Status  string `json:"status"`
 	Recipe  string `json:"recipe"`
 	Version int    `json:"version"`
+}
+
+type NextFormationStep struct {
+	Name     string `json:"name"`
+	Step     string `json:"step"`
+	StepType string `json:"step_type"`
 }
 
 // Status strings for cell PF data status
@@ -227,17 +227,12 @@ func (c *Client) GetCellMap(sn string) (map[string]CellData, error) {
 	return cm, nil
 }
 
-func (c *Client) UpdateProcessStatus(sn, rcpeName string, s TrayStatus) error {
+func (c *Client) UpdateProcessStatus(sn, fixture string, s TrayStatus) error {
 	if !s.isValid() {
 		return fmt.Errorf("status %s is not valid", s)
 	}
 
-	process, err := RecipeToProcess(rcpeName)
-	if err != nil {
-		return fmt.Errorf("determine process name: %v", err)
-	}
-
-	url := urlJoin(c.baseURL, fmt.Sprintf(c.eps.processStatusFmt, sn, process, s))
+	url := urlJoin(c.baseURL, fmt.Sprintf(c.eps.processStatusFmt, sn, fixture, s))
 
 	// of course the URL has to be variable. We need to fmt everything in.
 	// nolint:gosec
@@ -313,44 +308,14 @@ func (c *Client) SetCellStatuses(cpf []CellPFData) error {
 	return nil
 }
 
-func (c *Client) SetCellStatusesSWIFT(cpf []CellPFDataSWIFT) error {
-	type request struct {
-		Cells []CellPFDataSWIFT `json:"cells"`
-	}
-
-	b, err := json.Marshal(request{Cells: cpf})
-	if err != nil {
-		return fmt.Errorf("marshal request json: %v", err)
-	}
-
-	url := urlJoin(c.baseURL, c.eps.cellStatus)
-
-	// of course the URL has to be variable. We need to construct it.
-	// nolint:gosec
-	resp, err := http.Post(url, "application/json", bytes.NewReader(b))
-	if err != nil {
-		return fmt.Errorf("POST to %s: %v", url, err)
-	}
-
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		// ignore error here, it's just for enhancing the error string
-		b, _ := ioutil.ReadAll(resp.Body)
-		return fmt.Errorf("POST response NOT OK: %v; %v", resp.StatusCode, string(b))
-	}
-
-	return nil
-}
-
-func (c *Client) GetNextProcessStep(sn string) (string, error) {
+func (c *Client) GetNextProcessStep(sn string) (NextFormationStep, error) {
 	url := urlJoin(c.baseURL, fmt.Sprintf(c.eps.nextProcessStepFmt, sn))
 
 	// of course the URL has to be variable. We need to construct it.
 	// nolint:gosec
 	resp, err := http.Get(url)
 	if err != nil {
-		return "", fmt.Errorf("POST to %s: %v", url, err)
+		return NextFormationStep{}, fmt.Errorf("POST to %s: %v", url, err)
 	}
 
 	defer func() {
@@ -359,37 +324,20 @@ func (c *Client) GetNextProcessStep(sn string) (string, error) {
 
 	rBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return "", fmt.Errorf("read response body from %s: %v", url, err)
+		return NextFormationStep{}, fmt.Errorf("read response body from %s: %v", url, err)
 	}
 
-	r := struct {
-		Next string `json:"next"`
-	}{}
+	var r NextFormationStep
 
 	if err := json.Unmarshal(rBody, &r); err != nil {
-		return "", fmt.Errorf("unmarshal response body from %s: %v", url, err)
+		return NextFormationStep{}, fmt.Errorf("unmarshal response body from %s: %v", url, err)
 	}
 
-	if r.Next == "" {
-		return "", fmt.Errorf("next process step not defined for tray %s", sn)
+	if r.Name == "" {
+		return NextFormationStep{}, fmt.Errorf("next process step not defined for tray %s", sn)
 	}
 
-	r.Next = strings.ToUpper(r.Next)
-
-	prefixes := map[string]string{
-		"PRECHARGE":       "FORM_PRECHARGE",
-		"FIRST_CHARGE":    "FORM_FIRST_CHARGE",
-		"FINAL_CD":        "FORM_SECOND_CHARGE",
-		"QUALITY_CYCLING": "FORM_CYCLE",
-	}
-
-	for prefix, step := range prefixes {
-		if strings.HasPrefix(r.Next, prefix) {
-			return step, nil
-		}
-	}
-
-	return "", fmt.Errorf("invalid process step %s defined for this tray %s", r.Next, sn)
+	return r, nil
 }
 
 func urlJoin(base, endpoint string) string {

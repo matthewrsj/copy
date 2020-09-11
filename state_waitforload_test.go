@@ -10,7 +10,7 @@ import (
 )
 
 func TestWaitForLoad_Next(t *testing.T) {
-	assert.Equal(t, "ProcessStep", statemachine.NameOf((&WaitForLoad{Logger: zap.NewExample().Sugar()}).Next()))
+	assert.Equal(t, "StartProcess", statemachine.NameOf((&WaitForLoad{Logger: zap.NewExample().Sugar()}).Next()))
 }
 
 func TestWaitForLoad_Actions(t *testing.T) {

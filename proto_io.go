@@ -2,6 +2,7 @@ package towercontroller
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"google.golang.org/protobuf/proto"
@@ -29,6 +30,10 @@ func marshalProtoEvent(msg proto.Message, fxrName string) ([]byte, error) {
 }
 
 func sendProtoMessage(publisher *protostream.Socket, msg proto.Message, fxrName string) error {
+	if publisher == nil {
+		return errors.New("publisher is nil")
+	}
+
 	buf, err := marshalProtoEvent(msg, fxrName)
 	if err != nil {
 		return fmt.Errorf("marshal proto event: %v", err)

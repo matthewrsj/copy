@@ -18,7 +18,7 @@ require (
 	stash.teslamotors.com/cas/asrs v0.0.0-20200623062440-9cee2d665dfb
 	stash.teslamotors.com/ctet/go-socketcan v0.0.2
 	stash.teslamotors.com/ctet/statemachine/v2 v2.0.1
-	stash.teslamotors.com/rr/cellapi v0.0.3
+	stash.teslamotors.com/rr/cellapi v0.0.7
 	stash.teslamotors.com/rr/protostream v0.1.3
 	stash.teslamotors.com/rr/towerproto v0.0.13
 	stash.teslamotors.com/rr/traycontrollers v0.1.4

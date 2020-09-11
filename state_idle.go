@@ -23,7 +23,6 @@ type Idle struct {
 	CellAPIClient *cellapi.Client
 	Publisher     *protostream.Socket
 
-	Manual      bool
 	MockCellAPI bool
 
 	alarmed pb.FireAlarmStatus
@@ -62,7 +61,6 @@ waitForUpdate:
 			Publisher:     i.Publisher,
 			tbc:           tbc,
 			fxbc:          fxbc,
-			manual:        i.Manual,
 			mockCellAPI:   i.MockCellAPI,
 			fxrInfo:       i.FXRInfo,
 		}
@@ -77,26 +75,20 @@ waitForUpdate:
 			return
 		}
 
-		// TODO: short circuit to in-progress if fixture status is active (or complete?)
-		i.next = &ProcessStep{
-			Config:        i.Config,
-			Logger:        i.Logger,
-			CellAPIClient: i.CellAPIClient,
-			Publisher:     i.Publisher,
-			mockCellAPI:   i.MockCellAPI,
-			fxrInfo:       i.FXRInfo,
+		i.next = &StartProcess{
+			Config:          i.Config,
+			Logger:          i.Logger,
+			CellAPIClient:   i.CellAPIClient,
+			Publisher:       i.Publisher,
+			mockCellAPI:     i.MockCellAPI,
+			fxrInfo:         i.FXRInfo,
+			fxbc:            fxbc,
+			tbc:             tbc,
+			processStepName: fxrLoad.RecipeName,
+			recipeVersion:   fxrLoad.RecipeVersion,
+			steps:           fxrLoad.Steps,
+			transactID:      fxrLoad.TransactionID,
 		}
-
-		i.next.SetContext(Barcodes{
-			Fixture:         fxbc,
-			Tray:            tbc,
-			ProcessStepName: fxrLoad.RecipeName,
-			MockCellAPI:     i.MockCellAPI,
-			RecipeName:      fxrLoad.RecipeName,
-			RecipeVersion:   fxrLoad.RecipeVersion,
-			StepConf:        fxrLoad.Steps,
-			TransactID:      fxrLoad.TransactionID,
-		})
 	case ip := <-active:
 		if ip.transactionID == "" {
 			goto waitForUpdate

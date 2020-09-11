@@ -40,7 +40,6 @@ func main() {
 	configFile := flag.String("conf", _confFileDef, "path to the configuration file")
 	localAddr := flag.String("local", _localDef, "local address for operational API")
 	localUserAddr := flag.String("local-usr", _localUserDef, "local address for user API")
-	manual := flag.Bool("manual", false, "turn on manual mode (i.e. for SWIFT line)")
 	mockCellAPI := flag.Bool("mockapi", false, "mock Cell API interactions")
 	wsAddr := flag.String("wsaddr", protostream.DefaultWebsocketAddress, "websocket address for proto")
 
@@ -62,39 +61,15 @@ func main() {
 
 	go towercontroller.MonitorConfig(sugar, *configFile, &conf)
 
-	// use normal base URL unless we are running SWIFT (manual) mode
-	base := conf.CellAPI.Base
-	if *manual {
-		base = conf.CellAPI.BaseSWIFT
-	}
-
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 
-	caClient := cellapi.NewClient(base,
+	caClient := cellapi.NewClient(conf.CellAPI.Base,
 		cellapi.WithNextProcessStepFmtEndpoint(conf.CellAPI.Endpoints.NextProcStepFmt),
 		cellapi.WithProcessStatusFmtEndpoint(conf.CellAPI.Endpoints.ProcessStatusFmt),
 		cellapi.WithCellMapFmtEndpoint(conf.CellAPI.Endpoints.CellMapFmt),
 		cellapi.WithCellStatusEndpoint(conf.CellAPI.Endpoints.CellStatus),
 		cellapi.WithCloseProcessFmtEndpoint(conf.CellAPI.Endpoints.CloseProcessFmt),
 	)
-
-	s := statemachine.NewScheduler()
-
-	for _, name := range conf.AllFixtures {
-		sugar.Infow("registering", "fixture", name)
-		s.Register(name,
-			&towercontroller.ProcessStep{
-				Config:        conf,
-				Logger:        sugar,
-				CellAPIClient: caClient,
-			}, nil, // runner (default)
-		)
-	}
-
-	if *manual {
-		handleManualOperation(s, sugar, caClient, *mockCellAPI)
-		return
-	} // end of manual operation
 
 	registry := make(map[string]*towercontroller.FixtureInfo)
 
@@ -212,7 +187,6 @@ func main() {
 				Config:        conf,
 				Logger:        sugar,
 				CellAPIClient: caClient,
-				Manual:        *manual,
 				MockCellAPI:   *mockCellAPI,
 				FXRInfo:       registry[name],
 				Publisher:     publisher,

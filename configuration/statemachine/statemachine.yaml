@@ -1,5 +1,3 @@
-recipefile: /home/parallels/projects/towercontroller/configuration/recipes/recipes.yaml
-ingredientsfile: /home/parallels/projects/towercontroller/configuration/recipes/ingredients.yaml
 cdcontroller_remote: "http://localhost:8080"
 
 location:
@@ -8,7 +6,6 @@ location:
   aisle: 010
 
 cell_api:
-  base_swift: https://celltest-kato.mo.tesla.services/module/api/v0.1
   base: https://cellapi-rr.us-sjc25-prd-factory.k8s.tesla.com:31443/module/api/v0.1
   endpoints:
     cell_map: /trays/%s/cells                        # tray_serial

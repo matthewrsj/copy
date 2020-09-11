@@ -21,7 +21,6 @@ type Unloading struct {
 	Publisher     *protostream.Socket
 
 	childLogger *zap.SugaredLogger
-	manual      bool
 	mockCellAPI bool
 
 	fxbc traycontrollers.FixtureBarcode
@@ -70,7 +69,6 @@ func (u *Unloading) Next() statemachine.State {
 		Logger:        u.Logger,
 		CellAPIClient: u.CellAPIClient,
 		Publisher:     u.Publisher,
-		Manual:        u.manual,
 		MockCellAPI:   u.mockCellAPI,
 		FXRInfo:       u.fxrInfo,
 	}

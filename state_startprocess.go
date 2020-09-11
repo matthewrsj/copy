@@ -31,7 +31,6 @@ type StartProcess struct {
 	steps           traycontrollers.StepConfiguration
 	cells           map[string]cellapi.CellData
 	smFatal         bool
-	manual          bool
 	mockCellAPI     bool
 	timeout         bool
 	recipeVersion   int
@@ -42,6 +41,13 @@ type StartProcess struct {
 const _readinessTimeoutLen = time.Minute
 
 func (s *StartProcess) action() {
+	s.childLogger = s.Logger.With(
+		"tray", s.tbc.SN,
+		"fixture", s.fxbc.Raw,
+		"process_step", s.processStepName,
+		"transaction_id", s.transactID,
+	)
+
 	s.childLogger.Info("sending recipe and other information to FXR")
 
 	twr2Fxr := pb.TowerToFixture{
@@ -103,25 +109,19 @@ func (s *StartProcess) action() {
 	// performHandshake blocks until the FXR acknowledges receipt of recipe
 	s.performHandshake(&twr2Fxr)
 
-	if s.manual {
-		if !s.mockCellAPI {
-			if err := s.CellAPIClient.UpdateProcessStatus(s.tbc.SN, s.processStepName, cellapi.StatusStart); err != nil {
-				s.childLogger.Errorw("UpdateProcessStatus", "error", err)
-				s.smFatal = true
+	if !s.mockCellAPI {
+		// out of band and ignoring all errors update Cell API that we started
+		// does not affect any process just makes it easier to find data
+		go func() {
+			s.childLogger.Debug("updating process status", "status", "end")
 
-				return
+			err := s.CellAPIClient.UpdateProcessStatus(s.tbc.SN, s.fxbc.Raw, cellapi.StatusStart)
+			if err != nil {
+				s.childLogger.Warnw("unable to update Cell API of recipe start", "error", err)
 			}
-
-			// out of band and ignoring all errors update Cell API that we started
-			// does not affect any process just makes it easier to find data
-			// this is different from ending it with the process name as it just leaves a marker on the fixture itself instead
-			// of closing the actual process step.
-			go func() {
-				_ = s.CellAPIClient.UpdateProcessStatus(s.tbc.SN, fmt.Sprintf("CM2-%s%s-%s", s.Config.Loc.Process, s.Config.Loc.Aisle, s.fxrInfo.Name), cellapi.StatusStart)
-			}()
-		} else {
-			s.childLogger.Warn("cell API mocked, skipping UpdateProcessStatus")
-		}
+		}()
+	} else {
+		s.childLogger.Warn("cell API mocked, skipping UpdateProcessStatus")
 	}
 }
 
@@ -143,7 +143,6 @@ func (s *StartProcess) Next() statemachine.State {
 			Logger:        s.Logger,
 			CellAPIClient: s.CellAPIClient,
 			Publisher:     s.Publisher,
-			Manual:        s.manual,
 			MockCellAPI:   s.mockCellAPI,
 			FXRInfo:       s.fxrInfo,
 		}
@@ -158,7 +157,6 @@ func (s *StartProcess) Next() statemachine.State {
 			fxbc:            s.fxbc,
 			cells:           s.cells,
 			processStepName: s.processStepName,
-			manual:          s.manual,
 			mockCellAPI:     s.mockCellAPI,
 			recipeVersion:   s.recipeVersion,
 			fxrInfo:         s.fxrInfo,
@@ -174,7 +172,6 @@ func (s *StartProcess) Next() statemachine.State {
 			fxbc:            s.fxbc,
 			cells:           s.cells,
 			processStepName: s.processStepName,
-			manual:          s.manual,
 			mockCellAPI:     s.mockCellAPI,
 			recipeVersion:   s.recipeVersion,
 			fxrInfo:         s.fxrInfo,

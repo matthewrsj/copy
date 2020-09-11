@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -35,7 +34,6 @@ type EndProcess struct {
 	processStepName string
 	smFatal         bool
 	fixtureFault    bool
-	manual          bool
 	mockCellAPI     bool
 	recipeVersion   int
 
@@ -43,31 +41,6 @@ type EndProcess struct {
 }
 
 func (e *EndProcess) action() {
-	// only update cell API on SWIFT. On C Tower and beyond this is done by CND
-	if e.manual {
-		if !e.mockCellAPI {
-			e.childLogger.Debugw("UpdateProcessStatus", "process_name", e.processStepName)
-
-			// out of band and ignoring all errors update Cell API that we finished
-			// does not affect any process just makes it easier to find data
-			// this is different from ending it with the process name as it just leaves a marker on the fixture itself instead
-			// of closing the actual process step.
-			go func() {
-				_ = e.CellAPIClient.UpdateProcessStatus(e.tbc.SN, fmt.Sprintf("CM2-%s%s-%s", e.Config.Loc.Process, e.Config.Loc.Aisle, e.fxrInfo.Name), cellapi.StatusEnd)
-			}()
-
-			// only try to close the process step if this is a normal recipe
-			if e.processStepName != traycontrollers.CommissionSelfTestRecipeName {
-				if err := e.CellAPIClient.UpdateProcessStatus(e.tbc.SN, e.processStepName, cellapi.StatusEnd); err != nil {
-					// keep trying the other transactions
-					e.childLogger.Warn(err)
-				}
-			}
-		} else {
-			e.childLogger.Warn("cell API mocked, skipping UpdateProcessStatus")
-		}
-	}
-
 	if len(e.cells) == 0 { // we short-circuited here or something went wrong, just re-get the map
 		e.childLogger.Info("empty cell map, querying API for new map")
 
@@ -80,20 +53,35 @@ func (e *EndProcess) action() {
 		}
 	}
 
-	if e.manual {
-		e.setCellStatusesSWIFT()
-	} else if e.processStepName != traycontrollers.CommissionSelfTestRecipeName {
+	if e.processStepName != traycontrollers.CommissionSelfTestRecipeName {
 		e.setCellStatuses()
 	}
 
-	if !e.manual && !e.mockCellAPI {
-		e.childLogger.Infow("closing process step", "recipe_name", e.processStepName, "recipe_version", e.recipeVersion)
+	if !e.mockCellAPI {
+		// out of band and ignoring all errors update Cell API that we finished
+		// does not affect any process just makes it easier to find data
+		// this is different from ending it with the process name as it just leaves a marker on the fixture itself instead
+		// of closing the actual process step.
+		go func() {
+			e.childLogger.Debug("updating process status", "status", "end")
+
+			err := e.CellAPIClient.UpdateProcessStatus(e.tbc.SN, fmt.Sprintf("CM2-%s%s-%s", e.Config.Loc.Process, e.Config.Loc.Aisle, e.fxrInfo.Name), cellapi.StatusEnd)
+			if err != nil {
+				e.childLogger.Warnw("unable to update Cell API of recipe end", "error", err)
+			}
+		}()
 
 		if e.processStepName != traycontrollers.CommissionSelfTestRecipeName {
+			e.childLogger.Infow("closing process step", "recipe_name", e.processStepName, "recipe_version", e.recipeVersion)
+
 			if err := e.CellAPIClient.CloseProcessStep(e.tbc.SN, e.processStepName, e.recipeVersion); err != nil {
 				e.childLogger.Error("close process status", "error", err)
 			}
+		} else {
+			e.childLogger.Info("not closing process step for recipe", "recipe_name", e.processStepName)
 		}
+	} else {
+		e.childLogger.Warn("Cell API mocked, not closing process step")
 	}
 
 	// TODO: determine how to inform cell API of fault
@@ -103,12 +91,6 @@ func (e *EndProcess) action() {
 	}
 
 	e.childLogger.Info(msg)
-
-	// if this is manual we are done
-	if e.manual {
-		e.childLogger.Info("done with tray")
-		return
-	}
 
 	tc := trayComplete{
 		ID:     e.tbc.Raw,
@@ -154,11 +136,6 @@ func (e *EndProcess) action() {
 
 // Actions returns the action functions for this state
 func (e *EndProcess) Actions() []func() {
-	if e.manual {
-		// this is the last state for manual
-		e.SetLast(true)
-	}
-
 	return []func(){
 		e.action,
 	}
@@ -166,12 +143,6 @@ func (e *EndProcess) Actions() []func() {
 
 // Next returns the next state to run
 func (e *EndProcess) Next() statemachine.State {
-	if e.manual {
-		// all done
-		e.childLogger.Debug("statemachine exiting")
-		return nil
-	}
-
 	var next statemachine.State
 
 	switch {
@@ -181,7 +152,6 @@ func (e *EndProcess) Next() statemachine.State {
 			Logger:        e.Logger,
 			CellAPIClient: e.CellAPIClient,
 			Publisher:     e.Publisher,
-			Manual:        e.manual,
 			MockCellAPI:   e.mockCellAPI,
 			FXRInfo:       e.fxrInfo,
 		}
@@ -208,73 +178,6 @@ type trayComplete struct {
 	Aisle  string `json:"aisle"`
 	Column string `json:"column"`
 	Level  string `json:"level"`
-}
-
-func (e *EndProcess) setCellStatusesSWIFT() {
-	// nolint:prealloc // we don't know how long this will be, depends on what the FXR Cells' content is
-	cpf := []cellapi.CellPFDataSWIFT{}
-
-	var failed []string
-
-	for i, cell := range e.cellResponse {
-		// no cell present
-		if cell.GetCellstatus() == pb.CellStatus_CELL_STATUS_NONE_UNSPECIFIED {
-			continue
-		}
-
-		status := cellapi.StatusPassed
-		if cell.GetCellstatus() != pb.CellStatus_CELL_STATUS_COMPLETE {
-			status = cellapi.StatusFailed
-		}
-
-		m, ok := e.Config.CellMap[e.tbc.O.String()]
-		if !ok {
-			e.childLogger.Error(fmt.Errorf("invalid tray position: %s", e.tbc.O.String()))
-			return
-		}
-
-		if i > len(m) || len(m) == 0 {
-			e.childLogger.Error(fmt.Errorf("invalid cell position index, cell list too large: %d > %d", i, len(m)))
-			return
-		}
-
-		position := m[i]
-
-		if status == cellapi.StatusFailed {
-			failed = append(failed, position)
-		}
-
-		cell, ok := e.cells[position]
-		if !ok {
-			e.childLogger.Warn(fmt.Errorf("invalid cell position %s, unable to find cell serial", position))
-			continue
-		}
-
-		psn, err := cellapi.RecipeToProcess(e.processStepName)
-		if err != nil {
-			e.childLogger.Warn(fmt.Errorf("invalid recipe name %s, unable to find process name", e.processStepName))
-			continue
-		}
-
-		cpf = append(cpf, cellapi.CellPFDataSWIFT{
-			Serial:  cell.Serial,
-			Status:  status,
-			Process: psn,
-		})
-	}
-
-	if len(failed) > 0 {
-		e.childLogger.Info(fmt.Sprintf("failed cells: %s", strings.Join(failed, ", ")))
-	}
-
-	if !e.mockCellAPI {
-		if err := e.CellAPIClient.SetCellStatusesSWIFT(cpf); err != nil {
-			e.childLogger.Errorw("SetCellStatuses", "error", err)
-			return
-		}
-	} else {
-		e.childLogger.Warn("cell API mocked, skipping SetCellStatuses")
-	}
 }
 
 func (e *EndProcess) setCellStatuses() {

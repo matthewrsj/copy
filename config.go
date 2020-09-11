@@ -9,8 +9,6 @@ import (
 
 // Configuration contains the configuration parameters for the statemachine.
 type Configuration struct {
-	RecipeFile      string              `yaml:"recipefile"`
-	IngredientsFile string              `yaml:"ingredientsfile"`
 	Remote          string              `yaml:"cdcontroller_remote"`
 	RouterAddress   string              `yaml:"router_address"`
 	CellAPI         cellAPIConf         `yaml:"cell_api"`

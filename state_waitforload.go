@@ -25,7 +25,6 @@ type WaitForLoad struct {
 	processStepName string
 	transactID      string
 	recipeVersion   int
-	manual          bool
 	mockCellAPI     bool
 	resetToIdle     bool
 
@@ -107,29 +106,24 @@ func (w *WaitForLoad) Next() statemachine.State {
 			Logger:        w.Logger,
 			CellAPIClient: w.CellAPIClient,
 			Publisher:     w.Publisher,
-			Manual:        w.manual,
 			MockCellAPI:   w.mockCellAPI,
 			FXRInfo:       w.fxrInfo,
 		}
 	default:
-		next = &ProcessStep{
-			Config:        w.Config,
-			Logger:        w.Logger,
-			CellAPIClient: w.CellAPIClient,
-			Publisher:     w.Publisher,
-			fxrInfo:       w.fxrInfo,
+		next = &StartProcess{
+			Config:          w.Config,
+			Logger:          w.Logger,
+			CellAPIClient:   w.CellAPIClient,
+			Publisher:       w.Publisher,
+			processStepName: w.processStepName,
+			transactID:      w.transactID,
+			fxbc:            w.fxbc,
+			tbc:             w.tbc,
+			mockCellAPI:     w.mockCellAPI,
+			steps:           w.steps,
+			recipeVersion:   w.recipeVersion,
+			fxrInfo:         w.fxrInfo,
 		}
-
-		next.SetContext(Barcodes{
-			Fixture:         w.fxbc,
-			Tray:            w.tbc,
-			ProcessStepName: w.processStepName,
-			MockCellAPI:     w.mockCellAPI,
-			RecipeName:      w.processStepName,
-			RecipeVersion:   w.recipeVersion,
-			StepConf:        w.steps,
-			TransactID:      w.transactID,
-		})
 	}
 
 	w.Logger.Debugw("transitioning to next state", "next", statemachine.NameOf(next))

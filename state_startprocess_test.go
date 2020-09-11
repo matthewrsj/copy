@@ -6,6 +6,7 @@ import (
 
 	"bou.ke/monkey"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/proto"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cellapi"
 	"stash.teslamotors.com/rr/protostream"
@@ -18,6 +19,7 @@ func TestStartProcess_Action(t *testing.T) {
 	cmc[0] = "A01"
 	cmc[1] = "A02"
 	spState := StartProcess{
+		Logger: zap.NewExample().Sugar(),
 		fxrInfo: &FixtureInfo{
 			FixtureState: NewFixtureState(),
 		},
@@ -30,7 +32,7 @@ func TestStartProcess_Action(t *testing.T) {
 		},
 		childLogger:     zap.NewExample().Sugar(),
 		CellAPIClient:   &cellapi.Client{},
-		processStepName: "",
+		processStepName: "test",
 		tbc: traycontrollers.TrayBarcode{
 			SN:  "11223344",
 			O:   traycontrollers.OrientationA,
@@ -39,6 +41,7 @@ func TestStartProcess_Action(t *testing.T) {
 		fxbc: traycontrollers.FixtureBarcode{
 			Tower: "01",
 			Fxn:   "01",
+			Raw:   "CM2-63010-01-01",
 		},
 		steps: traycontrollers.StepConfiguration{{Mode: "test"}},
 	}
@@ -66,6 +69,11 @@ func TestStartProcess_Action(t *testing.T) {
 		},
 	)
 	defer gcmp.Unpatch()
+
+	pio := monkey.Patch(sendProtoMessage, func(_ *protostream.Socket, _ proto.Message, _ string) error {
+		return nil
+	})
+	defer pio.Unpatch()
 
 	ups := monkey.PatchInstanceMethod(
 		reflect.TypeOf(&cellapi.Client{}),

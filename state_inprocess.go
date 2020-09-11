@@ -25,7 +25,6 @@ type InProcess struct {
 	fxbc            traycontrollers.FixtureBarcode
 	processStepName string
 	fixtureFault    bool
-	manual          bool
 	mockCellAPI     bool
 	returnToIdle    bool
 	alarmed         pb.FireAlarmStatus
@@ -114,7 +113,6 @@ func (i *InProcess) Next() statemachine.State {
 			Logger:        i.Logger,
 			CellAPIClient: i.CellAPIClient,
 			Publisher:     i.Publisher,
-			Manual:        i.manual,
 			MockCellAPI:   i.mockCellAPI,
 			FXRInfo:       i.fxrInfo,
 			alarmed:       i.alarmed,
@@ -132,7 +130,6 @@ func (i *InProcess) Next() statemachine.State {
 			fixtureFault:    i.fixtureFault,
 			cellResponse:    i.cellResponse,
 			cells:           i.cells,
-			manual:          i.manual,
 			mockCellAPI:     i.mockCellAPI,
 			recipeVersion:   i.recipeVersion,
 			fxrInfo:         i.fxrInfo,
