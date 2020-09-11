@@ -111,6 +111,14 @@ func (s *StartProcess) action() {
 
 				return
 			}
+
+			// out of band and ignoring all errors update Cell API that we started
+			// does not affect any process just makes it easier to find data
+			// this is different from ending it with the process name as it just leaves a marker on the fixture itself instead
+			// of closing the actual process step.
+			go func() {
+				_ = s.CellAPIClient.UpdateProcessStatus(s.tbc.SN, fmt.Sprintf("CM2-%s%s-%s", s.Config.Loc.Process, s.Config.Loc.Aisle, s.fxrInfo.Name), cellapi.StatusStart)
+			}()
 		} else {
 			s.childLogger.Warn("cell API mocked, skipping UpdateProcessStatus")
 		}

@@ -48,6 +48,14 @@ func (e *EndProcess) action() {
 		if !e.mockCellAPI {
 			e.childLogger.Debugw("UpdateProcessStatus", "process_name", e.processStepName)
 
+			// out of band and ignoring all errors update Cell API that we finished
+			// does not affect any process just makes it easier to find data
+			// this is different from ending it with the process name as it just leaves a marker on the fixture itself instead
+			// of closing the actual process step.
+			go func() {
+				_ = e.CellAPIClient.UpdateProcessStatus(e.tbc.SN, fmt.Sprintf("CM2-%s%s-%s", e.Config.Loc.Process, e.Config.Loc.Aisle, e.fxrInfo.Name), cellapi.StatusEnd)
+			}()
+
 			// only try to close the process step if this is a normal recipe
 			if e.processStepName != traycontrollers.CommissionSelfTestRecipeName {
 				if err := e.CellAPIClient.UpdateProcessStatus(e.tbc.SN, e.processStepName, cellapi.StatusEnd); err != nil {
