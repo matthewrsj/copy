@@ -211,6 +211,6 @@ stash.teslamotors.com/rr/protostream
 # stash.teslamotors.com/rr/towerproto v0.0.13
 ## explicit
 stash.teslamotors.com/rr/towerproto
-# stash.teslamotors.com/rr/traycontrollers v0.1.4
+# stash.teslamotors.com/rr/traycontrollers v0.1.6
 ## explicit
 stash.teslamotors.com/rr/traycontrollers

@@ -35,6 +35,7 @@ type EndProcess struct {
 	smFatal         bool
 	fixtureFault    bool
 	mockCellAPI     bool
+	skipClose       bool
 	recipeVersion   int
 
 	fxrInfo *FixtureInfo
@@ -53,7 +54,12 @@ func (e *EndProcess) action() {
 		}
 	}
 
-	if e.processStepName != traycontrollers.CommissionSelfTestRecipeName {
+	if e.skipClose {
+		e.childLogger.Info("skipClose set, not closing process step or setting cell statuses")
+	}
+
+	if !e.skipClose && e.processStepName != traycontrollers.CommissionSelfTestRecipeName {
+		e.childLogger.Info("setting cell statuses")
 		e.setCellStatuses()
 	}
 
@@ -71,7 +77,7 @@ func (e *EndProcess) action() {
 			}
 		}()
 
-		if e.processStepName != traycontrollers.CommissionSelfTestRecipeName {
+		if !e.skipClose && e.processStepName != traycontrollers.CommissionSelfTestRecipeName {
 			e.childLogger.Infow("closing process step", "recipe_name", e.processStepName, "recipe_version", e.recipeVersion)
 
 			if err := e.CellAPIClient.CloseProcessStep(e.tbc.SN, e.processStepName, e.recipeVersion); err != nil {

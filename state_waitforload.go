@@ -22,6 +22,7 @@ type WaitForLoad struct {
 	tbc             traycontrollers.TrayBarcode
 	fxbc            traycontrollers.FixtureBarcode
 	steps           traycontrollers.StepConfiguration
+	stepType        string
 	processStepName string
 	transactID      string
 	recipeVersion   int
@@ -76,6 +77,7 @@ func (w *WaitForLoad) action() {
 	w.processStepName = fxrLoad.RecipeName
 	w.recipeVersion = fxrLoad.RecipeVersion
 	w.steps = fxrLoad.Steps
+	w.stepType = fxrLoad.StepType
 	w.transactID = fxrLoad.TransactionID
 
 	if w.processStepName == "" || len(w.steps) == 0 {
@@ -121,6 +123,7 @@ func (w *WaitForLoad) Next() statemachine.State {
 			tbc:             w.tbc,
 			mockCellAPI:     w.mockCellAPI,
 			steps:           w.steps,
+			stepType:        w.stepType,
 			recipeVersion:   w.recipeVersion,
 			fxrInfo:         w.fxrInfo,
 		}

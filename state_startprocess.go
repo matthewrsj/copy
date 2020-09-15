@@ -29,10 +29,11 @@ type StartProcess struct {
 	tbc             traycontrollers.TrayBarcode
 	fxbc            traycontrollers.FixtureBarcode
 	steps           traycontrollers.StepConfiguration
+	stepType        string
 	cells           map[string]cellapi.CellData
 	smFatal         bool
 	mockCellAPI     bool
-	timeout         bool
+	unload          bool
 	recipeVersion   int
 
 	fxrInfo *FixtureInfo
@@ -47,6 +48,13 @@ func (s *StartProcess) action() {
 		"process_step", s.processStepName,
 		"transaction_id", s.transactID,
 	)
+
+	if s.stepType != traycontrollers.AllowedStepType {
+		s.childLogger.Errorw("incorrect step type for charge/discharge", "step_type", s.stepType)
+		s.unload = true
+
+		return
+	}
 
 	s.childLogger.Info("sending recipe and other information to FXR")
 
@@ -146,7 +154,7 @@ func (s *StartProcess) Next() statemachine.State {
 			MockCellAPI:   s.mockCellAPI,
 			FXRInfo:       s.fxrInfo,
 		}
-	case s.timeout:
+	case s.unload:
 		next = &EndProcess{
 			Config:          s.Config,
 			Logger:          s.Logger,
@@ -160,6 +168,7 @@ func (s *StartProcess) Next() statemachine.State {
 			mockCellAPI:     s.mockCellAPI,
 			recipeVersion:   s.recipeVersion,
 			fxrInfo:         s.fxrInfo,
+			skipClose:       true, // do not close the process step, error here
 		}
 	default:
 		next = &InProcess{
@@ -205,18 +214,18 @@ func (s *StartProcess) performHandshake(msg proto.Message) {
 		}
 
 		// if we got this far no timeout
-		s.timeout = false
+		s.unload = false
 
 		break
 	}
 
-	if s.timeout {
+	if s.unload {
 		s.childLogger.Warn("timeout trying to send recipe to FXR")
 		return
 	}
 
 	// reset timeout to true, make below loop turn it off again
-	s.timeout = true
+	s.unload = true
 	start = time.Now()
 
 	for time.Since(start) < _readinessTimeoutLen {
@@ -248,12 +257,12 @@ func (s *StartProcess) performHandshake(msg proto.Message) {
 		}
 
 		// no timeout if we got here
-		s.timeout = false
+		s.unload = false
 
 		break
 	}
 
-	if s.timeout {
+	if s.unload {
 		s.childLogger.Warn("timeout trying to send recipe to FXR")
 	} else {
 		s.childLogger.Info("sent recipe and other information to FXR")

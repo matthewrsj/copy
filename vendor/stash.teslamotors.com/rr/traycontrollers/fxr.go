@@ -106,12 +106,16 @@ func (fl *FXRLayout) GetNeighbor(coord Coordinates) *FXR {
 // GetTwoFXRs returns two FXRs in order of physical front/back location
 // in the case where there is not a front/back fixture they are returned in
 // order of lower/higher fixtures.
-// nolint:gocognit // the algorithm is a simple one if all in one place
+// nolint:gocognit,wsl // the algorithm is a simple one if all in one place; leading commented-out code for hack TODO: REMOVE COMMENTS AROUND CODE
 func (fl *FXRLayout) GetTwoFXRs() (front, back *FXR) {
-	var (
-		col1Lowest, col2Lowest             *FXR
-		overallLowest, overallSecondLowest *FXR
-	)
+	// TODO: REMOVE COMMENTS AROUND CODE
+	// nolint:gocritic,wsl // not needed while hack in place
+	/*
+		var (
+			col1Lowest, col2Lowest             *FXR
+			overallLowest, overallSecondLowest *FXR
+		)
+	*/
 
 	col := fl.layout[0]
 	c := Coordinates{Col: 1}
@@ -121,39 +125,61 @@ func (fl *FXRLayout) GetTwoFXRs() (front, back *FXR) {
 
 		current, neighbor := fl.Get(c), fl.GetNeighbor(c)
 
-		if current != nil && current.Free {
-			if overallLowest == nil {
-				overallLowest = current
-			} else if overallSecondLowest == nil {
-				overallSecondLowest = current
-			}
-
-			if col1Lowest == nil {
-				col1Lowest = current
-			}
-		}
-
-		if neighbor != nil && neighbor.Free {
-			if overallLowest == nil {
-				overallLowest = neighbor
-			} else if overallSecondLowest == nil {
-				overallSecondLowest = neighbor
-			}
-
-			if col2Lowest == nil {
-				col2Lowest = neighbor
-			}
-		}
+		// TODO: REMOVE BELOW HACK
+		// BEGIN HACK
+		// This is an issue with Hanwha PLC that makes it impossible to use fork 2 to send a tray to an even-numbered
+		// column. This has to do with the fact that they didn't teach fork 2 for even columns, only odd columns.
+		// They claim it will take them a full week to fix this. Whether or not that is true it can be hacked right here.
+		//
+		// The hack is to only return two FXRs if there are two FXRs next to each other, basically disabling any type of
+		// two-tray operation without it being two tray place.
 
 		if current != nil && current.Free && neighbor != nil && neighbor.Free {
-			// found two available next to each other, two tray place
-			// return col2 first as this is the most forward tray
 			return neighbor, current
 		}
 	}
 
-	// col2 first as this is the most forward tray
-	return getMinimumTravelDistance(col2Lowest, col1Lowest, overallLowest, overallSecondLowest)
+	return nil, nil
+	// END HACK
+	// TODO: REMOVE ABOVE HACK
+
+	// TODO: REMOVE COMMENTS AROUND CODE
+	// nolint:gocritic,wsl // not needed while hack in place
+	/*
+			if current != nil && current.Free {
+				if overallLowest == nil {
+					overallLowest = current
+				} else if overallSecondLowest == nil {
+					overallSecondLowest = current
+				}
+
+				if col1Lowest == nil {
+					col1Lowest = current
+				}
+			}
+
+			if neighbor != nil && neighbor.Free {
+				if overallLowest == nil {
+					overallLowest = neighbor
+				} else if overallSecondLowest == nil {
+					overallSecondLowest = neighbor
+				}
+
+				if col2Lowest == nil {
+					col2Lowest = neighbor
+				}
+			}
+
+			if current != nil && current.Free && neighbor != nil && neighbor.Free {
+				// found two available next to each other, two tray place
+				// return col2 first as this is the most forward tray
+				return neighbor, current
+			}
+		}
+
+		// col2 first as this is the most forward tray
+		return getMinimumTravelDistance(col2Lowest, col1Lowest, overallLowest, overallSecondLowest)
+	*/
 }
 
 const _maximumEfficientTravelHeight = 3
@@ -179,6 +205,7 @@ const _maximumEfficientTravelHeight = 3
 // decisions.
 //
 // This is not calculated on the fly, instead a constant _maximumEfficientTravelHeight was introduced.
+// nolint:deadcode,unused // not used while hack is in place TODO: REMOVE WHEN HACK REMOVED
 func getMinimumTravelDistance(frontLowest, backLowest, overallLowest, overallSecondLowest *FXR) (front, back *FXR) {
 	// if either of these are nil we can't use these, use overall
 	if frontLowest == nil || backLowest == nil {
@@ -229,6 +256,21 @@ func (fl *FXRLayout) GetAvail() int {
 			if f != nil && f.Free {
 				avail++
 			}
+		}
+	}
+
+	return avail
+}
+
+// GetAvailForTwoTrayPlace is a temporary function to resolve a problem with Hanwha PLC
+// TODO: REMOVE HACK. This function is not needed for normal operations. It is only needed when we are forcing
+//       two-tray place due to issues in Hanwha PLC code.
+func (fl *FXRLayout) GetAvailForTwoTrayPlace() int {
+	var avail int
+
+	for _, lvl := range fl.layout[0] {
+		if lvl != nil && lvl.Free && fl.GetNeighbor(lvl.Coord) != nil && fl.GetNeighbor(lvl.Coord).Free {
+			avail += 2
 		}
 	}
 

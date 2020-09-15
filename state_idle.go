@@ -87,6 +87,7 @@ waitForUpdate:
 			processStepName: fxrLoad.RecipeName,
 			recipeVersion:   fxrLoad.RecipeVersion,
 			steps:           fxrLoad.Steps,
+			stepType:        fxrLoad.StepType,
 			transactID:      fxrLoad.TransactionID,
 		}
 	case ip := <-active:
