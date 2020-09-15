@@ -47,7 +47,7 @@ func TestHandleSendFormRequest(t *testing.T) {
 
 	mux := http.NewServeMux()
 
-	go HandleSendFormRequest(mux, s, zap.NewExample().Sugar(), registry)
+	HandleSendFormRequest(mux, s, zap.NewExample().Sugar(), registry)
 
 	port, err := freeport.GetFreePort()
 	if err != nil {
@@ -68,6 +68,8 @@ func TestHandleSendFormRequest(t *testing.T) {
 	defer func() {
 		_ = srv.Shutdown(context.Background())
 	}()
+
+	time.Sleep(time.Millisecond * 200)
 
 	status := &pb.FixtureToTower{
 		Content: &pb.FixtureToTower_Op{
@@ -128,14 +130,23 @@ func TestHandleSendFormRequest(t *testing.T) {
 	}
 
 	var pMsg protostream.ProtoMessage
-	if err := json.Unmarshal(rx.Msg.Body, &pMsg); err != nil {
+	if err = json.Unmarshal(rx.Msg.Body, &pMsg); err != nil {
 		t.Fatal(err)
 	}
 
 	var fReset pb.TowerToFixture
-	if err := proto.Unmarshal(pMsg.Body, &fReset); err != nil {
+	if err = proto.Unmarshal(pMsg.Body, &fReset); err != nil {
 		t.Fatal(err)
 	}
 
 	assert.Equal(t, pb.FormRequest_FORM_REQUEST_FAULT_RESET, fReset.GetRecipe().GetFormrequest())
+
+	resp, err = http.Get(fmt.Sprintf("http://localhost:%d/form_request", port))
+	if err != nil {
+		t.Error(err)
+	}
+
+	assert.Equal(t, resp.StatusCode, http.StatusBadRequest)
+
+	_ = resp.Body.Close()
 }

@@ -128,14 +128,23 @@ func TestHandleSendEquipmentRequest(t *testing.T) {
 	}
 
 	var pMsg protostream.ProtoMessage
-	if err := json.Unmarshal(rx.Msg.Body, &pMsg); err != nil {
+	if err = json.Unmarshal(rx.Msg.Body, &pMsg); err != nil {
 		t.Fatal(err)
 	}
 
 	var eRequest pb.TowerToFixture
-	if err := proto.Unmarshal(pMsg.Body, &eRequest); err != nil {
+	if err = proto.Unmarshal(pMsg.Body, &eRequest); err != nil {
 		t.Fatal(err)
 	}
 
 	assert.Equal(t, pb.EquipmentRequest_EQUIPMENT_REQUEST_SELF_TEST_APPROVED, eRequest.GetEquipmentRequest())
+
+	resp, err = http.Get(fmt.Sprintf("http://localhost:%d/equipment_request", port))
+	if err != nil {
+		t.Error(err)
+	}
+
+	assert.Equal(t, resp.StatusCode, http.StatusBadRequest)
+
+	_ = resp.Body.Close()
 }

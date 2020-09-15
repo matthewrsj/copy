@@ -46,6 +46,8 @@ func MonitorConfig(lg *zap.SugaredLogger, path string, initial *Configuration) {
 				lg.Debug("configuration change detected")
 
 				if conf, err := LoadConfig(path); err == nil {
+					lg.Info("loaded new configuration")
+
 					_globalConfiguration = &conf
 				} else {
 					lg.Warnw("unable to load configuration upon change", "error", err.Error())

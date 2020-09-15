@@ -71,6 +71,8 @@ func TestHandleBroadcastRequest(t *testing.T) {
 		_ = srv.Shutdown(context.Background())
 	}()
 
+	time.Sleep(time.Millisecond * 200)
+
 	rxd := make(chan struct{})
 
 	var rx *protostream.Message

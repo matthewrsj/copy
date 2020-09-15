@@ -31,7 +31,7 @@ func TestHandleUnreserveFixture(t *testing.T) {
 
 	mux := http.NewServeMux()
 
-	go HandleUnreserveFixture(mux, zap.NewExample().Sugar(), registry)
+	HandleUnreserveFixture(mux, zap.NewExample().Sugar(), registry)
 
 	port, err := freeport.GetFreePort()
 	if err != nil {
@@ -109,4 +109,13 @@ func TestHandleUnreserveFixture(t *testing.T) {
 	}()
 
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+	resp, err = http.Get(fmt.Sprintf("http://localhost:%d/unreserve", port))
+	if err != nil {
+		t.Error(err)
+	}
+
+	assert.Equal(t, resp.StatusCode, http.StatusBadRequest)
+
+	_ = resp.Body.Close()
 }
