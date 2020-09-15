@@ -53,6 +53,8 @@ func TestHandleUnreserveFixture(t *testing.T) {
 		_ = srv.Shutdown(context.Background())
 	}()
 
+	time.Sleep(time.Millisecond * 200)
+
 	unResReq := RequestForm{FixtureID: "01-01"}
 
 	buf, err := json.Marshal(unResReq)

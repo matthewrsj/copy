@@ -139,6 +139,8 @@ func main() {
 	towercontroller.HandlePreparedForDelivery(opsMux, sugar, registry)
 	// handle incoming posts to broadcast to fixtures
 	towercontroller.HandleBroadcastRequest(opsMux, publisher, sugar, registry)
+	// handle incoming gets to canary
+	towercontroller.HandleCanary(opsMux, registry, sugar)
 
 	// user API is handled by the userMux
 	userMux := http.NewServeMux()
