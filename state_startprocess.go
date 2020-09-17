@@ -197,6 +197,8 @@ func (s *StartProcess) performHandshake(msg proto.Message) {
 
 	s.childLogger.Info("checking that FXR is ready to handshake")
 
+	s.unload = true
+
 	for time.Since(start) < _readinessTimeoutLen {
 		rMsg, err := s.fxrInfo.FixtureState.GetOp()
 		if err != nil {
