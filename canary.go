@@ -3,6 +3,7 @@ package towercontroller
 import (
 	"encoding/json"
 	"net/http"
+	"sort"
 
 	"go.uber.org/zap"
 )
@@ -39,6 +40,14 @@ func HandleCanary(mux *http.ServeMux, registry map[string]*FixtureInfo, logger *
 				cr.FixturesUp = append(cr.FixturesUp, name)
 			}
 		}
+
+		sort.Slice(cr.FixturesUp, func(i, j int) bool {
+			return cr.FixturesUp[i] < cr.FixturesUp[j]
+		})
+
+		sort.Slice(cr.FixturesDown, func(i, j int) bool {
+			return cr.FixturesDown[i] < cr.FixturesDown[j]
+		})
 
 		cl = cl.With("fixture_status", cr)
 
