@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"go.uber.org/zap"
@@ -92,11 +93,14 @@ func (e *EndProcess) action() {
 
 	// TODO: determine how to inform cell API of fault
 	msg := "tray complete"
+
 	if e.fixtureFault {
-		msg += "; fixture faulted"
+		if err := logFaultToFile(msg, e.fxrInfo.Name, "logs/towercontroller/faults.log"); err != nil {
+			e.childLogger.Errorw("log fault to file", "error", err)
+		}
 	}
 
-	e.childLogger.Info(msg)
+	e.childLogger.Infow(msg, "fixture_faulted", e.fixtureFault)
 
 	tc := trayComplete{
 		ID:     e.tbc.Raw,
@@ -283,4 +287,25 @@ func (e *EndProcess) waitForOpen() {
 		// allow it to update
 		time.Sleep(time.Second)
 	}
+}
+
+func logFaultToFile(msg, fxName, fPath string) error {
+	msg += fmt.Sprintf("; fixture %s faulted; time: %v\n", fxName, time.Now())
+
+	f, err := os.OpenFile(fPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("open fault log: %v", err)
+	}
+
+	defer func() {
+		if cerr := f.Close(); err == nil {
+			err = cerr
+		}
+	}()
+
+	if _, err = f.Write([]byte(msg)); err != nil {
+		return fmt.Errorf("write to fault log: %v", err)
+	}
+
+	return err
 }
