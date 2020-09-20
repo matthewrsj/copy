@@ -42,13 +42,13 @@ all:
         ctet-cm2-tc-46.cell.tesla.com:
         ctet-cm2-tc-47.cell.tesla.com:
         ctet-cm2-tc-48.cell.tesla.com:
-#    aisle5:
-#      hosts:
-#        ctet-cm2-tc-51.cell.tesla.com:
-#        ctet-cm2-tc-52.cell.tesla.com:
-#        ctet-cm2-tc-53.cell.tesla.com:
-#        ctet-cm2-tc-54.cell.tesla.com:
-#        ctet-cm2-tc-55.cell.tesla.com:
-#        ctet-cm2-tc-56.cell.tesla.com:
-#        ctet-cm2-tc-57.cell.tesla.com:
-#        ctet-cm2-tc-58.cell.tesla.com:
+    aisle5:
+      hosts:
+        ctet-cm2-tc-51.cell.tesla.com:
+        ctet-cm2-tc-52.cell.tesla.com:
+        ctet-cm2-tc-53.cell.tesla.com:
+        ctet-cm2-tc-54.cell.tesla.com:
+        ctet-cm2-tc-55.cell.tesla.com:
+        ctet-cm2-tc-56.cell.tesla.com:
+        ctet-cm2-tc-57.cell.tesla.com:
+        ctet-cm2-tc-58.cell.tesla.com:

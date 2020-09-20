@@ -1,35 +1,35 @@
 ---
-# ansible-playbook -l <host_group> restart-services.yaml -K
+# ansible-playbook -l <host_group> start-services.yaml -K
 - hosts: all
   tasks:
-  - name: Restart protostream
+  - name: Start protostream
     service:
       name: protostream.service
-      state: restarted
+      state: started
     become: yes
     become_method: sudo
     tags:
       - protostream
-  - name: Restart towercontroller
+  - name: Start towercontroller
     service:
       name: towercontroller.service
-      state: restarted
+      state: started
     become: yes
     become_method: sudo
     tags:
       - towercontroller
-  - name: Restart towerstreamsvc
+  - name: Start towerstreamsvc
     service:
       name: towerstreamsvc.service
-      state: restarted
+      state: started
     become: yes
     become_method: sudo
     tags:
       - towerstreamsvc
-  - name: Restart canup
+  - name: Start canup
     service:
       name: canup.service
-      state: restarted
+      state: started
     become: yes
     become_method: sudo
     tags:

@@ -1,0 +1,11 @@
+---
+# ansible-playbook -l <host_group> copy.yaml -K
+- hosts: all
+  tasks:
+    - name: Copy File Over
+      copy:
+        src: <source>
+        dest: <destination>
+        owner: celladmin
+      become: yes
+      become_method: sudo
