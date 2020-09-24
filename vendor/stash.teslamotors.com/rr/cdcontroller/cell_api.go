@@ -1,4 +1,4 @@
-package cellapi
+package cdcontroller
 
 import (
 	"bytes"
@@ -13,12 +13,14 @@ type cellMapResp struct {
 	Cells []CellData `json:"cells"`
 }
 
+// CellData contains the serial number, location in tray, and a flag indicating whether or not the locaiton is empty
 type CellData struct {
 	Position string `json:"position"`
 	Serial   string `json:"cell_serial"`
 	IsEmpty  bool   `json:"is_empty"`
 }
 
+// CellPFData contains the pass/fail data of a given cell
 type CellPFData struct {
 	Serial  string `json:"cell_serial"`
 	Status  string `json:"status"`
@@ -26,6 +28,7 @@ type CellPFData struct {
 	Version int    `json:"version"`
 }
 
+// NextFormationStep contains the recipe name, step and step type for a given tray
 type NextFormationStep struct {
 	Name     string `json:"name"`
 	Step     string `json:"step"`
@@ -38,7 +41,8 @@ const (
 	StatusFailed = "fail"
 )
 
-type Client struct {
+// CellAPIClient holds several ease-of-use methods for communicating with the Cell API
+type CellAPIClient struct {
 	baseURL string
 	eps     endpoints
 }
@@ -66,51 +70,51 @@ const (
 	DefaultCloseProcessFmt = "/trays/%s/formation/next"
 )
 
-// Option function to set internal fields on the client
-type Option func(*Client)
+// CellAPIOption function to set internal fields on the client
+type CellAPIOption func(*CellAPIClient)
 
-// WithCellMapFmtEndpoint returns an Option to set the client cell map endpoint.
+// WithCellMapFmtEndpoint returns an CellAPIOption to set the client cell map endpoint.
 // The epf argument is a format string that accepts the tray serial number.
-func WithCellMapFmtEndpoint(epf string) Option {
-	return func(c *Client) {
+func WithCellMapFmtEndpoint(epf string) CellAPIOption {
+	return func(c *CellAPIClient) {
 		c.eps.cellMapFmt = epf
 	}
 }
 
-// WithProcessStatusFmtEndpoint returns an Option to set the client process status endpoint.
+// WithProcessStatusFmtEndpoint returns an CellAPIOption to set the client process status endpoint.
 // The epf argument is a format string that accepts the tray serial number, process step, and status.
-func WithProcessStatusFmtEndpoint(epf string) Option {
-	return func(c *Client) {
+func WithProcessStatusFmtEndpoint(epf string) CellAPIOption {
+	return func(c *CellAPIClient) {
 		c.eps.processStatusFmt = epf
 	}
 }
 
-// WithNextProcessStepFmtEndpoint returns an Option to set the client next process step endpoint.
+// WithNextProcessStepFmtEndpoint returns an CellAPIOption to set the client next process step endpoint.
 // The epf argument is a format string that accepts the tray serial number.
-func WithNextProcessStepFmtEndpoint(epf string) Option {
-	return func(c *Client) {
+func WithNextProcessStepFmtEndpoint(epf string) CellAPIOption {
+	return func(c *CellAPIClient) {
 		c.eps.nextProcessStepFmt = epf
 	}
 }
 
-// WithCellStatusEndpoint returns an Option to set the client cell status endpoint.
-func WithCellStatusEndpoint(ep string) Option {
-	return func(c *Client) {
+// WithCellStatusEndpoint returns an CellAPIOption to set the client cell status endpoint.
+func WithCellStatusEndpoint(ep string) CellAPIOption {
+	return func(c *CellAPIClient) {
 		c.eps.cellStatus = ep
 	}
 }
 
 // WithCloseProcessFmtEndpoint returns an option to set the client close process endpoint.
 // The epf argument is a format string that accepts the tray serial number.
-func WithCloseProcessFmtEndpoint(epf string) Option {
-	return func(c *Client) {
+func WithCloseProcessFmtEndpoint(epf string) CellAPIOption {
+	return func(c *CellAPIClient) {
 		c.eps.closeProcessFmt = epf
 	}
 }
 
-// NewClient returns a pointer to a new Client object configured with opts.
-func NewClient(baseURL string, opts ...Option) *Client {
-	c := Client{
+// NewCellAPIClient returns a pointer to a new CellAPIClient object configured with opts.
+func NewCellAPIClient(baseURL string, opts ...CellAPIOption) *CellAPIClient {
+	c := CellAPIClient{
 		baseURL: baseURL,
 		eps: endpoints{
 			cellMapFmt:         DefaultCellMapFmt,
@@ -128,7 +132,8 @@ func NewClient(baseURL string, opts ...Option) *Client {
 	return &c
 }
 
-func (c *Client) CloseProcessStep(sn, rcpeName string, version int) error {
+// CloseProcessStep closes the process step for the tray SN in the cell API
+func (c *CellAPIClient) CloseProcessStep(sn, rcpeName string, version int) error {
 	url := urlJoin(c.baseURL, fmt.Sprintf(c.eps.closeProcessFmt, sn))
 
 	type request struct {
@@ -141,8 +146,7 @@ func (c *Client) CloseProcessStep(sn, rcpeName string, version int) error {
 		return fmt.Errorf("marshal request json: %v", err)
 	}
 
-	// of course the URL has to be variable. We need to fmt everything in.
-	// nolint:gosec
+	// nolint:gosec // easier to construct the URL
 	resp, err := http.Post(url, "application/json", bytes.NewReader(b))
 	if err != nil {
 		return fmt.Errorf("POST to %s: %v", url, err)
@@ -185,11 +189,11 @@ func (c *Client) CloseProcessStep(sn, rcpeName string, version int) error {
 	return nil
 }
 
-func (c *Client) GetCellMap(sn string) (map[string]CellData, error) {
+// GetCellMap fetches the cell map for the given tray sn
+func (c *CellAPIClient) GetCellMap(sn string) (map[string]CellData, error) {
 	url := urlJoin(c.baseURL, fmt.Sprintf(c.eps.cellMapFmt, sn))
 
-	// of course the URL has to be variable. We need to fmt in the tray_serial.
-	// nolint:gosec
+	// nolint:gosec // easier to construct the URL
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("http GET %s: %v", url, err)
@@ -227,15 +231,15 @@ func (c *Client) GetCellMap(sn string) (map[string]CellData, error) {
 	return cm, nil
 }
 
-func (c *Client) UpdateProcessStatus(sn, fixture string, s TrayStatus) error {
+// UpdateProcessStatus updates the cell API of the start or end of a recipe
+func (c *CellAPIClient) UpdateProcessStatus(sn, fixture string, s TrayStatus) error {
 	if !s.isValid() {
 		return fmt.Errorf("status %s is not valid", s)
 	}
 
 	url := urlJoin(c.baseURL, fmt.Sprintf(c.eps.processStatusFmt, sn, fixture, s))
 
-	// of course the URL has to be variable. We need to fmt everything in.
-	// nolint:gosec
+	// nolint:gosec // easier to construct the URL
 	resp, err := http.Post(url, "", nil)
 	if err != nil {
 		return fmt.Errorf("POST to %s: %v", url, err)
@@ -278,7 +282,8 @@ func (c *Client) UpdateProcessStatus(sn, fixture string, s TrayStatus) error {
 	return nil
 }
 
-func (c *Client) SetCellStatuses(cpf []CellPFData) error {
+// SetCellStatuses sets the pass/fail data of a list of cells
+func (c *CellAPIClient) SetCellStatuses(cpf []CellPFData) error {
 	type request struct {
 		Cells []CellPFData `json:"cells"`
 	}
@@ -290,14 +295,17 @@ func (c *Client) SetCellStatuses(cpf []CellPFData) error {
 
 	url := urlJoin(c.baseURL, c.eps.cellStatus)
 
-	// of course the URL has to be variable. We need to construct it.
-	// nolint:gosec
+	// nolint:gosec // easier to construct the URL
 	resp, err := http.Post(url, "application/json", bytes.NewReader(b))
 	if err != nil {
 		return fmt.Errorf("POST to %s: %v", url, err)
 	}
 
-	defer resp.Body.Close()
+	defer func() {
+		if cerr := resp.Body.Close(); err == nil {
+			err = cerr
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		// ignore error here, it's just for enhancing the error string
@@ -308,11 +316,11 @@ func (c *Client) SetCellStatuses(cpf []CellPFData) error {
 	return nil
 }
 
-func (c *Client) GetNextProcessStep(sn string) (NextFormationStep, error) {
+// GetNextProcessStep returns the NextFormationStep for the tray SN
+func (c *CellAPIClient) GetNextProcessStep(sn string) (NextFormationStep, error) {
 	url := urlJoin(c.baseURL, fmt.Sprintf(c.eps.nextProcessStepFmt, sn))
 
-	// of course the URL has to be variable. We need to construct it.
-	// nolint:gosec
+	// nolint:gosec // easier to construct the URL
 	resp, err := http.Get(url)
 	if err != nil {
 		return NextFormationStep{}, fmt.Errorf("POST to %s: %v", url, err)

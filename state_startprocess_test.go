@@ -8,7 +8,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 	"stash.teslamotors.com/ctet/statemachine/v2"
-	"stash.teslamotors.com/rr/cellapi"
+	"stash.teslamotors.com/rr/cdcontroller"
 	"stash.teslamotors.com/rr/protostream"
 	pb "stash.teslamotors.com/rr/towerproto"
 	"stash.teslamotors.com/rr/traycontrollers"
@@ -31,7 +31,7 @@ func TestStartProcess_Action(t *testing.T) {
 			AllowedFixtures: []string{"01-01"},
 		},
 		childLogger:     zap.NewExample().Sugar(),
-		CellAPIClient:   &cellapi.Client{},
+		CellAPIClient:   &cdcontroller.CellAPIClient{},
 		processStepName: "test",
 		tbc: traycontrollers.TrayBarcode{
 			SN:  "11223344",
@@ -53,10 +53,10 @@ func TestStartProcess_Action(t *testing.T) {
 	}
 
 	gcmp := monkey.PatchInstanceMethod(
-		reflect.TypeOf(&cellapi.Client{}),
+		reflect.TypeOf(&cdcontroller.CellAPIClient{}),
 		"GetCellMap",
-		func(_ *cellapi.Client, sn string) (map[string]cellapi.CellData, error) {
-			return map[string]cellapi.CellData{
+		func(_ *cdcontroller.CellAPIClient, sn string) (map[string]cdcontroller.CellData, error) {
+			return map[string]cdcontroller.CellData{
 				"A01": {
 					Position: "A01",
 					Serial:   "TESTA01",
@@ -76,9 +76,9 @@ func TestStartProcess_Action(t *testing.T) {
 	defer pio.Unpatch()
 
 	ups := monkey.PatchInstanceMethod(
-		reflect.TypeOf(&cellapi.Client{}),
+		reflect.TypeOf(&cdcontroller.CellAPIClient{}),
 		"UpdateProcessStatus",
-		func(*cellapi.Client, string, string, cellapi.TrayStatus) error { return nil },
+		func(*cdcontroller.CellAPIClient, string, string, cdcontroller.TrayStatus) error { return nil },
 	)
 	defer ups.Unpatch()
 

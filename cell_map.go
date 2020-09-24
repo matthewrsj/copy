@@ -2,10 +2,10 @@ package towercontroller
 
 import (
 	"go.uber.org/zap"
-	"stash.teslamotors.com/rr/cellapi"
+	"stash.teslamotors.com/rr/cdcontroller"
 )
 
-func getCellMap(mockCellAPI bool, logger *zap.SugaredLogger, ca *cellapi.Client, tray string) (map[string]cellapi.CellData, error) {
+func getCellMap(mockCellAPI bool, logger *zap.SugaredLogger, ca *cdcontroller.CellAPIClient, tray string) (map[string]cdcontroller.CellData, error) {
 	if !mockCellAPI {
 		logger.Info("GetCellMap")
 		return ca.GetCellMap(tray)
@@ -13,7 +13,7 @@ func getCellMap(mockCellAPI bool, logger *zap.SugaredLogger, ca *cellapi.Client,
 
 	logger.Warn("cell API mocked, skipping GetCellMap and populating a few cells")
 
-	return map[string]cellapi.CellData{
+	return map[string]cdcontroller.CellData{
 		"A01": {
 			Position: "A01",
 			Serial:   "TESTA01",

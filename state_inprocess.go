@@ -5,7 +5,7 @@ import (
 
 	"go.uber.org/zap"
 	"stash.teslamotors.com/ctet/statemachine/v2"
-	"stash.teslamotors.com/rr/cellapi"
+	"stash.teslamotors.com/rr/cdcontroller"
 	"stash.teslamotors.com/rr/protostream"
 	pb "stash.teslamotors.com/rr/towerproto"
 	"stash.teslamotors.com/rr/traycontrollers"
@@ -17,7 +17,7 @@ type InProcess struct {
 
 	Config        Configuration
 	Logger        *zap.SugaredLogger
-	CellAPIClient *cellapi.Client
+	CellAPIClient *cdcontroller.CellAPIClient
 	Publisher     *protostream.Socket
 
 	childLogger     *zap.SugaredLogger
@@ -28,7 +28,7 @@ type InProcess struct {
 	mockCellAPI     bool
 	returnToIdle    bool
 	alarmed         pb.FireAlarmStatus
-	cells           map[string]cellapi.CellData
+	cells           map[string]cdcontroller.CellData
 	cellResponse    []*pb.Cell
 	recipeVersion   int
 

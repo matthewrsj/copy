@@ -8,7 +8,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 	"stash.teslamotors.com/ctet/statemachine/v2"
-	"stash.teslamotors.com/rr/cellapi"
+	"stash.teslamotors.com/rr/cdcontroller"
 	"stash.teslamotors.com/rr/protostream"
 	pb "stash.teslamotors.com/rr/towerproto"
 	"stash.teslamotors.com/rr/traycontrollers"
@@ -20,7 +20,7 @@ type StartProcess struct {
 
 	Config        Configuration
 	Logger        *zap.SugaredLogger
-	CellAPIClient *cellapi.Client
+	CellAPIClient *cdcontroller.CellAPIClient
 	Publisher     *protostream.Socket
 
 	childLogger     *zap.SugaredLogger
@@ -30,7 +30,7 @@ type StartProcess struct {
 	fxbc            traycontrollers.FixtureBarcode
 	steps           traycontrollers.StepConfiguration
 	stepType        string
-	cells           map[string]cellapi.CellData
+	cells           map[string]cdcontroller.CellData
 	smFatal         bool
 	mockCellAPI     bool
 	unload          bool
@@ -123,7 +123,7 @@ func (s *StartProcess) action() {
 		go func() {
 			s.childLogger.Debug("updating process status", "status", "end")
 
-			err := s.CellAPIClient.UpdateProcessStatus(s.tbc.SN, s.fxbc.Raw, cellapi.StatusStart)
+			err := s.CellAPIClient.UpdateProcessStatus(s.tbc.SN, s.fxbc.Raw, cdcontroller.StatusStart)
 			if err != nil {
 				s.childLogger.Warnw("unable to update Cell API of recipe start", "error", err)
 			}

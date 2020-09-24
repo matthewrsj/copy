@@ -8,6 +8,9 @@ import (
 	"sync"
 	"time"
 
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/peer"
+
 	"github.com/golang/protobuf/ptypes"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
@@ -40,15 +43,16 @@ type PeerTracker struct {
 	sync.RWMutex
 	lastChange time.Time
 	state      bool
+	discovered string
 }
 
 // PeerTracker.GetState returns the current state as determined by keepalives,
 // indicating state and when the state last changed or creation time if state has
-// not changed since.
-func (p *PeerTracker) GetState() (bool, time.Time) {
+// not changed since. GetState also returns the name reported by the remote endpoint.
+func (p *PeerTracker) GetState() (bool, time.Time, string) {
 	p.RLock()
 	defer p.RUnlock()
-	return p.state, p.lastChange
+	return p.state, p.lastChange, p.discovered
 }
 
 const (
@@ -110,7 +114,7 @@ func NewPeerTracker(
 	}
 }
 
-func (p *PeerTracker) Start(ctx context.Context, remoteEnd string) {
+func (p *PeerTracker) Start(ctx context.Context, remoteEnd string, remoteName string) {
 	defer close(p.Notify)
 
 	// Log and debug anon function
@@ -118,12 +122,14 @@ func (p *PeerTracker) Start(ctx context.Context, remoteEnd string) {
 		if p.metrics != nil {
 			p.metrics.HellosCounter.WithLabelValues(labels...).Inc()
 		}
-		logFields := getHelloZapFields(hello)
-		if err != nil {
-			logFields = append(logFields, "error", err)
-			p.Errorw(msg, logFields...)
-		} else {
-			p.Debugw(msg, logFields...)
+		if msg != "" {
+			logFields := getHelloZapFields(hello)
+			if err != nil {
+				logFields = append(logFields, "error", err)
+				p.Errorw(msg, logFields...)
+			} else {
+				p.Debugw(msg, logFields...)
+			}
 		}
 	}
 
@@ -141,9 +147,11 @@ func (p *PeerTracker) Start(ctx context.Context, remoteEnd string) {
 
 				st, ok := status.FromError(err)
 				if err == io.EOF || (ok && st.Code() == codes.Canceled) {
-					p.Debugw("peerTracker_reader_goroutine_closing_down_stream_closed", "remote", remoteEnd)
+					p.Debugw("peerTracker_reader_goroutine_closing_down_stream_closed", ""+
+						"remote", remoteEnd, "peer", remoteName)
 				} else {
-					p.Errorw("peerTracker_reader_goroutine_closing_down_stream_error", "remote", remoteEnd,
+					p.Errorw("peerTracker_reader_goroutine_closing_down_stream_error",
+						"remote", remoteEnd, "peer", remoteName,
 						"error", err)
 				}
 				return
@@ -177,30 +185,29 @@ outerLoop:
 
 		case <-timeout:
 			// hmm... we found a hello for which we have not got a Response in time
-			trace([]string{DirRx, ResHelloTimeoutOnReply, remoteEnd, HelloEchoReply},
+			trace([]string{DirRx, ResHelloTimeoutOnReply, remoteName, HelloEchoReply},
 				"peerTracker_echo_request_never_received",
 				fmt.Errorf("gave up waiting for nonce %v from %s", nonce, remoteEnd), nil)
 			timeout = nil
 			nonce = 0
-			p.evaluateStateChange(remoteEnd, false)
+			p.evaluateStateChange(remoteName, false)
 
 		case <-helloPeriodChan:
 
 			// If hello period is configured this channel will tick. Set up a new nonce, and launch.
 			nonce = rand.Int63()
 			hello := &Hello{
-				Conversation: p.buildConversationHeader(),
+				Conversation: p.buildConversationHeader(MessageIDNone),
 				EchoRequest:  true,
 				Nonce:        nonce,
 			}
 			err := p.conn.Send(hello)
 			if err != nil {
-				trace([]string{DirTx, ResSendFailed, remoteEnd, HelloEchoRequest},
+				trace([]string{DirTx, ResSendFailed, remoteName, HelloEchoRequest},
 					"peerTracker_sent_echo_request", err, hello)
 				break outerLoop
 			}
-			trace([]string{DirTx, ResOk, remoteEnd, HelloEchoRequest},
-				"peerTracker_sent_echo_request", err, hello)
+			trace([]string{DirTx, ResOk, remoteName, HelloEchoRequest}, "", err, hello)
 
 			// Setup timeout... (on the expensive side - we could reuse timer... but we don't have many connections.
 			timeout = time.NewTimer(p.timeout).C
@@ -216,32 +223,29 @@ outerLoop:
 
 			if hello.EchoRequest {
 
-				trace([]string{DirRx, ResOk, remoteEnd, HelloEchoRequest},
-					"peerTracker_rxed_echo_request", nil, hello)
+				trace([]string{DirRx, ResOk, remoteName, HelloEchoRequest}, "", nil, hello)
 
 				hello.EchoRequest = false
-				hello.Conversation = p.buildConversationHeader()
+				hello.Conversation = p.buildConversationHeader(hello.Conversation.Id())
 				err := p.conn.Send(hello)
 				if err != nil {
-					trace([]string{DirTx, ResSendFailed, remoteEnd, HelloEchoReply},
+					trace([]string{DirTx, ResSendFailed, remoteName, HelloEchoReply},
 						"peerTracker_txed_echo_reply", err, hello)
 					break outerLoop
 				}
-				trace([]string{DirTx, ResOk, remoteEnd, HelloEchoReply},
-					"peerTracker_txed_echo_reply", err, hello)
+				trace([]string{DirTx, ResOk, remoteName, HelloEchoReply}, "", err, hello)
 				break
 			}
 
 			// We have a reply. Check if it matches nonce?
 			rxNonce := hello.Nonce
 			if rxNonce != 0 && rxNonce == nonce {
-				trace([]string{DirRx, ResOk, remoteEnd, HelloEchoReply},
-					"peerTracker_rxed_echo_reply_expected", nil, hello)
+				trace([]string{DirRx, ResOk, remoteName, HelloEchoReply}, "", nil, hello)
 				timeout = nil
 				nonce = 0 // stop waiting for it
-				p.evaluateStateChange(remoteEnd, true)
+				p.evaluateStateChange(remoteName, true)
 			} else {
-				trace([]string{DirRx, ResHelloWithUnknownNonce, remoteEnd, HelloEchoReply},
+				trace([]string{DirRx, ResHelloWithUnknownNonce, remoteName, HelloEchoReply},
 					"peerTracker_rxed_echo_reply_unexpected", nil, hello)
 			}
 		}
@@ -256,7 +260,7 @@ outerLoop:
 		}
 	}
 	// Issue final unreachable...
-	p.evaluateStateChange(remoteEnd, false)
+	p.evaluateStateChange(remoteName, false)
 }
 
 func (p *PeerTracker) evaluateStateChange(remoteEnd string, ok bool) {
@@ -266,6 +270,7 @@ func (p *PeerTracker) evaluateStateChange(remoteEnd string, ok bool) {
 		p.Lock()
 		p.state = ok
 		p.lastChange = time.Now()
+		p.discovered = remoteEnd
 		p.Unlock()
 		if p.metrics != nil {
 			if ok {
@@ -288,12 +293,8 @@ func (p *PeerTracker) evaluateStateChange(remoteEnd string, ok bool) {
 	}
 }
 
-func (p *PeerTracker) buildConversationHeader() *Conversation {
-	return &Conversation{
-		Line:       p.line,
-		Origin:     p.name,
-		Originated: ptypes.TimestampNow(),
-	}
+func (p *PeerTracker) buildConversationHeader(mid MessageId) *Conversation {
+	return BuildConversationHeader(p.line, p.name, mid)
 }
 
 func getConversationZapFields(c *Conversation) []interface{} {
@@ -314,4 +315,22 @@ func getHelloZapFields(h *Hello) []interface{} {
 	return append(getConversationZapFields(h.Conversation),
 		"echorequest", h.EchoRequest,
 		"nonce", h.Nonce)
+}
+
+func HelloRemoteAddressAndNameFromContext(ctx context.Context) (string, string) {
+	remoteEnd := "unidentified"
+	pr, ok := peer.FromContext(ctx)
+	if ok {
+		remoteEnd = pr.Addr.String()
+	}
+
+	remoteName := "undiscovered"
+	md, ok := metadata.FromIncomingContext(ctx)
+	if ok {
+		values := md.Get("name")
+		if len(values) > 0 {
+			remoteName = values[0]
+		}
+	}
+	return remoteEnd, remoteName
 }

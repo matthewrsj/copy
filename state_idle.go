@@ -8,7 +8,7 @@ import (
 
 	"go.uber.org/zap"
 	"stash.teslamotors.com/ctet/statemachine/v2"
-	"stash.teslamotors.com/rr/cellapi"
+	"stash.teslamotors.com/rr/cdcontroller"
 	"stash.teslamotors.com/rr/protostream"
 	pb "stash.teslamotors.com/rr/towerproto"
 	"stash.teslamotors.com/rr/traycontrollers"
@@ -20,7 +20,7 @@ type Idle struct {
 
 	Config        Configuration
 	Logger        *zap.SugaredLogger
-	CellAPIClient *cellapi.Client
+	CellAPIClient *cdcontroller.CellAPIClient
 	Publisher     *protostream.Socket
 
 	MockCellAPI bool

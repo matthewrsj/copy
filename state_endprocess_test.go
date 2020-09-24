@@ -5,11 +5,12 @@ import (
 	"testing"
 	"time"
 
+	"stash.teslamotors.com/rr/cdcontroller"
+
 	"bou.ke/monkey"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 	"stash.teslamotors.com/ctet/statemachine/v2"
-	"stash.teslamotors.com/rr/cellapi"
 	"stash.teslamotors.com/rr/protostream"
 	pb "stash.teslamotors.com/rr/towerproto"
 	"stash.teslamotors.com/rr/traycontrollers"
@@ -28,7 +29,7 @@ func TestEndProcess_Action(t *testing.T) {
 				"A": {"A01", "A02"},
 			},
 		},
-		CellAPIClient: cellapi.NewClient(""),
+		CellAPIClient: cdcontroller.NewCellAPIClient(""),
 		cellResponse: []*pb.Cell{
 			{
 				Cellstatus: pb.CellStatus_CELL_STATUS_COMPLETE,
@@ -40,7 +41,7 @@ func TestEndProcess_Action(t *testing.T) {
 				Cellstatus: pb.CellStatus_CELL_STATUS_NONE_UNSPECIFIED,
 			},
 		},
-		cells: map[string]cellapi.CellData{
+		cells: map[string]cdcontroller.CellData{
 			"A01": {
 				Position: "A01",
 				Serial:   "A01CEREAL",
@@ -86,18 +87,18 @@ func TestEndProcess_Action(t *testing.T) {
 	}()
 
 	ups := monkey.PatchInstanceMethod(
-		reflect.TypeOf(&cellapi.Client{}),
+		reflect.TypeOf(&cdcontroller.CellAPIClient{}),
 		"UpdateProcessStatus",
-		func(*cellapi.Client, string, string, cellapi.TrayStatus) error {
+		func(*cdcontroller.CellAPIClient, string, string, cdcontroller.TrayStatus) error {
 			return nil
 		},
 	)
 	defer ups.Unpatch()
 
 	scs := monkey.PatchInstanceMethod(
-		reflect.TypeOf(&cellapi.Client{}),
+		reflect.TypeOf(&cdcontroller.CellAPIClient{}),
 		"SetCellStatuses",
-		func(*cellapi.Client, []cellapi.CellPFData) error {
+		func(*cdcontroller.CellAPIClient, []cdcontroller.CellPFData) error {
 			return nil
 		},
 	)
@@ -139,7 +140,7 @@ func TestEndProcess_ActionBadOrientation(t *testing.T) {
 				"A": {"A01", "A02"},
 			},
 		},
-		CellAPIClient: cellapi.NewClient(""),
+		CellAPIClient: cdcontroller.NewCellAPIClient(""),
 		cellResponse: []*pb.Cell{
 			{
 				Cellstatus: pb.CellStatus_CELL_STATUS_COMPLETE,
@@ -151,7 +152,7 @@ func TestEndProcess_ActionBadOrientation(t *testing.T) {
 				Cellstatus: pb.CellStatus_CELL_STATUS_NONE_UNSPECIFIED,
 			},
 		},
-		cells: map[string]cellapi.CellData{
+		cells: map[string]cdcontroller.CellData{
 			"A01": {
 				Position: "A01",
 				Serial:   "A01CEREAL",
@@ -193,9 +194,9 @@ func TestEndProcess_ActionBadOrientation(t *testing.T) {
 	}()
 
 	ups := monkey.PatchInstanceMethod(
-		reflect.TypeOf(&cellapi.Client{}),
+		reflect.TypeOf(&cdcontroller.CellAPIClient{}),
 		"UpdateProcessStatus",
-		func(*cellapi.Client, string, string, cellapi.TrayStatus) error {
+		func(*cdcontroller.CellAPIClient, string, string, cdcontroller.TrayStatus) error {
 			return assert.AnError
 		},
 	)
@@ -237,7 +238,7 @@ func TestEndProcess_ActionShortMap(t *testing.T) {
 				"A": {},
 			},
 		},
-		CellAPIClient: cellapi.NewClient(""),
+		CellAPIClient: cdcontroller.NewCellAPIClient(""),
 		cellResponse: []*pb.Cell{
 			{
 				Cellstatus: pb.CellStatus_CELL_STATUS_COMPLETE,
@@ -249,7 +250,7 @@ func TestEndProcess_ActionShortMap(t *testing.T) {
 				Cellstatus: pb.CellStatus_CELL_STATUS_NONE_UNSPECIFIED,
 			},
 		},
-		cells: map[string]cellapi.CellData{
+		cells: map[string]cdcontroller.CellData{
 			"A01": {
 				Position: "A01",
 				Serial:   "A01CEREAL",
@@ -291,9 +292,9 @@ func TestEndProcess_ActionShortMap(t *testing.T) {
 	}()
 
 	ups := monkey.PatchInstanceMethod(
-		reflect.TypeOf(&cellapi.Client{}),
+		reflect.TypeOf(&cdcontroller.CellAPIClient{}),
 		"UpdateProcessStatus",
-		func(*cellapi.Client, string, string, cellapi.TrayStatus) error {
+		func(*cdcontroller.CellAPIClient, string, string, cdcontroller.TrayStatus) error {
 			return assert.AnError
 		},
 	)
@@ -336,7 +337,7 @@ func TestEndProcess_ActionBadSetCellStatus(t *testing.T) {
 				"A": {"A01", "A02", "A03"},
 			},
 		},
-		CellAPIClient: cellapi.NewClient(""),
+		CellAPIClient: cdcontroller.NewCellAPIClient(""),
 		cellResponse: []*pb.Cell{
 			{
 				Cellstatus: pb.CellStatus_CELL_STATUS_COMPLETE,
@@ -348,7 +349,7 @@ func TestEndProcess_ActionBadSetCellStatus(t *testing.T) {
 				Cellstatus: pb.CellStatus_CELL_STATUS_NONE_UNSPECIFIED,
 			},
 		},
-		cells: map[string]cellapi.CellData{
+		cells: map[string]cdcontroller.CellData{
 			"A01": {
 				Position: "A01",
 				Serial:   "A01CEREAL",
@@ -394,18 +395,18 @@ func TestEndProcess_ActionBadSetCellStatus(t *testing.T) {
 	}()
 
 	ups := monkey.PatchInstanceMethod(
-		reflect.TypeOf(&cellapi.Client{}),
+		reflect.TypeOf(&cdcontroller.CellAPIClient{}),
 		"UpdateProcessStatus",
-		func(*cellapi.Client, string, string, cellapi.TrayStatus) error {
+		func(*cdcontroller.CellAPIClient, string, string, cdcontroller.TrayStatus) error {
 			return nil
 		},
 	)
 	defer ups.Unpatch()
 
 	scs := monkey.PatchInstanceMethod(
-		reflect.TypeOf(&cellapi.Client{}),
+		reflect.TypeOf(&cdcontroller.CellAPIClient{}),
 		"SetCellStatuses",
-		func(*cellapi.Client, []cellapi.CellPFData) error {
+		func(*cdcontroller.CellAPIClient, []cdcontroller.CellPFData) error {
 			return assert.AnError
 		},
 	)

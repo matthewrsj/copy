@@ -8,9 +8,10 @@ import (
 	"os"
 	"time"
 
+	"stash.teslamotors.com/rr/cdcontroller"
+
 	"go.uber.org/zap"
 	"stash.teslamotors.com/ctet/statemachine/v2"
-	"stash.teslamotors.com/rr/cellapi"
 	"stash.teslamotors.com/rr/protostream"
 	pb "stash.teslamotors.com/rr/towerproto"
 	"stash.teslamotors.com/rr/traycontrollers"
@@ -24,13 +25,13 @@ type EndProcess struct {
 
 	Config        Configuration
 	Logger        *zap.SugaredLogger
-	CellAPIClient *cellapi.Client
+	CellAPIClient *cdcontroller.CellAPIClient
 	Publisher     *protostream.Socket
 
 	childLogger     *zap.SugaredLogger
 	tbc             traycontrollers.TrayBarcode
 	fxbc            traycontrollers.FixtureBarcode
-	cells           map[string]cellapi.CellData
+	cells           map[string]cdcontroller.CellData
 	cellResponse    []*pb.Cell
 	processStepName string
 	smFatal         bool
@@ -72,7 +73,7 @@ func (e *EndProcess) action() {
 		go func() {
 			e.childLogger.Debug("updating process status", "status", "end")
 
-			err := e.CellAPIClient.UpdateProcessStatus(e.tbc.SN, fmt.Sprintf("CM2-%s%s-%s", e.Config.Loc.Process, e.Config.Loc.Aisle, e.fxrInfo.Name), cellapi.StatusEnd)
+			err := e.CellAPIClient.UpdateProcessStatus(e.tbc.SN, fmt.Sprintf("CM2-%s%s-%s", e.Config.Loc.Process, e.Config.Loc.Aisle, e.fxrInfo.Name), cdcontroller.StatusEnd)
 			if err != nil {
 				e.childLogger.Warnw("unable to update Cell API of recipe end", "error", err)
 			}
@@ -192,7 +193,7 @@ type trayComplete struct {
 
 func (e *EndProcess) setCellStatuses() {
 	// nolint:prealloc // we don't know how long this will be, depends on what the FXR Cells' content is
-	cpf := []cellapi.CellPFData{}
+	cpf := []cdcontroller.CellPFData{}
 
 	type cellStats struct {
 		Serial      string `json:"cell_serial"`
@@ -205,9 +206,9 @@ func (e *EndProcess) setCellStatuses() {
 	var failed []string
 
 	for i, cell := range e.cellResponse {
-		status := cellapi.StatusPassed
+		status := cdcontroller.StatusPassed
 		if cell.GetCellstatus() != pb.CellStatus_CELL_STATUS_COMPLETE {
-			status = cellapi.StatusFailed
+			status = cdcontroller.StatusFailed
 		}
 
 		m, ok := e.Config.CellMap[e.tbc.O.String()]
@@ -223,7 +224,7 @@ func (e *EndProcess) setCellStatuses() {
 
 		position := m[i]
 
-		if status == cellapi.StatusFailed {
+		if status == cdcontroller.StatusFailed {
 			failed = append(failed, position)
 		}
 
@@ -240,7 +241,7 @@ func (e *EndProcess) setCellStatuses() {
 			Status:      cell.GetCellstatus().String(),
 		}
 
-		cpf = append(cpf, cellapi.CellPFData{
+		cpf = append(cpf, cdcontroller.CellPFData{
 			Serial:  cellInfo.Serial,
 			Status:  status,
 			Recipe:  e.processStepName,

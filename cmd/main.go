@@ -19,7 +19,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"stash.teslamotors.com/ctet/statemachine/v2"
-	"stash.teslamotors.com/rr/cellapi"
+	"stash.teslamotors.com/rr/cdcontroller"
 	"stash.teslamotors.com/rr/protostream"
 	"stash.teslamotors.com/rr/towercontroller"
 	"stash.teslamotors.com/rr/traycontrollers"
@@ -63,12 +63,12 @@ func main() {
 
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 
-	caClient := cellapi.NewClient(conf.CellAPI.Base,
-		cellapi.WithNextProcessStepFmtEndpoint(conf.CellAPI.Endpoints.NextProcStepFmt),
-		cellapi.WithProcessStatusFmtEndpoint(conf.CellAPI.Endpoints.ProcessStatusFmt),
-		cellapi.WithCellMapFmtEndpoint(conf.CellAPI.Endpoints.CellMapFmt),
-		cellapi.WithCellStatusEndpoint(conf.CellAPI.Endpoints.CellStatus),
-		cellapi.WithCloseProcessFmtEndpoint(conf.CellAPI.Endpoints.CloseProcessFmt),
+	caClient := cdcontroller.NewCellAPIClient(conf.CellAPI.Base,
+		cdcontroller.WithNextProcessStepFmtEndpoint(conf.CellAPI.Endpoints.NextProcStepFmt),
+		cdcontroller.WithProcessStatusFmtEndpoint(conf.CellAPI.Endpoints.ProcessStatusFmt),
+		cdcontroller.WithCellMapFmtEndpoint(conf.CellAPI.Endpoints.CellMapFmt),
+		cdcontroller.WithCellStatusEndpoint(conf.CellAPI.Endpoints.CellStatus),
+		cdcontroller.WithCloseProcessFmtEndpoint(conf.CellAPI.Endpoints.CloseProcessFmt),
 	)
 
 	registry := make(map[string]*towercontroller.FixtureInfo)

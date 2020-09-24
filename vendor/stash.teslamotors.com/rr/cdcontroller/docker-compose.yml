@@ -1,0 +1,12 @@
+version: '3.7'
+
+services:
+  cdcontroller:
+    image: artifactory.teslamotors.com:2132/formation-docker-local/cdcontrollerapp
+    build:
+      context: .
+      dockerfile: Dockerfile.app
+    network_mode: host
+    volumes:
+      - /var/log/cdcontroller:/go/src/app/cmd/logs/cdcontroller
+      - /etc/cdcontroller.d:/etc/cdcontroller.d

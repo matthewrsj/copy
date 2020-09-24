@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cdcontroller
+  namespace: formation-cdcontroller
+spec:
+  selector:
+    matchLabels:
+      app: cdcontroller
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: cdcontroller
+    spec:
+      containers:
+        - name: cdcontroller
+          image: artifactory.teslamotors.com:2132/formation-docker-local/cdcontrollerapp:latest
+          ports:
+            - containerPort: 8080
+            - containerPort: 13175
+      imagePullSecrets:
+        - name: regcred
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cdcontroller
+  namespace: formation-cdcontroller
+  labels:
+    app: cdcontroller
+spec:
+  ports:
+    - port: 443
+      name: https
+      protocol: TCP
+      targetPort: 8080
+    - port: 13175
+      name: grpc
+      protocol: TCP
+      targetPort: 13175
+  selector:
+    app: cdcontroller
+---
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: cdcontroller
+  namespace: formation-cdcontroller
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
+    nginx.ingress.kubernetes.io/server-snippet: |
+      grpc_read_timeout 600s;
+      grpc_send_timeout 600s;
+      client_body_timeout 600s;
+spec:
+  rules:
+    - host: terminal.formation-cdcontroller.us-sjc25-prd-factory.k8s.tesla.com
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: cdcontroller
+              servicePort: 13175
+---
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: cdcontroller-tc
+  namespace: formation-cdcontroller
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+    - host: cdc.formation-cdcontroller.us-sjc25-prd-factory.k8s.tesla.com
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: cdcontroller
+              servicePort: 443
