@@ -11,7 +11,6 @@ import (
 	"stash.teslamotors.com/rr/cdcontroller"
 	"stash.teslamotors.com/rr/protostream"
 	pb "stash.teslamotors.com/rr/towerproto"
-	"stash.teslamotors.com/rr/traycontrollers"
 )
 
 func TestStartProcess_Action(t *testing.T) {
@@ -33,17 +32,17 @@ func TestStartProcess_Action(t *testing.T) {
 		childLogger:     zap.NewExample().Sugar(),
 		CellAPIClient:   &cdcontroller.CellAPIClient{},
 		processStepName: "test",
-		tbc: traycontrollers.TrayBarcode{
+		tbc: cdcontroller.TrayBarcode{
 			SN:  "11223344",
-			O:   traycontrollers.OrientationA,
+			O:   cdcontroller.OrientationA,
 			Raw: "11223344A",
 		},
-		fxbc: traycontrollers.FixtureBarcode{
+		fxbc: cdcontroller.FixtureBarcode{
 			Tower: "01",
 			Fxn:   "01",
 			Raw:   "CM2-63010-01-01",
 		},
-		steps: traycontrollers.StepConfiguration{{Mode: "test"}},
+		steps: cdcontroller.StepConfiguration{{Mode: "test"}},
 	}
 	as := (&spState).Actions()
 

@@ -11,7 +11,6 @@ import (
 	"stash.teslamotors.com/rr/cdcontroller"
 	"stash.teslamotors.com/rr/protostream"
 	pb "stash.teslamotors.com/rr/towerproto"
-	"stash.teslamotors.com/rr/traycontrollers"
 )
 
 // StartProcess sends the recipe information to the FXR
@@ -26,9 +25,9 @@ type StartProcess struct {
 	childLogger     *zap.SugaredLogger
 	processStepName string
 	transactID      string
-	tbc             traycontrollers.TrayBarcode
-	fxbc            traycontrollers.FixtureBarcode
-	steps           traycontrollers.StepConfiguration
+	tbc             cdcontroller.TrayBarcode
+	fxbc            cdcontroller.FixtureBarcode
+	steps           cdcontroller.StepConfiguration
 	stepType        string
 	cells           map[string]cdcontroller.CellData
 	smFatal         bool
@@ -49,7 +48,7 @@ func (s *StartProcess) action() {
 		"transaction_id", s.transactID,
 	)
 
-	if s.stepType != traycontrollers.AllowedStepType {
+	if s.stepType != cdcontroller.AllowedStepType {
 		s.childLogger.Errorw("incorrect step type for charge/discharge", "step_type", s.stepType)
 		s.unload = true
 

@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"go.uber.org/zap"
-	"stash.teslamotors.com/rr/traycontrollers"
+	"stash.teslamotors.com/rr/cdcontroller"
 )
 
 const _preparedForDeliveryEndpoint = "/preparedForDelivery"
@@ -25,7 +25,7 @@ func HandlePreparedForDelivery(mux *http.ServeMux, logger *zap.SugaredLogger, re
 			return
 		}
 
-		var pfd traycontrollers.PreparedForDelivery
+		var pfd cdcontroller.PreparedForDelivery
 		if err = json.Unmarshal(b, &pfd); err != nil {
 			logger.Errorw("unmarshal request body", "error", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)

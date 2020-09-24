@@ -10,12 +10,11 @@ import (
 	"testing"
 	"time"
 
-	"stash.teslamotors.com/rr/traycontrollers"
-
 	"github.com/phayes/freeport"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
+	"stash.teslamotors.com/rr/cdcontroller"
 	"stash.teslamotors.com/rr/protostream"
 	pb "stash.teslamotors.com/rr/towerproto"
 )
@@ -83,11 +82,11 @@ func TestHandleBroadcastRequest(t *testing.T) {
 		close(rxd)
 	}()
 
-	br := traycontrollers.BroadcastRequest{
-		Scale:     traycontrollers.ScaleAisle,
-		Operation: traycontrollers.OperationStopFormation,
-		Reason:    traycontrollers.ReasonFireLevel0,
-		Originator: traycontrollers.BroadcastOrigin{
+	br := cdcontroller.BroadcastRequest{
+		Scale:     cdcontroller.ScaleAisle,
+		Operation: cdcontroller.OperationStopFormation,
+		Reason:    cdcontroller.ReasonFireLevel0,
+		Originator: cdcontroller.BroadcastOrigin{
 			Aisle:    "010",
 			Location: "01-01",
 		},
@@ -100,7 +99,7 @@ func TestHandleBroadcastRequest(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	resp, err := http.Post(fmt.Sprintf("http://localhost:%d%s", port, traycontrollers.BroadcastEndpoint), "application/json", bytes.NewReader(buf))
+	resp, err := http.Post(fmt.Sprintf("http://localhost:%d%s", port, cdcontroller.BroadcastEndpoint), "application/json", bytes.NewReader(buf))
 	if err != nil {
 		t.Fatal(err)
 	}

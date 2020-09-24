@@ -8,7 +8,6 @@ import (
 	"stash.teslamotors.com/rr/cdcontroller"
 	"stash.teslamotors.com/rr/protostream"
 	pb "stash.teslamotors.com/rr/towerproto"
-	"stash.teslamotors.com/rr/traycontrollers"
 )
 
 // InProcess monitors the FXR proto for the state to change
@@ -21,8 +20,8 @@ type InProcess struct {
 	Publisher     *protostream.Socket
 
 	childLogger     *zap.SugaredLogger
-	tbc             traycontrollers.TrayBarcode
-	fxbc            traycontrollers.FixtureBarcode
+	tbc             cdcontroller.TrayBarcode
+	fxbc            cdcontroller.FixtureBarcode
 	processStepName string
 	fixtureFault    bool
 	mockCellAPI     bool

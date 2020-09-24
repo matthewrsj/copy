@@ -9,9 +9,9 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"nanomsg.org/go/mangos/v2"
 	"stash.teslamotors.com/ctet/statemachine/v2"
+	"stash.teslamotors.com/rr/cdcontroller"
 	"stash.teslamotors.com/rr/protostream"
 	pb "stash.teslamotors.com/rr/towerproto"
-	"stash.teslamotors.com/rr/traycontrollers"
 )
 
 func TestInProcess_Action(t *testing.T) {
@@ -24,12 +24,12 @@ func TestInProcess_Action(t *testing.T) {
 			AllowedFixtures: []string{"01-01"},
 		},
 		childLogger: zap.NewExample().Sugar(),
-		tbc: traycontrollers.TrayBarcode{
+		tbc: cdcontroller.TrayBarcode{
 			SN:  "11223344",
-			O:   traycontrollers.OrientationA,
+			O:   cdcontroller.OrientationA,
 			Raw: "11223344A",
 		},
-		fxbc: traycontrollers.FixtureBarcode{
+		fxbc: cdcontroller.FixtureBarcode{
 			Location: "CM2",
 			Aisle:    "63010",
 			Tower:    "01",

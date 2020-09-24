@@ -6,8 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 	"stash.teslamotors.com/ctet/statemachine/v2"
+	"stash.teslamotors.com/rr/cdcontroller"
 	pb "stash.teslamotors.com/rr/towerproto"
-	"stash.teslamotors.com/rr/traycontrollers"
 )
 
 func TestIdle_Next(t *testing.T) {
@@ -34,7 +34,7 @@ func TestIdle_NextErr(t *testing.T) {
 }
 
 func TestIdle_Actions(t *testing.T) {
-	pfdC := make(chan traycontrollers.PreparedForDelivery)
+	pfdC := make(chan cdcontroller.PreparedForDelivery)
 	i := &Idle{
 		Config: Configuration{
 			AllowedFixtures: []string{"01-01"},
@@ -58,7 +58,7 @@ func TestIdle_Actions(t *testing.T) {
 	}()
 
 	go func() {
-		pfdC <- traycontrollers.PreparedForDelivery{
+		pfdC <- cdcontroller.PreparedForDelivery{
 			Tray:    "11223344A",
 			Fixture: "CM2-63010-01-01",
 		}
@@ -72,7 +72,7 @@ func TestIdle_Actions(t *testing.T) {
 }
 
 func TestIdle_ActionsBadTray(t *testing.T) {
-	pfdC := make(chan traycontrollers.PreparedForDelivery)
+	pfdC := make(chan cdcontroller.PreparedForDelivery)
 	i := &Idle{
 		Config: Configuration{
 			AllowedFixtures: []string{"01-01"},
@@ -92,7 +92,7 @@ func TestIdle_ActionsBadTray(t *testing.T) {
 	}()
 
 	go func() {
-		pfdC <- traycontrollers.PreparedForDelivery{
+		pfdC <- cdcontroller.PreparedForDelivery{
 			Tray:    "11223",
 			Fixture: "CM2-63010-01-01",
 		}

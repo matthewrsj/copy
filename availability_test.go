@@ -13,8 +13,8 @@ import (
 	"github.com/phayes/freeport"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
+	"stash.teslamotors.com/rr/cdcontroller"
 	pb "stash.teslamotors.com/rr/towerproto"
-	"stash.teslamotors.com/rr/traycontrollers"
 )
 
 func TestHandleAvailable(t *testing.T) {
@@ -115,7 +115,7 @@ func TestHandleAvailable(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var as traycontrollers.Availability
+	var as cdcontroller.Availability
 	if err = json.Unmarshal(jb, &as); err != nil {
 		t.Fatal(err)
 	}

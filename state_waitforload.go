@@ -7,7 +7,6 @@ import (
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cdcontroller"
 	"stash.teslamotors.com/rr/protostream"
-	"stash.teslamotors.com/rr/traycontrollers"
 )
 
 // WaitForLoad waits for a loaded message from the C/D controller
@@ -19,9 +18,9 @@ type WaitForLoad struct {
 	CellAPIClient *cdcontroller.CellAPIClient
 	Publisher     *protostream.Socket
 
-	tbc             traycontrollers.TrayBarcode
-	fxbc            traycontrollers.FixtureBarcode
-	steps           traycontrollers.StepConfiguration
+	tbc             cdcontroller.TrayBarcode
+	fxbc            cdcontroller.FixtureBarcode
+	steps           cdcontroller.StepConfiguration
 	stepType        string
 	processStepName string
 	transactID      string
@@ -40,7 +39,7 @@ func (w *WaitForLoad) action() {
 
 	w.Logger.Infow("waiting for load complete message from C/D controller", "fixture", w.fxbc)
 
-	var fxrLoad traycontrollers.FXRLoad
+	var fxrLoad cdcontroller.FXRLoad
 
 	select {
 	case <-w.fxrInfo.Unreserve:

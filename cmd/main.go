@@ -22,7 +22,6 @@ import (
 	"stash.teslamotors.com/rr/cdcontroller"
 	"stash.teslamotors.com/rr/protostream"
 	"stash.teslamotors.com/rr/towercontroller"
-	"stash.teslamotors.com/rr/traycontrollers"
 )
 
 const (
@@ -98,8 +97,8 @@ func main() {
 
 		registry[name] = &towercontroller.FixtureInfo{
 			Name: name,
-			PFD:  make(chan traycontrollers.PreparedForDelivery),
-			LDC:  make(chan traycontrollers.FXRLoad),
+			PFD:  make(chan cdcontroller.PreparedForDelivery),
+			LDC:  make(chan cdcontroller.FXRLoad),
 			FixtureState: towercontroller.RunNewFixtureState(
 				towercontroller.WithAllDataExpiry(time.Second*5),
 				towercontroller.WithContext(ctx),

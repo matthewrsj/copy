@@ -8,7 +8,6 @@ import (
 	"stash.teslamotors.com/rr/cdcontroller"
 	"stash.teslamotors.com/rr/protostream"
 	pb "stash.teslamotors.com/rr/towerproto"
-	"stash.teslamotors.com/rr/traycontrollers"
 )
 
 // Unloading waits for the fixture to go back to IDLE before returning to the idle state
@@ -23,7 +22,7 @@ type Unloading struct {
 	childLogger *zap.SugaredLogger
 	mockCellAPI bool
 
-	fxbc traycontrollers.FixtureBarcode
+	fxbc cdcontroller.FixtureBarcode
 
 	fxrInfo *FixtureInfo
 }

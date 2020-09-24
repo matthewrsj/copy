@@ -8,7 +8,7 @@ import (
 	"net/http"
 
 	"go.uber.org/zap"
-	"stash.teslamotors.com/rr/traycontrollers"
+	"stash.teslamotors.com/rr/cdcontroller"
 )
 
 const _loadEndpoint = "/load"
@@ -26,7 +26,7 @@ func HandleLoad(mux *http.ServeMux, conf Configuration, logger *zap.SugaredLogge
 			return
 		}
 
-		var loadRequest traycontrollers.FXRLoad
+		var loadRequest cdcontroller.FXRLoad
 		if err = json.Unmarshal(b, &loadRequest); err != nil {
 			logger.Errorw("unmarshal request body", "error", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -42,7 +42,7 @@ func HandleLoad(mux *http.ServeMux, conf Configuration, logger *zap.SugaredLogge
 			return
 		}
 
-		fxr, err := traycontrollers.NewFixtureBarcode(
+		fxr, err := cdcontroller.NewFixtureBarcode(
 			fmt.Sprintf("%s-%s%s-%02d-%02d", conf.Loc.Line, conf.Loc.Process, conf.Loc.Aisle, loadRequest.Column, loadRequest.Level),
 		)
 		if err != nil {

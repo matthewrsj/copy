@@ -11,7 +11,6 @@ require (
 	github.com/phayes/freeport v0.0.0-20180830031419-95f893ade6f2
 	github.com/stretchr/testify v1.6.1
 	go.uber.org/zap v1.15.0
-	google.golang.org/grpc v1.29.1
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/yaml.v2 v2.3.0
 	nanomsg.org/go/mangos/v2 v2.0.8
@@ -21,7 +20,4 @@ require (
 	stash.teslamotors.com/rr/cdcontroller v0.2.1
 	stash.teslamotors.com/rr/protostream v0.1.3
 	stash.teslamotors.com/rr/towerproto v0.0.13
-	stash.teslamotors.com/rr/traycontrollers v0.1.6
 )
-
-replace stash.teslamotors.com/rr/cdcontroller v0.2.1 => /home/parallels/projects/cdcontroller

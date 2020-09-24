@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 	"stash.teslamotors.com/ctet/statemachine/v2"
-	"stash.teslamotors.com/rr/traycontrollers"
+	"stash.teslamotors.com/rr/cdcontroller"
 )
 
 func TestWaitForLoad_Next(t *testing.T) {
@@ -14,7 +14,7 @@ func TestWaitForLoad_Next(t *testing.T) {
 }
 
 func TestWaitForLoad_Actions(t *testing.T) {
-	lc := make(chan traycontrollers.FXRLoad)
+	lc := make(chan cdcontroller.FXRLoad)
 	wfl := &WaitForLoad{
 		Config: Configuration{
 			Loc: location{
@@ -37,7 +37,7 @@ func TestWaitForLoad_Actions(t *testing.T) {
 	}()
 
 	go func() {
-		lc <- traycontrollers.FXRLoad{
+		lc <- cdcontroller.FXRLoad{
 			Column:        1,
 			Level:         1,
 			TrayID:        "11223344A",

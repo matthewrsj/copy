@@ -8,13 +8,11 @@ import (
 	"os"
 	"time"
 
-	"stash.teslamotors.com/rr/cdcontroller"
-
 	"go.uber.org/zap"
 	"stash.teslamotors.com/ctet/statemachine/v2"
+	"stash.teslamotors.com/rr/cdcontroller"
 	"stash.teslamotors.com/rr/protostream"
 	pb "stash.teslamotors.com/rr/towerproto"
-	"stash.teslamotors.com/rr/traycontrollers"
 )
 
 const _unloadEndpoint = "/unload"
@@ -29,8 +27,8 @@ type EndProcess struct {
 	Publisher     *protostream.Socket
 
 	childLogger     *zap.SugaredLogger
-	tbc             traycontrollers.TrayBarcode
-	fxbc            traycontrollers.FixtureBarcode
+	tbc             cdcontroller.TrayBarcode
+	fxbc            cdcontroller.FixtureBarcode
 	cells           map[string]cdcontroller.CellData
 	cellResponse    []*pb.Cell
 	processStepName string
@@ -60,7 +58,7 @@ func (e *EndProcess) action() {
 		e.childLogger.Info("skipClose set, not closing process step or setting cell statuses")
 	}
 
-	if !e.skipClose && e.processStepName != traycontrollers.CommissionSelfTestRecipeName {
+	if !e.skipClose && e.processStepName != cdcontroller.CommissionSelfTestRecipeName {
 		e.childLogger.Info("setting cell statuses")
 		e.setCellStatuses()
 	}
@@ -79,7 +77,7 @@ func (e *EndProcess) action() {
 			}
 		}()
 
-		if !e.skipClose && e.processStepName != traycontrollers.CommissionSelfTestRecipeName {
+		if !e.skipClose && e.processStepName != cdcontroller.CommissionSelfTestRecipeName {
 			e.childLogger.Infow("closing process step", "recipe_name", e.processStepName, "recipe_version", e.recipeVersion)
 
 			if err := e.CellAPIClient.CloseProcessStep(e.tbc.SN, e.processStepName, e.recipeVersion); err != nil {

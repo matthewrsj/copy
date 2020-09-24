@@ -8,15 +8,15 @@ import (
 	"net/http"
 
 	"go.uber.org/zap"
+	"stash.teslamotors.com/rr/cdcontroller"
 	"stash.teslamotors.com/rr/protostream"
 	pb "stash.teslamotors.com/rr/towerproto"
-	"stash.teslamotors.com/rr/traycontrollers"
 )
 
 // HandleBroadcastRequest handles incoming broadcast requests from the CD Controller
 func HandleBroadcastRequest(mux *http.ServeMux, publisher *protostream.Socket, logger *zap.SugaredLogger, registry map[string]*FixtureInfo) {
-	mux.HandleFunc(traycontrollers.BroadcastEndpoint, func(w http.ResponseWriter, r *http.Request) {
-		cl := logger.With("endpoint", traycontrollers.BroadcastEndpoint)
+	mux.HandleFunc(cdcontroller.BroadcastEndpoint, func(w http.ResponseWriter, r *http.Request) {
+		cl := logger.With("endpoint", cdcontroller.BroadcastEndpoint)
 		cl.Infow("got request to endpoint")
 
 		if r.Method != http.MethodPost {
@@ -34,7 +34,7 @@ func HandleBroadcastRequest(mux *http.ServeMux, publisher *protostream.Socket, l
 			return
 		}
 
-		var broadcastRequest traycontrollers.BroadcastRequest
+		var broadcastRequest cdcontroller.BroadcastRequest
 		if err = json.Unmarshal(rb, &broadcastRequest); err != nil {
 			cl.Errorw("unmarshal request body", "error", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -44,7 +44,7 @@ func HandleBroadcastRequest(mux *http.ServeMux, publisher *protostream.Socket, l
 
 		var targets []string
 
-		if broadcastRequest.Scale >= traycontrollers.ScaleTower {
+		if broadcastRequest.Scale >= cdcontroller.ScaleTower {
 			cl.Debugw("scale is tower or higher, broadcasting to all", "scale", broadcastRequest.Scale.String())
 			// we are broadcasting to entire tower, so grab everything in the registry
 			for name := range registry {
@@ -79,15 +79,15 @@ func HandleBroadcastRequest(mux *http.ServeMux, publisher *protostream.Socket, l
 		}
 
 		switch broadcastRequest.Operation {
-		case traycontrollers.OperationStopFormation:
+		case cdcontroller.OperationStopFormation:
 			msg.GetRecipe().Formrequest = pb.FormRequest_FORM_REQUEST_STOP
-		case traycontrollers.OperationPauseFormation:
+		case cdcontroller.OperationPauseFormation:
 			msg.GetRecipe().Formrequest = pb.FormRequest_FORM_REQUEST_PAUSE
-		case traycontrollers.OperationResumeFormation:
+		case cdcontroller.OperationResumeFormation:
 			msg.GetRecipe().Formrequest = pb.FormRequest_FORM_REQUEST_RESUME
-		case traycontrollers.OperationStopIsoCheck:
+		case cdcontroller.OperationStopIsoCheck:
 			// TODO: not implemented in towerproto yet
-		case traycontrollers.OperationFaultReset:
+		case cdcontroller.OperationFaultReset:
 			msg.GetRecipe().Formrequest = pb.FormRequest_FORM_REQUEST_FAULT_RESET
 		default:
 			// nothing to do

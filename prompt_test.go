@@ -7,7 +7,7 @@ import (
 	"bou.ke/monkey"
 	"github.com/manifoldco/promptui"
 	"github.com/stretchr/testify/assert"
-	"stash.teslamotors.com/rr/traycontrollers"
+	"stash.teslamotors.com/rr/cdcontroller"
 )
 
 func Test_prompt(t *testing.T) {
@@ -16,7 +16,7 @@ func Test_prompt(t *testing.T) {
 	})
 	defer p.Unpatch()
 
-	s, err := prompt("", traycontrollers.IsValidFixtureBarcode)
+	s, err := prompt("", cdcontroller.IsValidFixtureBarcode)
 	assert.Nil(t, err)
 	assert.Equal(t, "input", s)
 }
@@ -27,7 +27,7 @@ func Test_promptError(t *testing.T) {
 	})
 	defer p.Unpatch()
 
-	_, err := prompt("", traycontrollers.IsValidFixtureBarcode)
+	_, err := prompt("", cdcontroller.IsValidFixtureBarcode)
 	assert.NotNil(t, err)
 }
 
@@ -37,7 +37,7 @@ func Test_promptErrorInterrupt(t *testing.T) {
 	})
 	defer p.Unpatch()
 
-	_, err := prompt("", traycontrollers.IsValidFixtureBarcode)
+	_, err := prompt("", cdcontroller.IsValidFixtureBarcode)
 	assert.NotNil(t, err)
 	assert.True(t, IsInterrupt(err))
 }

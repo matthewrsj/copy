@@ -6,8 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 	"stash.teslamotors.com/ctet/statemachine/v2"
+	"stash.teslamotors.com/rr/cdcontroller"
 	pb "stash.teslamotors.com/rr/towerproto"
-	"stash.teslamotors.com/rr/traycontrollers"
 )
 
 func TestUnloading_Next(t *testing.T) {
@@ -20,7 +20,7 @@ func TestUnloading_Actions(t *testing.T) {
 			AllowedFixtures: []string{"01-01"},
 		},
 		childLogger: zap.NewExample().Sugar(),
-		fxbc: traycontrollers.FixtureBarcode{
+		fxbc: cdcontroller.FixtureBarcode{
 			Location: "",
 			Aisle:    "",
 			Tower:    "01",

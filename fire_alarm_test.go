@@ -11,8 +11,8 @@ import (
 	"github.com/phayes/freeport"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
+	"stash.teslamotors.com/rr/cdcontroller"
 	pb "stash.teslamotors.com/rr/towerproto"
-	"stash.teslamotors.com/rr/traycontrollers"
 )
 
 func Test_soundTheAlarm(t *testing.T) {
@@ -23,10 +23,10 @@ func Test_soundTheAlarm(t *testing.T) {
 
 	remote := fmt.Sprintf("http://localhost:%d", port)
 
-	var rxd traycontrollers.BroadcastRequest
+	var rxd cdcontroller.BroadcastRequest
 
 	mux := http.NewServeMux()
-	mux.HandleFunc(traycontrollers.BroadcastEndpoint, func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc(cdcontroller.BroadcastEndpoint, func(w http.ResponseWriter, r *http.Request) {
 		var body []byte
 
 		body, err = ioutil.ReadAll(r.Body)
@@ -76,11 +76,11 @@ func Test_soundTheAlarm(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	expected := traycontrollers.BroadcastRequest{
-		Scale:     traycontrollers.ScaleAisle,
-		Operation: traycontrollers.OperationPauseFormation,
-		Reason:    traycontrollers.ReasonFireLevel0,
-		Originator: traycontrollers.BroadcastOrigin{
+	expected := cdcontroller.BroadcastRequest{
+		Scale:     cdcontroller.ScaleAisle,
+		Operation: cdcontroller.OperationPauseFormation,
+		Reason:    cdcontroller.ReasonFireLevel0,
+		Originator: cdcontroller.BroadcastOrigin{
 			Aisle:    "010",
 			Location: "CM2-63010-01-01",
 		},

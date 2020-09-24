@@ -11,7 +11,6 @@ import (
 	"stash.teslamotors.com/rr/cdcontroller"
 	"stash.teslamotors.com/rr/protostream"
 	pb "stash.teslamotors.com/rr/towerproto"
-	"stash.teslamotors.com/rr/traycontrollers"
 )
 
 // Idle waits for a PreparedForLoad (or loaded to short circuit) from C/D controller
@@ -135,7 +134,7 @@ waitForUpdate:
 			"transaction_id", ip.transactionID,
 		)
 
-		fxbc, err := traycontrollers.NewFixtureBarcode(ip.fixtureBarcode)
+		fxbc, err := cdcontroller.NewFixtureBarcode(ip.fixtureBarcode)
 		if err != nil {
 			i.err = fmt.Errorf("parse IDs: %v", err)
 			i.Logger.Error(err)
@@ -304,14 +303,14 @@ func (i *Idle) monitorForStatus(done <-chan struct{}, active chan<- inProgressIn
 	}
 }
 
-func newIDs(tray, fixture string) (tbc traycontrollers.TrayBarcode, fxbc traycontrollers.FixtureBarcode, err error) {
-	tbc, err = traycontrollers.NewTrayBarcode(tray)
+func newIDs(tray, fixture string) (tbc cdcontroller.TrayBarcode, fxbc cdcontroller.FixtureBarcode, err error) {
+	tbc, err = cdcontroller.NewTrayBarcode(tray)
 	if err != nil {
 		err = fmt.Errorf("parse tray ID: %v", err)
 		return
 	}
 
-	fxbc, err = traycontrollers.NewFixtureBarcode(fixture)
+	fxbc, err = cdcontroller.NewFixtureBarcode(fixture)
 	if err != nil {
 		err = fmt.Errorf("parse fixture ID: %v", err)
 		return

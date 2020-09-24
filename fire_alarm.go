@@ -11,21 +11,21 @@ import (
 
 	"github.com/cenkalti/backoff"
 	"go.uber.org/zap"
+	"stash.teslamotors.com/rr/cdcontroller"
 	pb "stash.teslamotors.com/rr/towerproto"
-	"stash.teslamotors.com/rr/traycontrollers"
 )
 
 func soundTheAlarm(config Configuration, status pb.FireAlarmStatus, location string, logger *zap.SugaredLogger) error {
-	level := traycontrollers.ReasonFireLevel0
+	level := cdcontroller.ReasonFireLevel0
 	if status == pb.FireAlarmStatus_FIRE_ALARM_LEVEL_1 {
-		level = traycontrollers.ReasonFireLevel1
+		level = cdcontroller.ReasonFireLevel1
 	}
 
-	broadcastReq := traycontrollers.BroadcastRequest{
-		Scale:     traycontrollers.ScaleAisle,
-		Operation: traycontrollers.OperationPauseFormation, // ignored if fire level is 0
+	broadcastReq := cdcontroller.BroadcastRequest{
+		Scale:     cdcontroller.ScaleAisle,
+		Operation: cdcontroller.OperationPauseFormation, // ignored if fire level is 0
 		Reason:    level,
-		Originator: traycontrollers.BroadcastOrigin{
+		Originator: cdcontroller.BroadcastOrigin{
 			Aisle:    config.Loc.Aisle,
 			Location: location,
 		},
@@ -38,7 +38,7 @@ func soundTheAlarm(config Configuration, status pb.FireAlarmStatus, location str
 	}
 
 	return backoff.Retry(func() error {
-		resp, err := http.Post(config.Remote+traycontrollers.BroadcastEndpoint, "application/json", bytes.NewReader(jb))
+		resp, err := http.Post(config.Remote+cdcontroller.BroadcastEndpoint, "application/json", bytes.NewReader(jb))
 		if err != nil {
 			logger.Warnw("post broadcast request", "error", err)
 			return err

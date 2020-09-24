@@ -13,7 +13,6 @@ import (
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/protostream"
 	pb "stash.teslamotors.com/rr/towerproto"
-	"stash.teslamotors.com/rr/traycontrollers"
 )
 
 func TestEndProcess_Action(t *testing.T) {
@@ -58,9 +57,9 @@ func TestEndProcess_Action(t *testing.T) {
 				IsEmpty:  false,
 			},
 		},
-		tbc: traycontrollers.TrayBarcode{
+		tbc: cdcontroller.TrayBarcode{
 			SN:  "11223344",
-			O:   traycontrollers.OrientationA,
+			O:   cdcontroller.OrientationA,
 			Raw: "11223344A",
 		},
 		fixtureFault: true,
@@ -169,9 +168,9 @@ func TestEndProcess_ActionBadOrientation(t *testing.T) {
 				IsEmpty:  false,
 			},
 		},
-		tbc: traycontrollers.TrayBarcode{
+		tbc: cdcontroller.TrayBarcode{
 			SN:  "11223344",
-			O:   traycontrollers.OrientationB,
+			O:   cdcontroller.OrientationB,
 			Raw: "11223344A",
 		},
 		fixtureFault: true,
@@ -267,9 +266,9 @@ func TestEndProcess_ActionShortMap(t *testing.T) {
 				IsEmpty:  false,
 			},
 		},
-		tbc: traycontrollers.TrayBarcode{
+		tbc: cdcontroller.TrayBarcode{
 			SN:  "11223344",
-			O:   traycontrollers.OrientationA,
+			O:   cdcontroller.OrientationA,
 			Raw: "11223344A",
 		},
 		fixtureFault: true,
@@ -366,9 +365,9 @@ func TestEndProcess_ActionBadSetCellStatus(t *testing.T) {
 				IsEmpty:  false,
 			},
 		},
-		tbc: traycontrollers.TrayBarcode{
+		tbc: cdcontroller.TrayBarcode{
 			SN:  "11223344",
-			O:   traycontrollers.OrientationA,
+			O:   cdcontroller.OrientationA,
 			Raw: "11223344A",
 		},
 		fixtureFault: true,

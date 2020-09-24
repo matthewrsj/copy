@@ -3,15 +3,15 @@ package towercontroller
 import (
 	"sync"
 
-	"stash.teslamotors.com/rr/traycontrollers"
+	"stash.teslamotors.com/rr/cdcontroller"
 )
 
 // FixtureInfo contains the feeds for messages from the C/D Controller
 type FixtureInfo struct {
 	Name         string
 	FixtureState *FixtureState
-	PFD          chan traycontrollers.PreparedForDelivery
-	LDC          chan traycontrollers.FXRLoad
+	PFD          chan cdcontroller.PreparedForDelivery
+	LDC          chan cdcontroller.FXRLoad
 	Unreserve    chan struct{}
 	Avail        ReadyStatus
 }

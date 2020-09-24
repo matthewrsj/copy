@@ -7,8 +7,8 @@ import (
 
 	"bou.ke/monkey"
 	"github.com/stretchr/testify/assert"
+	"stash.teslamotors.com/rr/cdcontroller"
 	pb "stash.teslamotors.com/rr/towerproto"
-	"stash.teslamotors.com/rr/traycontrollers"
 )
 
 const (
@@ -158,7 +158,7 @@ func Test_loadRecipesBadIngredients(t *testing.T) {
 func Test_loadRecipeNoRecipe(t *testing.T) {
 	rf := monkey.Patch(loadRecipes, func(string, string) (Cookbook, error) {
 		return Cookbook{
-			"bar": traycontrollers.StepConfiguration{},
+			"bar": cdcontroller.StepConfiguration{},
 		}, nil
 	})
 	defer rf.Unpatch()

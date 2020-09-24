@@ -4,30 +4,30 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"stash.teslamotors.com/rr/traycontrollers"
+	"stash.teslamotors.com/rr/cdcontroller"
 )
 
 func TestIDFromFXR(t *testing.T) {
 	testCases := []struct {
-		in  traycontrollers.FixtureBarcode
+		in  cdcontroller.FixtureBarcode
 		out string
 	}{
 		{
-			in: traycontrollers.FixtureBarcode{
+			in: cdcontroller.FixtureBarcode{
 				Tower: "hi",
 				Fxn:   "there",
 			},
 			out: "hi-there",
 		},
 		{
-			in: traycontrollers.FixtureBarcode{
+			in: cdcontroller.FixtureBarcode{
 				Tower: "",
 				Fxn:   "there",
 			},
 			out: "-there",
 		},
 		{
-			in: traycontrollers.FixtureBarcode{
+			in: cdcontroller.FixtureBarcode{
 				Tower: "",
 				Fxn:   "",
 			},

@@ -7,8 +7,8 @@ import (
 	"sync"
 
 	"go.uber.org/zap"
+	"stash.teslamotors.com/rr/cdcontroller"
 	pb "stash.teslamotors.com/rr/towerproto"
-	"stash.teslamotors.com/rr/traycontrollers"
 )
 
 const (
@@ -46,14 +46,14 @@ func HandleAvailable(mux *http.ServeMux, configPath string, logger *zap.SugaredL
 
 		type namedAvail struct {
 			name  string
-			avail traycontrollers.FXRAvailable
+			avail cdcontroller.FXRAvailable
 		}
 
 		avail := make(chan namedAvail)
 		done := make(chan struct{})
 		var wg sync.WaitGroup
 
-		as := make(traycontrollers.Availability)
+		as := make(cdcontroller.Availability)
 		go func() {
 			for a := range avail {
 				as[a.name] = a.avail
@@ -73,7 +73,7 @@ func HandleAvailable(mux *http.ServeMux, configPath string, logger *zap.SugaredL
 
 				zeroAvail := namedAvail{
 					name: location,
-					avail: traycontrollers.FXRAvailable{
+					avail: cdcontroller.FXRAvailable{
 						Status:          pb.FixtureStatus_FIXTURE_STATUS_UNKNOWN_UNSPECIFIED.String(),
 						EquipmentStatus: pb.EquipmentStatus_EQUIPMENT_STATUS_UNKNOWN_UNSPECIFIED.String(),
 						Allowed:         fixtureIsAllowed(n, conf.AllowedFixtures),
@@ -110,7 +110,7 @@ func HandleAvailable(mux *http.ServeMux, configPath string, logger *zap.SugaredL
 
 				avail <- namedAvail{
 					name: location,
-					avail: traycontrollers.FXRAvailable{
+					avail: cdcontroller.FXRAvailable{
 						Status:          msg.GetOp().GetStatus().String(),
 						EquipmentStatus: msg.GetOp().GetEquipmentStatus().String(),
 						Reserved:        reserved,
