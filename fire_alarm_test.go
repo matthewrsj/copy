@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/gorilla/mux"
 	"github.com/phayes/freeport"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -25,8 +26,8 @@ func Test_soundTheAlarm(t *testing.T) {
 
 	var rxd cdcontroller.BroadcastRequest
 
-	mux := http.NewServeMux()
-	mux.HandleFunc(cdcontroller.BroadcastEndpoint, func(w http.ResponseWriter, r *http.Request) {
+	router := mux.NewRouter()
+	router.HandleFunc(cdcontroller.BroadcastEndpoint, func(w http.ResponseWriter, r *http.Request) {
 		var body []byte
 
 		body, err = ioutil.ReadAll(r.Body)
@@ -47,7 +48,7 @@ func Test_soundTheAlarm(t *testing.T) {
 
 	srv := http.Server{
 		Addr:    fmt.Sprintf(":%d", port),
-		Handler: mux,
+		Handler: router,
 	}
 
 	go func() {

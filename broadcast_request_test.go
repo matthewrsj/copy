@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gorilla/mux"
 	"github.com/phayes/freeport"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -46,9 +47,8 @@ func TestHandleBroadcastRequest(t *testing.T) {
 		},
 	}
 
-	mux := http.NewServeMux()
-
-	go HandleBroadcastRequest(mux, s, zap.NewExample().Sugar(), registry)
+	router := mux.NewRouter()
+	router.HandleFunc(cdcontroller.BroadcastEndpoint, HandleBroadcastRequest(s, zap.NewExample().Sugar(), registry)).Methods(http.MethodPost)
 
 	port, err := freeport.GetFreePort()
 	if err != nil {
@@ -57,7 +57,7 @@ func TestHandleBroadcastRequest(t *testing.T) {
 
 	srv := http.Server{
 		Addr:    fmt.Sprintf(":%d", port),
-		Handler: mux,
+		Handler: router,
 	}
 
 	go func() {

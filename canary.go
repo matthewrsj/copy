@@ -8,7 +8,8 @@ import (
 	"go.uber.org/zap"
 )
 
-const _canaryEndpoint = "/canary"
+// CanaryEndpoint handles incoming requests for TC health
+const CanaryEndpoint = "/canary"
 
 type canaryResponse struct {
 	FixturesUp   []string `json:"fixtures_broadcasting"`
@@ -16,17 +17,10 @@ type canaryResponse struct {
 }
 
 // HandleCanary handles incoming requests to the canary endpoint
-func HandleCanary(mux *http.ServeMux, registry map[string]*FixtureInfo, logger *zap.SugaredLogger) {
-	mux.HandleFunc(_canaryEndpoint, func(w http.ResponseWriter, r *http.Request) {
-		cl := logger.With("endpoint", _canaryEndpoint)
-		cl.Infow("got request to endpont")
-
-		if r.Method != http.MethodGet {
-			cl.Error("invalid request method", "method", r.Method)
-			http.Error(w, "invalid request method", http.StatusBadRequest)
-
-			return
-		}
+func HandleCanary(logger *zap.SugaredLogger, registry map[string]*FixtureInfo) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cl := logger.With("endpoint", CanaryEndpoint, "remote", r.RemoteAddr)
+		cl.Info("got request to endpoint")
 
 		cr := canaryResponse{
 			FixturesUp:   []string{},
@@ -52,6 +46,7 @@ func HandleCanary(mux *http.ServeMux, registry map[string]*FixtureInfo, logger *
 		cl = cl.With("fixture_status", cr)
 
 		w.Header().Set("Content-Type", "application/json")
+
 		jb, err := json.Marshal(cr)
 		if err != nil {
 			cl.Errorw("unable to marshal canary response", "error", err)
@@ -68,5 +63,5 @@ func HandleCanary(mux *http.ServeMux, registry map[string]*FixtureInfo, logger *
 		}
 
 		cl.Info("responded to request to endpoint")
-	})
+	}
 }

@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gorilla/mux"
 	"github.com/phayes/freeport"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -45,9 +46,8 @@ func TestHandleSendFormRequest(t *testing.T) {
 		},
 	}
 
-	mux := http.NewServeMux()
-
-	HandleSendFormRequest(mux, s, zap.NewExample().Sugar(), registry)
+	router := mux.NewRouter()
+	router.HandleFunc(SendFormRequestEndpoint, HandleSendFormRequest(s, zap.NewExample().Sugar(), registry))
 
 	port, err := freeport.GetFreePort()
 	if err != nil {
@@ -56,7 +56,7 @@ func TestHandleSendFormRequest(t *testing.T) {
 
 	srv := http.Server{
 		Addr:    fmt.Sprintf(":%d", port),
-		Handler: mux,
+		Handler: router,
 	}
 
 	go func() {
@@ -112,7 +112,7 @@ func TestHandleSendFormRequest(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	resp, err := http.Post(fmt.Sprintf("http://localhost:%d%s", port, _sendFormRequestEndpoint), "application/json", bytes.NewReader(buf))
+	resp, err := http.Post(fmt.Sprintf("http://localhost:%d%s", port, SendFormRequestEndpoint), "application/json", bytes.NewReader(buf))
 	if err != nil {
 		t.Fatal(err)
 	}

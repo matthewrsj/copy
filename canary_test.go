@@ -6,11 +6,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"reflect"
 	"testing"
 	"time"
 
-	"bou.ke/monkey"
+	"github.com/gorilla/mux"
 	"github.com/phayes/freeport"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -18,29 +17,26 @@ import (
 )
 
 func TestHandleCanary(t *testing.T) {
+	fs := NewFixtureState()
+	fs.operational = &fixtureMessage{
+		message:    &pb.FixtureToTower{},
+		lastSeen:   time.Now(),
+		dataExpiry: time.Second * 10,
+	}
+
 	registry := map[string]*FixtureInfo{
 		"01-01": {
 			Name:         "01-01",
-			FixtureState: NewFixtureState(),
+			FixtureState: fs,
 		},
 		"01-02": {
 			Name:         "01-02",
-			FixtureState: NewFixtureState(),
+			FixtureState: fs,
 		},
 	}
 
-	fsGetOp := monkey.PatchInstanceMethod(
-		reflect.TypeOf(&FixtureState{}),
-		"GetOp",
-		func(f *FixtureState) (*pb.FixtureToTower, error) {
-			return &pb.FixtureToTower{}, nil
-		},
-	)
-	defer fsGetOp.Unpatch()
-
-	mux := http.NewServeMux()
-
-	HandleCanary(mux, registry, zap.NewExample().Sugar())
+	router := mux.NewRouter()
+	router.HandleFunc(CanaryEndpoint, HandleCanary(zap.NewExample().Sugar(), registry))
 
 	port, err := freeport.GetFreePort()
 	if err != nil {
@@ -49,7 +45,7 @@ func TestHandleCanary(t *testing.T) {
 
 	srv := http.Server{
 		Addr:    fmt.Sprintf(":%d", port),
-		Handler: mux,
+		Handler: router,
 	}
 
 	go func() {

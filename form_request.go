@@ -11,7 +11,8 @@ import (
 	pb "stash.teslamotors.com/rr/towerproto"
 )
 
-const _sendFormRequestEndpoint = "/form_request"
+// SendFormRequestEndpoint handles incoming requests to send form requests to a fixture
+const SendFormRequestEndpoint = "/form_request"
 
 // RequestForm is the request made to send a FormRequest to a fixture
 type RequestForm struct {
@@ -22,22 +23,14 @@ type RequestForm struct {
 // HandleSendFormRequest accepts POST requests to send a form request to a fixture.
 // Common use-case for this is to reset a faulted fixture.
 // nolint:gocognit // no reason to split this out
-func HandleSendFormRequest(mux *http.ServeMux, publisher *protostream.Socket, logger *zap.SugaredLogger, registry map[string]*FixtureInfo) {
-	mux.HandleFunc(_sendFormRequestEndpoint, func(w http.ResponseWriter, r *http.Request) {
-		logger.Infow(fmt.Sprintf("got request to %s", _sendFormRequestEndpoint))
-
-		cl := logger.With("endpoint", _sendFormRequestEndpoint)
-
-		if r.Method != "POST" {
-			cl.Errorw("received invalid request type", "request_type", r.Method)
-			http.Error(w, "this endpoint only accepts POST requests", http.StatusBadRequest)
-
-			return
-		}
+func HandleSendFormRequest(publisher *protostream.Socket, logger *zap.SugaredLogger, registry map[string]*FixtureInfo) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		logger = logger.With("endpoint", SendFormRequestEndpoint, "remote", r.RemoteAddr)
+		logger.Info("got request to endpoint")
 
 		jb, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			cl.Errorw("read request body", "error", err)
+			logger.Errorw("read request body", "error", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 
 			return
@@ -46,7 +39,7 @@ func HandleSendFormRequest(mux *http.ServeMux, publisher *protostream.Socket, lo
 		var rf RequestForm
 
 		if err = json.Unmarshal(jb, &rf); err != nil {
-			cl.Errorw("unmarshal request body", "error", err)
+			logger.Errorw("unmarshal request body", "error", err)
 			http.Error(w, err.Error(), http.StatusBadRequest)
 
 			return
@@ -55,7 +48,7 @@ func HandleSendFormRequest(mux *http.ServeMux, publisher *protostream.Socket, lo
 		// confirm the fixture is valid
 		fxrInfo, ok := registry[rf.FixtureID]
 		if !ok {
-			cl.Errorw("unable to find fixture in registry", "fixture", rf.FixtureID)
+			logger.Errorw("unable to find fixture in registry", "fixture", rf.FixtureID)
 			http.Error(w, fmt.Sprintf("unable to find fixture %s in registry", rf.FixtureID), http.StatusBadRequest)
 
 			return
@@ -63,7 +56,7 @@ func HandleSendFormRequest(mux *http.ServeMux, publisher *protostream.Socket, lo
 
 		formReq, ok := pb.FormRequest_value[rf.FormRequest]
 		if !ok {
-			cl.Errorw("invalid form request", "form_request", rf.FormRequest)
+			logger.Errorw("invalid form request", "form_request", rf.FormRequest)
 			http.Error(w, fmt.Sprintf("invalid form request %s", rf.FormRequest), http.StatusBadRequest)
 
 			return
@@ -76,14 +69,14 @@ func HandleSendFormRequest(mux *http.ServeMux, publisher *protostream.Socket, lo
 		}
 
 		if err := sendProtoMessage(publisher, &sendMsg, fxrInfo.Name); err != nil {
-			cl.Errorw("unable to send data to protostream", "error", err)
+			logger.Errorw("unable to send data to protostream", "error", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 
 			return
 		}
 
-		cl.Infow("published form request", "form_request", rf.FormRequest)
+		logger.Infow("published form request", "form_request", rf.FormRequest)
 
 		w.WriteHeader(http.StatusOK)
-	})
+	}
 }

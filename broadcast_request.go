@@ -14,17 +14,10 @@ import (
 )
 
 // HandleBroadcastRequest handles incoming broadcast requests from the CD Controller
-func HandleBroadcastRequest(mux *http.ServeMux, publisher *protostream.Socket, logger *zap.SugaredLogger, registry map[string]*FixtureInfo) {
-	mux.HandleFunc(cdcontroller.BroadcastEndpoint, func(w http.ResponseWriter, r *http.Request) {
+func HandleBroadcastRequest(publisher *protostream.Socket, logger *zap.SugaredLogger, registry map[string]*FixtureInfo) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		cl := logger.With("endpoint", cdcontroller.BroadcastEndpoint)
 		cl.Infow("got request to endpoint")
-
-		if r.Method != http.MethodPost {
-			cl.Errorw("received invalid request type", "request_type", r.Method)
-			http.Error(w, "this endpoint only accepts POST requests", http.StatusBadRequest)
-
-			return
-		}
 
 		rb, err := ioutil.ReadAll(r.Body)
 		if err != nil {
@@ -111,5 +104,5 @@ func HandleBroadcastRequest(mux *http.ServeMux, publisher *protostream.Socket, l
 
 		cl.Debug("done sending broadcasts")
 		w.WriteHeader(http.StatusOK)
-	})
+	}
 }

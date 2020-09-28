@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gorilla/mux"
 	"github.com/phayes/freeport"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -18,7 +19,6 @@ import (
 )
 
 func TestHandleAvailable(t *testing.T) {
-	mux := http.NewServeMux()
 	previousConfig := _globalConfiguration
 
 	defer func() { _globalConfiguration = previousConfig }()
@@ -72,12 +72,8 @@ func TestHandleAvailable(t *testing.T) {
 		},
 	}
 
-	HandleAvailable(
-		mux,
-		"", /* configPath not used due to global config set */
-		zap.NewExample().Sugar(),
-		registry,
-	)
+	router := mux.NewRouter()
+	router.HandleFunc(AvailabilityEndpoint, HandleAvailable("" /* configPath not used due to global config set */, zap.NewExample().Sugar(), registry))
 
 	port, err := freeport.GetFreePort()
 	if err != nil {
@@ -86,7 +82,7 @@ func TestHandleAvailable(t *testing.T) {
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", port),
-		Handler: mux,
+		Handler: router,
 	}
 
 	go func() {
@@ -101,7 +97,7 @@ func TestHandleAvailable(t *testing.T) {
 
 	time.Sleep(time.Millisecond * 200)
 
-	resp, err := http.Get(fmt.Sprintf("http://localhost:%d%s?allowed=true", port, _availabilityEndpoint))
+	resp, err := http.Get(fmt.Sprintf("http://localhost:%d%s?allowed=true", port, AvailabilityEndpoint))
 	if err != nil {
 		t.Fatal(err)
 	}

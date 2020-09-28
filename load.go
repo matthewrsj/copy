@@ -11,11 +11,12 @@ import (
 	"stash.teslamotors.com/rr/cdcontroller"
 )
 
-const _loadEndpoint = "/load"
+// LoadEndpoint is the endpoint that handles load requests from the C/D Controller
+const LoadEndpoint = "/load"
 
 // HandleLoad handles requests the the load endpoint
-func HandleLoad(mux *http.ServeMux, conf Configuration, logger *zap.SugaredLogger, registry map[string]*FixtureInfo) {
-	mux.HandleFunc(_loadEndpoint, func(w http.ResponseWriter, r *http.Request) {
+func HandleLoad(conf Configuration, logger *zap.SugaredLogger, registry map[string]*FixtureInfo) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		logger.Infow("got request to /load", "remote", r.RemoteAddr)
 
 		b, err := ioutil.ReadAll(r.Body)
@@ -72,5 +73,5 @@ func HandleLoad(mux *http.ServeMux, conf Configuration, logger *zap.SugaredLogge
 		fInfo.LDC <- loadRequest
 
 		w.WriteHeader(http.StatusOK)
-	})
+	}
 }

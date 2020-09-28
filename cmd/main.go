@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff"
+	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"stash.teslamotors.com/ctet/statemachine/v2"
@@ -127,37 +128,48 @@ func main() {
 		backoff.NewConstantBackOff(time.Second*5),
 	)
 
-	// operational API is handled by the opsMux
-	opsMux := http.NewServeMux()
+	/*
+		The Operational API is the API used by the C/D Controller to control each Tower Controller by
+		querying availability, informing the TC a tray has been loaded, reserving fixtures when a
+		tray is on the way, broadcasting requests to all fixtures, etc.
+	*/
 
+	// operational API is handled by the opsRouter
+	opsRouter := mux.NewRouter()
 	// handle incoming requests on availability
-	towercontroller.HandleAvailable(opsMux, *configFile, sugar, registry)
+	opsRouter.HandleFunc(towercontroller.AvailabilityEndpoint, towercontroller.HandleAvailable(*configFile, sugar, registry)).Methods(http.MethodGet)
 	// handle incoming posts to load
-	towercontroller.HandleLoad(opsMux, conf, sugar, registry)
+	opsRouter.HandleFunc(towercontroller.LoadEndpoint, towercontroller.HandleLoad(conf, sugar, registry)).Methods(http.MethodPost)
 	// handle incoming posts to preparedForDelivery
-	towercontroller.HandlePreparedForDelivery(opsMux, sugar, registry)
+	opsRouter.HandleFunc(towercontroller.PreparedForDeliveryEndpoint, towercontroller.HandlePreparedForDelivery(sugar, registry)).Methods(http.MethodPost)
 	// handle incoming posts to broadcast to fixtures
-	towercontroller.HandleBroadcastRequest(opsMux, publisher, sugar, registry)
+	opsRouter.HandleFunc(cdcontroller.BroadcastEndpoint, towercontroller.HandleBroadcastRequest(publisher, sugar, registry)).Methods(http.MethodPost)
 	// handle incoming gets to canary
-	towercontroller.HandleCanary(opsMux, registry, sugar)
+	opsRouter.HandleFunc(towercontroller.CanaryEndpoint, towercontroller.HandleCanary(sugar, registry)).Methods(http.MethodGet)
 
-	// user API is handled by the userMux
-	userMux := http.NewServeMux()
+	/*
+		The User API is the API intended for engineers to send maintenance-type commands to manually exercise
+		fixtures or to repair state of the system. The User API allows users to send form and equipment requests
+		to fixtures and manually un-reserve a reserved fixture.
+	*/
+
+	// user API is handled by the userRouter
+	userRouter := mux.NewRouter()
 
 	// handle incoming posts to send form and equipment requests
-	towercontroller.HandleSendFormRequest(userMux, publisher, sugar, registry)
-	towercontroller.HandleSendEquipmentRequest(userMux, publisher, sugar, registry)
+	userRouter.HandleFunc(towercontroller.SendFormRequestEndpoint, towercontroller.HandleSendFormRequest(publisher, sugar, registry)).Methods(http.MethodPost)
+	userRouter.HandleFunc(towercontroller.SendEquipmentRequestEndpoint, towercontroller.HandleSendEquipmentRequest(publisher, sugar, registry)).Methods(http.MethodPost)
 	// handle incoming posts to remove fixture reservation
-	towercontroller.HandleUnreserveFixture(userMux, sugar, registry)
+	userRouter.HandleFunc(towercontroller.UnreserveFixtureEndpoint, towercontroller.HandleUnreserveFixture(sugar, registry)).Methods(http.MethodPost)
 
 	opsServer := http.Server{
 		Addr:    *localAddr,
-		Handler: opsMux,
+		Handler: opsRouter,
 	}
 
 	userServer := http.Server{
 		Addr:    *localUserAddr,
-		Handler: userMux,
+		Handler: userRouter,
 	}
 
 	for _, srv := range []*http.Server{&opsServer, &userServer} {

@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gorilla/mux"
 	"github.com/phayes/freeport"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -29,9 +30,8 @@ func TestHandleUnreserveFixture(t *testing.T) {
 		},
 	}
 
-	mux := http.NewServeMux()
-
-	HandleUnreserveFixture(mux, zap.NewExample().Sugar(), registry)
+	router := mux.NewRouter()
+	router.HandleFunc(UnreserveFixtureEndpoint, HandleUnreserveFixture(zap.NewExample().Sugar(), registry))
 
 	port, err := freeport.GetFreePort()
 	if err != nil {
@@ -40,7 +40,7 @@ func TestHandleUnreserveFixture(t *testing.T) {
 
 	srv := http.Server{
 		Addr:    fmt.Sprintf(":%d", port),
-		Handler: mux,
+		Handler: router,
 	}
 
 	go func() {
@@ -76,7 +76,7 @@ func TestHandleUnreserveFixture(t *testing.T) {
 		}
 	}(&wg)
 
-	resp, err := http.Post(fmt.Sprintf("http://localhost:%d%s", port, _unreserveEndpoint), "application/json", bytes.NewReader(buf))
+	resp, err := http.Post(fmt.Sprintf("http://localhost:%d%s", port, UnreserveFixtureEndpoint), "application/json", bytes.NewReader(buf))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -99,7 +99,7 @@ func TestHandleUnreserveFixture(t *testing.T) {
 		}
 	}(&wg)
 
-	resp, err = http.Post(fmt.Sprintf("http://localhost:%d%s", port, _unreserveEndpoint), "application/json", bytes.NewReader(buf))
+	resp, err = http.Post(fmt.Sprintf("http://localhost:%d%s", port, UnreserveFixtureEndpoint), "application/json", bytes.NewReader(buf))
 	if err != nil {
 		t.Fatal(err)
 	}

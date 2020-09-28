@@ -9,23 +9,18 @@ import (
 	"go.uber.org/zap"
 )
 
-const _unreserveEndpoint = "/unreserve"
+// UnreserveFixtureEndpoint handles incoming requests to un-reserve fixtures
+const UnreserveFixtureEndpoint = "/unreserve"
 
 // HandleUnreserveFixture accepts POST requests to manually un-reserve a reserved fixture
-func HandleUnreserveFixture(mux *http.ServeMux, logger *zap.SugaredLogger, registry map[string]*FixtureInfo) {
-	mux.HandleFunc(_unreserveEndpoint, func(w http.ResponseWriter, r *http.Request) {
-		logger.Infow(fmt.Sprintf("got request to %s", _unreserveEndpoint))
-
-		cl := logger.With("endpoint", _unreserveEndpoint)
-
-		if r.Method != "POST" {
-			cl.Errorw("received invalid request type", "request_type", r.Method)
-			http.Error(w, "this endpoint only accepts POST request", http.StatusBadRequest)
-		}
+func HandleUnreserveFixture(logger *zap.SugaredLogger, registry map[string]*FixtureInfo) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		logger = logger.With("endpoint", UnreserveFixtureEndpoint, "remote", r.RemoteAddr)
+		logger.Info("got request to endpoint")
 
 		jb, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			cl.Errorw("read request body", "error", err)
+			logger.Errorw("read request body", "error", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 
 			return
@@ -35,7 +30,7 @@ func HandleUnreserveFixture(mux *http.ServeMux, logger *zap.SugaredLogger, regis
 		var rf RequestForm
 
 		if err = json.Unmarshal(jb, &rf); err != nil {
-			cl.Errorw("unmarshal request body", "error", err)
+			logger.Errorw("unmarshal request body", "error", err)
 			http.Error(w, err.Error(), http.StatusBadRequest)
 
 			return
@@ -43,14 +38,14 @@ func HandleUnreserveFixture(mux *http.ServeMux, logger *zap.SugaredLogger, regis
 
 		fxrInfo, ok := registry[rf.FixtureID]
 		if !ok {
-			cl.Errorw("unable to find fixture %s in registry", rf.FixtureID)
+			logger.Errorw("unable to find fixture %s in registry", rf.FixtureID)
 			http.Error(w, fmt.Sprintf("unable to find fixture %s in registry", rf.FixtureID), http.StatusBadRequest)
 
 			return
 		}
 
 		if fxrInfo.Avail.Status() != StatusWaitingForLoad {
-			cl.Errorf("fixture %s status is %s, should be %s", rf.FixtureID, fxrInfo.Avail.Status(), StatusWaitingForLoad)
+			logger.Errorf("fixture %s status is %s, should be %s", rf.FixtureID, fxrInfo.Avail.Status(), StatusWaitingForLoad)
 			http.Error(w, fmt.Sprintf("fixture %s status is %v, should be %v", rf.FixtureID, fxrInfo.Avail.Status(), StatusWaitingForLoad), http.StatusBadRequest)
 
 			return
@@ -61,8 +56,8 @@ func HandleUnreserveFixture(mux *http.ServeMux, logger *zap.SugaredLogger, regis
 		default:
 		}
 
-		cl.Infof("reservation removal requested for fixture %s", fxrInfo.Name)
+		logger.Info("reservation removal requested for fixture", "fixture", fxrInfo.Name)
 
 		w.WriteHeader(http.StatusOK)
-	})
+	}
 }

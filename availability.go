@@ -11,16 +11,18 @@ import (
 	pb "stash.teslamotors.com/rr/towerproto"
 )
 
-const (
-	_availabilityEndpoint = "/avail"
-	_allowedQueryKey      = "allowed"
-)
+// AvailabilityEndpoint is the endpoint that handles request for fixture availability
+const AvailabilityEndpoint = "/avail"
+
+const _allowedQueryKey = "allowed"
 
 // HandleAvailable is the handler for the endpoint reporting availability of fixtures
 // nolint:gocognit,funlen // ignore
-func HandleAvailable(mux *http.ServeMux, configPath string, logger *zap.SugaredLogger, registry map[string]*FixtureInfo) {
-	mux.HandleFunc(_availabilityEndpoint, func(w http.ResponseWriter, r *http.Request) {
-		logger.Infow("got request to /avail", "remote", r.RemoteAddr)
+func HandleAvailable(configPath string, logger *zap.SugaredLogger, registry map[string]*FixtureInfo) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		logger = logger.With("endpoint", AvailabilityEndpoint, "remote", r.RemoteAddr)
+
+		logger.Info("got request to endpoint")
 
 		var (
 			conf Configuration
@@ -39,6 +41,7 @@ func HandleAvailable(mux *http.ServeMux, configPath string, logger *zap.SugaredL
 		respondAvailable := conf.AllFixtures
 
 		values := r.URL.Query()
+
 		allowedOnly := values.Get(_allowedQueryKey)
 		if allowedOnly == "true" {
 			respondAvailable = conf.AllowedFixtures
@@ -51,15 +54,17 @@ func HandleAvailable(mux *http.ServeMux, configPath string, logger *zap.SugaredL
 
 		avail := make(chan namedAvail)
 		done := make(chan struct{})
-		var wg sync.WaitGroup
-
 		as := make(cdcontroller.Availability)
+
 		go func() {
 			for a := range avail {
 				as[a.name] = a.avail
 			}
+
 			close(done)
 		}()
+
+		var wg sync.WaitGroup
 
 		wg.Add(len(respondAvailable))
 
@@ -101,6 +106,7 @@ func HandleAvailable(mux *http.ServeMux, configPath string, logger *zap.SugaredL
 				cl.Debugw("fixture status rxd, checking if available", "status", msg.GetOp().GetStatus().String())
 
 				var reserved bool
+
 				switch fxrInfo.Avail.Status() {
 				case StatusWaitingForReservation, StatusUnknown:
 					reserved = false
@@ -136,11 +142,12 @@ func HandleAvailable(mux *http.ServeMux, configPath string, logger *zap.SugaredL
 		}
 
 		w.Header().Set("Content-Type", "application/json")
+
 		if _, err = w.Write(body); err != nil {
 			logger.Errorw("write body to responsewriter", "error", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 
 		logger.Info("sent response to request to /avail")
-	})
+	}
 }

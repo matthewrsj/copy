@@ -10,12 +10,15 @@ import (
 	"stash.teslamotors.com/rr/cdcontroller"
 )
 
-const _preparedForDeliveryEndpoint = "/preparedForDelivery"
+// PreparedForDeliveryEndpoint handles incoming POSTs to reserve a fixture
+const PreparedForDeliveryEndpoint = "/preparedForDelivery"
 
 // HandlePreparedForDelivery handles incoming prepared for delivery messages
-func HandlePreparedForDelivery(mux *http.ServeMux, logger *zap.SugaredLogger, registry map[string]*FixtureInfo) {
-	mux.HandleFunc(_preparedForDeliveryEndpoint, func(w http.ResponseWriter, r *http.Request) {
-		logger.Infow(fmt.Sprintf("got request to %s", _preparedForDeliveryEndpoint))
+func HandlePreparedForDelivery(logger *zap.SugaredLogger, registry map[string]*FixtureInfo) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		logger = logger.With("endpoint", PreparedForDeliveryEndpoint, "remote", r.RemoteAddr)
+
+		logger.Info("got request to endpoint")
 
 		b, err := ioutil.ReadAll(r.Body)
 		if err != nil {
@@ -62,5 +65,5 @@ func HandlePreparedForDelivery(mux *http.ServeMux, logger *zap.SugaredLogger, re
 		fInfo.PFD <- pfd
 
 		w.WriteHeader(http.StatusOK)
-	})
+	}
 }
