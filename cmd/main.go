@@ -161,6 +161,10 @@ func main() {
 	userRouter.HandleFunc(towercontroller.SendEquipmentRequestEndpoint, towercontroller.HandleSendEquipmentRequest(publisher, sugar, registry)).Methods(http.MethodPost)
 	// handle incoming posts to remove fixture reservation
 	userRouter.HandleFunc(towercontroller.UnreserveFixtureEndpoint, towercontroller.HandleUnreserveFixture(sugar, registry)).Methods(http.MethodPost)
+	// handle incoming GETs to get latest fixture proto messages
+	userRouter.HandleFunc(towercontroller.LatestOpEndpoint, towercontroller.HandleLatestOp(sugar, registry)).Methods(http.MethodGet)
+	userRouter.HandleFunc(towercontroller.LatestDiagEndpoint, towercontroller.HandleLatestDiag(sugar, registry)).Methods(http.MethodGet)
+	userRouter.HandleFunc(towercontroller.LatestAlertEndpoint, towercontroller.HandleLatestAlert(sugar, registry)).Methods(http.MethodGet)
 
 	opsServer := http.Server{
 		Addr:    *localAddr,
