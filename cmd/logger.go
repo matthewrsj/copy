@@ -7,7 +7,7 @@ import (
 
 func newLogger(lFile string, lvl zapcore.Level) zap.Config {
 	lcfg := zap.NewProductionConfig()
-	lcfg.Encoding = "console"
+	lcfg.Encoding = "json"
 	lcfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	lcfg.DisableStacktrace = false
 	lcfg.DisableCaller = true
