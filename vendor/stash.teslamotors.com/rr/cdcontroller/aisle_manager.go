@@ -185,7 +185,12 @@ func (am *AisleManager) MarshalAisleResponse() ([]byte, error) {
 	return json.Marshal(am.AisleResponse())
 }
 
-const _aisleRequestEndpoint = "/aisle"
+const (
+	// AisleEndpoint handles GETs and POSTs to monitor or update the round robin
+	AisleEndpoint = "/aisle"
+	// TestAisleEndpoint handles GETs and POSTs to monitor or update the non-production tray round robin
+	TestAisleEndpoint = "/nonprod/aisle"
+)
 
 const (
 	_arAddToRoundRobin      = "ADD"
@@ -207,9 +212,9 @@ type AisleResponse struct {
 
 // HandleAisleRequest handles incoming requests to the aisle request endpoint.
 // This endpoint returns the current state of the aisle manager.
-func HandleAisleRequest(mux *http.ServeMux, logger *zap.SugaredLogger, am *AisleManager) {
-	mux.HandleFunc(_aisleRequestEndpoint, func(w http.ResponseWriter, r *http.Request) {
-		cl := logger.With("endpoint", _aisleRequestEndpoint)
+func HandleAisleRequest(logger *zap.SugaredLogger, am *AisleManager, endpoint string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cl := logger.With("endpoint", endpoint)
 		cl.Info("got request to endpoint")
 
 		w.Header().Add("Content-Type", "application/json")
@@ -270,7 +275,7 @@ func HandleAisleRequest(mux *http.ServeMux, logger *zap.SugaredLogger, am *Aisle
 		}
 
 		cl.Info("responded to request")
-	})
+	}
 }
 
 func aisleRespond(am *AisleManager, w io.Writer) error {

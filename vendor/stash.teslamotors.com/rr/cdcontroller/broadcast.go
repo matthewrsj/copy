@@ -18,8 +18,8 @@ import (
 
 // HandleBroadcast handles broadcast requests coming from tower controller
 // nolint:gocognit // just past threshold. TODO: simplify/break out
-func HandleBroadcast(mux *http.ServeMux, server *terminal.Server, lg *zap.SugaredLogger, conf Configuration, aisles map[string]*Aisle, ina chan *asrsapi.TerminalAlarm) {
-	mux.HandleFunc(BroadcastEndpoint, func(w http.ResponseWriter, r *http.Request) {
+func HandleBroadcast(server *terminal.Server, lg *zap.SugaredLogger, conf Configuration, aisles map[string]*Aisle, ina chan *asrsapi.TerminalAlarm) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		logger := lg.With("endpoint", BroadcastEndpoint, "remote", r.RemoteAddr)
 		logger.Info("endpoint called")
 
@@ -72,6 +72,7 @@ func HandleBroadcast(mux *http.ServeMux, server *terminal.Server, lg *zap.Sugare
 		case ScaleGlobal:
 			// broadcast to each tower in each aisle one time
 			var lastError error
+
 			for n, aisle := range aisles {
 				if err := broadcastToAisle(logger, aisle, b); err != nil {
 					lastError = err
@@ -95,8 +96,8 @@ func HandleBroadcast(mux *http.ServeMux, server *terminal.Server, lg *zap.Sugare
 			}
 
 			if err := broadcastToAisle(logger, aisle, b); err != nil {
-				logger.Errorw("broadcast to aisle", "error", err, "aisle", br.Originator.Aisle)
 				// do not return, still need to tell CND
+				logger.Errorw("broadcast to aisle", "error", err, "aisle", br.Originator.Aisle)
 			}
 		case ScaleTower:
 			err := backoff.Retry(sendToTowerCallback(lg, r.RemoteAddr, b), backoff.WithMaxRetries(backoff.NewConstantBackOff(time.Second), 10))
@@ -111,10 +112,12 @@ func HandleBroadcast(mux *http.ServeMux, server *terminal.Server, lg *zap.Sugare
 			// TODO: implement when use-case arises (not needed currently)
 			logger.Error("ScaleColumn not implemented")
 			http.Error(w, "ScaleColumn not implemented", http.StatusNotImplemented)
+
 			return
 		default: // ScaleNone, negative, or too high (above global)
 			logger.Errorw("invalid broadcast scale", "scale", br.Scale.String())
 			http.Error(w, fmt.Sprintf("invalid broadcast scale %v", br.Scale), http.StatusBadRequest)
+
 			return
 		}
 
@@ -123,7 +126,7 @@ func HandleBroadcast(mux *http.ServeMux, server *terminal.Server, lg *zap.Sugare
 		} else {
 			w.WriteHeader(http.StatusOK)
 		}
-	})
+	}
 }
 
 func fireAlarm(level BroadcastReason, server *terminal.Server, loc Location, aisle, id string, ina chan *asrsapi.TerminalAlarm) error {

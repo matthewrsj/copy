@@ -11,6 +11,8 @@ import (
 // Configuration holds the common options for running this controller
 type Configuration struct {
 	Loc                    Location `yaml:"location"`
+	TestOnlyAisles         []string `yaml:"test_only_aisles"`
+	ProductionOnlyAisles   []string `yaml:"production_only_aisles"`
 	CellAPIBase            string   `yaml:"cell_api_base"`
 	CellAPINextProcStepFmt string   `yaml:"cell_api_next_process_step"`
 	CellAPICloseProcessFmt string   `yaml:"cell_api_close_process"`

@@ -14,11 +14,13 @@ import (
 	"go.uber.org/zap"
 )
 
+// AvailabilityEndpoint handles incoming GET requests for availability of tower/fixtures
+const AvailabilityEndpoint = "/available"
+
 const (
-	_allAvailabilityEndpoint = "/available"
-	_towerQueryKey           = "tower"
-	_fixtureQueryKey         = "fxr"
-	_allowedQueryKey         = "allowed"
+	_towerQueryKey   = "tower"
+	_fixtureQueryKey = "fxr"
+	_allowedQueryKey = "allowed"
 )
 
 // HandleAvailable is the handler for the endpoint reporting availability of fixtures
@@ -26,9 +28,10 @@ const (
 // where AISLEID is a three digit number (010, 020) with a trailing zero
 // and TOWERNUM is a two digit number (01, 02)
 // nolint:gocognit // no reason to split this up
-func HandleAvailable(mux *http.ServeMux, configPath string, logger *zap.SugaredLogger) {
-	mux.HandleFunc(_allAvailabilityEndpoint, func(w http.ResponseWriter, r *http.Request) {
+func HandleAvailable(configPath string, logger *zap.SugaredLogger) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		logger.Infow("got request to /available", "remote", r.RemoteAddr)
+
 		config, err := LoadConfig(configPath)
 		if err != nil {
 			logger.Errorw("read configuration file", "error", err)
@@ -54,6 +57,7 @@ func HandleAvailable(mux *http.ServeMux, configPath string, logger *zap.SugaredL
 		requestedFXR := r.URL.Query().Get(_fixtureQueryKey)
 		if requestedFXR != "" {
 			var rb []byte
+
 			if rb, err = responseForSingleFixture(requestedFXR, availableTowers, config.Loc.Station); err != nil {
 				logger.Errorw("generate response for single fixture", "fixture", requestedFXR, "error", err)
 				http.Error(w, fmt.Errorf("generate response for single fixture: %v", err).Error(), http.StatusInternalServerError)
@@ -62,6 +66,7 @@ func HandleAvailable(mux *http.ServeMux, configPath string, logger *zap.SugaredL
 			}
 
 			w.Header().Add("Content-Type", "application/json")
+
 			if _, err = w.Write(rb); err != nil {
 				logger.Error("unable to write response JSON", "error", err)
 				http.Error(w, fmt.Errorf("write response json: %v", err).Error(), http.StatusInternalServerError)
@@ -133,11 +138,12 @@ func HandleAvailable(mux *http.ServeMux, configPath string, logger *zap.SugaredL
 		}
 
 		w.Header().Set("Content-Type", "application/json")
+
 		if _, err := w.Write(rb); err != nil {
 			logger.Error("unable to write response JSON", "error", err)
 			http.Error(w, fmt.Errorf("write response json: %v", err).Error(), http.StatusInternalServerError)
 		}
-	})
+	}
 }
 
 func getOneAvailability(name, address, allowedQuery string, logger *zap.SugaredLogger, wg *sync.WaitGroup, sResp *sync.Map) {

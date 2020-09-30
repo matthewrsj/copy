@@ -3,7 +3,7 @@
 This repository contains the Charge/Discharge Controller (server) for
 RoadRunner formation.
 
-## Install
+## Install Locally
 
 ```shell script
 docker-compose build                                   # build the docker container
@@ -19,6 +19,40 @@ systemctl status cdcontroller                          # confirm the service is 
 
 Logs can be found (by default) at `/var/log/cdcontroller/server.log`.
 
-
 By default the C/D Controller gRPC server will be running at port 13175 and the
 HTTP server for Tower Controllers to talk to will be running at port 8080.
+
+## Deploy to Kubernetes Cluster
+### Deploy
+```shell script
+kubectl apply -f configuration/kubernetes/deploycdc.yaml
+```
+
+### Edit Configuration
+Enter the following command
+```shell script
+kubectl edit configmap cdcontroller -n=formation-cdcontroller
+```
+
+This will bring up Vim, make the desired changes and write-quit. The changes will be take effect immediately. 
+
+To simply view the current configuration
+```shell script
+kubectl describe configmap cdcontroller -n=formation-cdcontroller
+```
+or
+```shell script
+kubecutl get configmap cdcontroller -n=formation-cdcontroller -o yaml
+```
+
+### Force Restart
+To force a restart simply delete the pod (kubernetes will immediately remake it).
+
+Get the pod ID
+```shell script
+kubectl get pod -n=formation-cdcontroller
+```
+Delete the pod
+```shell script
+kubectl delete pod <pod-id> -n=formation-cdcontroller
+```

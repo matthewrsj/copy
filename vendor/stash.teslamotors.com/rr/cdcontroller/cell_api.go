@@ -15,17 +15,16 @@ type cellMapResp struct {
 
 // CellData contains the serial number, location in tray, and a flag indicating whether or not the locaiton is empty
 type CellData struct {
-	Position string `json:"position"`
-	Serial   string `json:"cell_serial"`
-	IsEmpty  bool   `json:"is_empty"`
+	Position   string `json:"position"`
+	Serial     string `json:"cell_serial"`
+	IsEmpty    bool   `json:"is_empty"`
+	StatusCode int    `json:"status_code"`
 }
 
 // CellPFData contains the pass/fail data of a given cell
 type CellPFData struct {
-	Serial  string `json:"cell_serial"`
-	Status  string `json:"status"`
-	Recipe  string `json:"recipe"`
-	Version int    `json:"version"`
+	Serial string `json:"cell_serial"`
+	Status string `json:"status"`
 }
 
 // NextFormationStep contains the recipe name, step and step type for a given tray
@@ -51,7 +50,7 @@ type endpoints struct {
 	cellMapFmt         string
 	processStatusFmt   string
 	nextProcessStepFmt string
-	cellStatus         string
+	cellStatusFmt      string
 	closeProcessFmt    string
 }
 
@@ -64,8 +63,8 @@ const (
 	// DefaultNextProcessStepFmt is the default endpoint for getting the next process step of a tray.
 	// Format directives is for the tray serial.
 	DefaultNextProcessStepFmt = "/trays/%s/formation"
-	// DefaultCellStatus is the default endpoint for posting cell status.
-	DefaultCellStatus = "/cells/set_cell_status"
+	// DefaultCellStatusFmt is the default endpoint for posting cell status.
+	DefaultCellStatusFmt = "/trays/%s/formation/cd/status"
 	// DefaultCloseProcessFmt is the default endpoint for closing a process step
 	DefaultCloseProcessFmt = "/trays/%s/formation/next"
 )
@@ -97,10 +96,10 @@ func WithNextProcessStepFmtEndpoint(epf string) CellAPIOption {
 	}
 }
 
-// WithCellStatusEndpoint returns an CellAPIOption to set the client cell status endpoint.
-func WithCellStatusEndpoint(ep string) CellAPIOption {
+// WithCellStatusFmtEndpoint returns an CellAPIOption to set the client cell status endpoint.
+func WithCellStatusFmtEndpoint(ep string) CellAPIOption {
 	return func(c *CellAPIClient) {
-		c.eps.cellStatus = ep
+		c.eps.cellStatusFmt = ep
 	}
 }
 
@@ -120,7 +119,7 @@ func NewCellAPIClient(baseURL string, opts ...CellAPIOption) *CellAPIClient {
 			cellMapFmt:         DefaultCellMapFmt,
 			processStatusFmt:   DefaultProcessStatusFmt,
 			nextProcessStepFmt: DefaultNextProcessStepFmt,
-			cellStatus:         DefaultCellStatus,
+			cellStatusFmt:      DefaultCellStatusFmt,
 			closeProcessFmt:    DefaultCloseProcessFmt,
 		},
 	}
@@ -221,7 +220,8 @@ func (c *CellAPIClient) GetCellMap(sn string) (map[string]CellData, error) {
 	cm := make(map[string]CellData, maxCells)
 
 	for _, cell := range cmr.Cells {
-		if cell.IsEmpty {
+		if cell.IsEmpty || cell.StatusCode != 0 {
+			// no cell present or cell previously failed
 			continue
 		}
 
@@ -283,7 +283,7 @@ func (c *CellAPIClient) UpdateProcessStatus(sn, fixture string, s TrayStatus) er
 }
 
 // SetCellStatuses sets the pass/fail data of a list of cells
-func (c *CellAPIClient) SetCellStatuses(cpf []CellPFData) error {
+func (c *CellAPIClient) SetCellStatuses(tray string, cpf []CellPFData) error {
 	type request struct {
 		Cells []CellPFData `json:"cells"`
 	}
@@ -293,7 +293,7 @@ func (c *CellAPIClient) SetCellStatuses(cpf []CellPFData) error {
 		return fmt.Errorf("marshal request json: %v", err)
 	}
 
-	url := urlJoin(c.baseURL, c.eps.cellStatus)
+	url := urlJoin(c.baseURL, fmt.Sprintf(c.eps.cellStatusFmt, tray))
 
 	// nolint:gosec // easier to construct the URL
 	resp, err := http.Post(url, "application/json", bytes.NewReader(b))

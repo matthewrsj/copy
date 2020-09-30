@@ -67,7 +67,7 @@ func main() {
 		cdcontroller.WithNextProcessStepFmtEndpoint(conf.CellAPI.Endpoints.NextProcStepFmt),
 		cdcontroller.WithProcessStatusFmtEndpoint(conf.CellAPI.Endpoints.ProcessStatusFmt),
 		cdcontroller.WithCellMapFmtEndpoint(conf.CellAPI.Endpoints.CellMapFmt),
-		cdcontroller.WithCellStatusEndpoint(conf.CellAPI.Endpoints.CellStatus),
+		cdcontroller.WithCellStatusFmtEndpoint(conf.CellAPI.Endpoints.CellStatusFmt),
 		cdcontroller.WithCloseProcessFmtEndpoint(conf.CellAPI.Endpoints.CloseProcessFmt),
 	)
 

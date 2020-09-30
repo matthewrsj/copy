@@ -13,6 +13,9 @@ import (
 	terminal "stash.teslamotors.com/cas/asrs/terminal/server"
 )
 
+// UnloadEndpoint handles incoming POSTs to unload a tray from a fixture
+const UnloadEndpoint = "/unload"
+
 type trayComplete struct {
 	ID     string `json:"id"`
 	Aisle  string `json:"aisle"`
@@ -22,20 +25,21 @@ type trayComplete struct {
 
 // HandleUnloads handles unloads coming from tower controller
 // nolint:gocognit,funlen // TODO: simplify
-func HandleUnloads(mux *http.ServeMux, server *terminal.Server, lg *zap.SugaredLogger, conf Configuration, aisles map[string]*Aisle, inuo chan *asrsapi.UnloadOperation, mockAPI string) {
+func HandleUnloads(server *terminal.Server, lg *zap.SugaredLogger, conf Configuration, aisles map[string]*Aisle, inuo chan *asrsapi.UnloadOperation, mockAPI string) http.HandlerFunc {
 	c := NewCellAPIClient(
 		conf.CellAPIBase,
 		WithNextProcessStepFmtEndpoint(conf.CellAPINextProcStepFmt),
 		WithCloseProcessFmtEndpoint(conf.CellAPICloseProcessFmt),
 	)
 
-	mux.HandleFunc("/unload", func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		logger := lg.With("remote", r.RemoteAddr)
 
 		b, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			logger.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+
 			return
 		}
 
@@ -43,6 +47,7 @@ func HandleUnloads(mux *http.ServeMux, server *terminal.Server, lg *zap.SugaredL
 		if err = json.Unmarshal(b, &tc); err != nil {
 			logger.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+
 			return
 		}
 
@@ -99,6 +104,7 @@ func HandleUnloads(mux *http.ServeMux, server *terminal.Server, lg *zap.SugaredL
 		switch step {
 		case CommissionSelfTestRecipeName:
 			logger.Debug("handling reload")
+
 			aisle, ok := aisles[tc.Aisle]
 			if !ok {
 				logger.Errorw("invalid aisle location", "aisle", tc.Aisle, "error", err)
@@ -156,10 +162,11 @@ func HandleUnloads(mux *http.ServeMux, server *terminal.Server, lg *zap.SugaredL
 			}
 		default:
 			logger.Debug("handling unload")
+
 			uo.State.State = asrsapi.UnloadOperationState_Executed
 		}
 
 		logger.Info("informing CND")
 		inuo <- uo
-	})
+	}
 }

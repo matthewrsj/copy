@@ -18,5 +18,5 @@ type endpointConf struct {
 	CloseProcessFmt string `yaml:"close_process"`
 
 	// no format here
-	CellStatus string `yaml:"cell_status"`
+	CellStatusFmt string `yaml:"cell_status"`
 }

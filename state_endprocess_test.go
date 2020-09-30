@@ -97,7 +97,7 @@ func TestEndProcess_Action(t *testing.T) {
 	scs := monkey.PatchInstanceMethod(
 		reflect.TypeOf(&cdcontroller.CellAPIClient{}),
 		"SetCellStatuses",
-		func(*cdcontroller.CellAPIClient, []cdcontroller.CellPFData) error {
+		func(*cdcontroller.CellAPIClient, string, []cdcontroller.CellPFData) error {
 			return nil
 		},
 	)
@@ -405,7 +405,7 @@ func TestEndProcess_ActionBadSetCellStatus(t *testing.T) {
 	scs := monkey.PatchInstanceMethod(
 		reflect.TypeOf(&cdcontroller.CellAPIClient{}),
 		"SetCellStatuses",
-		func(*cdcontroller.CellAPIClient, []cdcontroller.CellPFData) error {
+		func(*cdcontroller.CellAPIClient, string, []cdcontroller.CellPFData) error {
 			return assert.AnError
 		},
 	)

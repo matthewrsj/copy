@@ -14,7 +14,7 @@ import (
 	asrsapi "stash.teslamotors.com/cas/asrs/idl/src"
 )
 
-func handleIncomingLoad(g asrsapi.Terminal_LoadOperationsServer, lg *zap.SugaredLogger, am *AisleManager, aisles map[string]*Aisle, lo *asrsapi.LoadOperation) error {
+func handleIncomingLoad(g asrsapi.Terminal_LoadOperationsServer, lg *zap.SugaredLogger, prodAM, testAM *AisleManager, aisles map[string]*Aisle, lo *asrsapi.LoadOperation) error {
 	logger := lg.With(
 		"location", lo.GetLocation().GetCmFormat().GetEquipmentId(),
 		"trays", lo.GetTray().GetTrayId(),
@@ -36,7 +36,7 @@ func handleIncomingLoad(g asrsapi.Terminal_LoadOperationsServer, lg *zap.Sugared
 		// if aisleLocation is empty perform the initial load
 		if strings.Trim(aisleLocation, "0") == "" {
 			logger.Info("no aisle location, routing to aisle")
-			return handleInitialLoad(g, logger, am, aisles, lo)
+			return handleInitialLoad(g, logger, prodAM, testAM, aisles, lo)
 		}
 
 		// if aisleLocation is populated perform the tower load
@@ -61,9 +61,17 @@ func handleIncomingLoad(g asrsapi.Terminal_LoadOperationsServer, lg *zap.Sugared
 	return nil
 }
 
-func handleInitialLoad(g asrsapi.Terminal_LoadOperationsServer, logger *zap.SugaredLogger, am *AisleManager, aisles map[string]*Aisle, lo *asrsapi.LoadOperation) error {
+const _nonProdPrefix = "TEST_"
+
+func handleInitialLoad(g asrsapi.Terminal_LoadOperationsServer, logger *zap.SugaredLogger, prodAM, testAM *AisleManager, aisles map[string]*Aisle, lo *asrsapi.LoadOperation) error {
 	need := len(lo.GetTray().GetTrayId())
 	logger.Debugw("need space for trays", "need", need)
+
+	// determine which aisle manager to use
+	am := prodAM
+	if strings.HasPrefix(lo.GetRecipe().GetStep(), _nonProdPrefix) {
+		am = testAM
+	}
 
 	var aislePicked string
 

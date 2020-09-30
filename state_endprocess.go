@@ -240,10 +240,8 @@ func (e *EndProcess) setCellStatuses() {
 		}
 
 		cpf = append(cpf, cdcontroller.CellPFData{
-			Serial:  cellInfo.Serial,
-			Status:  status,
-			Recipe:  e.processStepName,
-			Version: e.recipeVersion,
+			Serial: cellInfo.Serial,
+			Status: status,
 		})
 	}
 
@@ -259,7 +257,7 @@ func (e *EndProcess) setCellStatuses() {
 	}
 
 	if !e.mockCellAPI {
-		if err := e.CellAPIClient.SetCellStatuses(cpf); err != nil {
+		if err := e.CellAPIClient.SetCellStatuses(e.tbc.SN, cpf); err != nil {
 			e.childLogger.Errorw("SetCellStatuses", "error", err)
 			return
 		}

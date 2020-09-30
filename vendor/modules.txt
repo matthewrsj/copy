@@ -10,13 +10,8 @@ github.com/beorn7/perks/quantile
 github.com/cenkalti/backoff
 # github.com/cespare/xxhash/v2 v2.1.1
 github.com/cespare/xxhash/v2
-# github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
-github.com/chzyer/readline
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
-# github.com/fatih/color v1.9.0
-## explicit
-github.com/fatih/color
 # github.com/fsnotify/fsnotify v1.4.9
 ## explicit
 github.com/fsnotify/fsnotify
@@ -41,20 +36,6 @@ github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap
 github.com/grpc-ecosystem/go-grpc-middleware/tags
 # github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 github.com/grpc-ecosystem/go-grpc-prometheus
-# github.com/juju/ansiterm v0.0.0-20180109212912-720a0952cc2a
-github.com/juju/ansiterm
-github.com/juju/ansiterm/tabwriter
-# github.com/lunixbochs/vtclean v0.0.0-20180621232353-2d01aacdc34a
-github.com/lunixbochs/vtclean
-# github.com/manifoldco/promptui v0.7.0
-## explicit
-github.com/manifoldco/promptui
-github.com/manifoldco/promptui/list
-github.com/manifoldco/promptui/screenbuf
-# github.com/mattn/go-colorable v0.1.4
-github.com/mattn/go-colorable
-# github.com/mattn/go-isatty v0.0.11
-github.com/mattn/go-isatty
 # github.com/matttproud/golang_protobuf_extensions v1.0.1
 github.com/matttproud/golang_protobuf_extensions/pbutil
 # github.com/phayes/freeport v0.0.0-20180830031419-95f893ade6f2
@@ -221,7 +202,7 @@ stash.teslamotors.com/ctet/go-socketcan/pkg/socketcan
 # stash.teslamotors.com/ctet/statemachine/v2 v2.0.1
 ## explicit
 stash.teslamotors.com/ctet/statemachine/v2
-# stash.teslamotors.com/rr/cdcontroller v0.2.1
+# stash.teslamotors.com/rr/cdcontroller v0.2.2
 ## explicit
 stash.teslamotors.com/rr/cdcontroller
 # stash.teslamotors.com/rr/protostream v0.1.3
