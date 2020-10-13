@@ -26,7 +26,8 @@ func TestWaitForLoad_Actions(t *testing.T) {
 		},
 		Logger: zap.NewExample().Sugar(),
 		fxrInfo: &FixtureInfo{
-			LDC: lc,
+			LDC:          lc,
+			FixtureState: newTestFixtureStateForFixture("01-01"),
 		},
 	}
 

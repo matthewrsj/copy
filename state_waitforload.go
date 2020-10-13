@@ -2,11 +2,13 @@ package towercontroller
 
 import (
 	"fmt"
+	"time"
 
 	"go.uber.org/zap"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cdcontroller"
 	"stash.teslamotors.com/rr/protostream"
+	pb "stash.teslamotors.com/rr/towerproto"
 )
 
 // WaitForLoad waits for a loaded message from the C/D controller
@@ -27,6 +29,7 @@ type WaitForLoad struct {
 	recipeVersion   int
 	mockCellAPI     bool
 	resetToIdle     bool
+	alarmed         pb.FireAlarmStatus
 
 	fxrInfo *FixtureInfo
 
@@ -41,13 +44,43 @@ func (w *WaitForLoad) action() {
 
 	var fxrLoad cdcontroller.FXRLoad
 
-	select {
-	case <-w.fxrInfo.Unreserve:
-		w.Logger.Warn("waitforload: reservation manually removed")
-		w.resetToIdle = true
+poll:
+	for {
+		select {
+		case <-w.fxrInfo.Unreserve: // unreserved via API
+			w.Logger.Warn("waitforload: reservation manually removed")
+			w.resetToIdle = true
 
-		return
-	case fxrLoad = <-w.fxrInfo.LDC:
+			return
+		case fxrLoad = <-w.fxrInfo.LDC: // load complete
+			break poll
+		default:
+			msg, err := w.fxrInfo.FixtureState.GetOp()
+			if err != nil {
+				w.Logger.Warnw("get fixture operational message", "error", err)
+				time.Sleep(time.Second)
+				continue
+			}
+
+			if msg.GetOp().GetStatus() == pb.FixtureStatus_FIXTURE_STATUS_FAULTED && msg.GetOp().GetFireAlarmStatus() != pb.FireAlarmStatus_FIRE_ALARM_UNKNOWN_UNSPECIFIED {
+				w.Logger.Warnw("fire alarm detected from fixture", "fixture", w.fxrInfo.Name, "alarm", msg.GetOp().GetFireAlarmStatus().String())
+
+				// fire alarm, tell CDC
+				// this is in-band because it will try _forever_ until it succeeds,
+				w.resetToIdle = true // return to idle whether or not we successfully sounded alarm
+				if err := soundTheAlarm(w.Config, msg.GetOp().GetFireAlarmStatus(), w.fxrInfo.Name, w.Logger); err != nil {
+					// basically couldn't marshal the request. Return to idle where we will keep trying for as
+					// long as the alarm exists
+					return
+				}
+
+				// successfully alarmed, return to idle but set alarmed to true so we don't keep alarming
+				w.alarmed = msg.GetOp().GetFireAlarmStatus()
+				return
+			}
+
+			time.Sleep(time.Second)
+		}
 	}
 
 	fxrID := fmt.Sprintf("%s-%s%s-%02d-%02d", w.Config.Loc.Line, w.Config.Loc.Process, w.Config.Loc.Aisle, fxrLoad.Column, fxrLoad.Level)
@@ -109,6 +142,7 @@ func (w *WaitForLoad) Next() statemachine.State {
 			Publisher:     w.Publisher,
 			MockCellAPI:   w.mockCellAPI,
 			FXRInfo:       w.fxrInfo,
+			alarmed:       w.alarmed,
 		}
 	default:
 		next = &StartProcess{
