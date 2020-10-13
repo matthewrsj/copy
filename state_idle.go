@@ -296,6 +296,9 @@ func (i *Idle) monitorForStatus(done <-chan struct{}, active chan<- inProgressIn
 					i.alarmed = msg.GetOp().GetFireAlarmStatus()
 				}
 			}
+
+			// wait a second for it to update before checking again so we don't spam the logs and CPU
+			time.Sleep(time.Second)
 		default:
 			// wait a second for it to update before checking again
 			time.Sleep(time.Second)
