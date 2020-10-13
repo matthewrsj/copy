@@ -17,7 +17,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"stash.teslamotors.com/rr/cdcontroller"
 	"stash.teslamotors.com/rr/protostream"
-	pb "stash.teslamotors.com/rr/towerproto"
+	tower "stash.teslamotors.com/rr/towerproto"
 )
 
 func TestHandleBroadcastRequest(t *testing.T) {
@@ -121,10 +121,10 @@ func TestHandleBroadcastRequest(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var fStop pb.TowerToFixture
+	var fStop tower.TowerToFixture
 	if err := proto.Unmarshal(pMsg.Body, &fStop); err != nil {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, pb.FormRequest_FORM_REQUEST_STOP, fStop.GetRecipe().GetFormrequest())
+	assert.Equal(t, tower.FormRequest_FORM_REQUEST_STOP, fStop.GetRecipe().GetFormrequest())
 }

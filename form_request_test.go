@@ -17,7 +17,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"nanomsg.org/go/mangos/v2"
 	"stash.teslamotors.com/rr/protostream"
-	pb "stash.teslamotors.com/rr/towerproto"
+	tower "stash.teslamotors.com/rr/towerproto"
 )
 
 func TestHandleSendFormRequest(t *testing.T) {
@@ -71,10 +71,10 @@ func TestHandleSendFormRequest(t *testing.T) {
 
 	time.Sleep(time.Millisecond * 200)
 
-	status := &pb.FixtureToTower{
-		Content: &pb.FixtureToTower_Op{
-			Op: &pb.FixtureOperational{
-				Status: pb.FixtureStatus_FIXTURE_STATUS_FAULTED,
+	status := &tower.FixtureToTower{
+		Content: &tower.FixtureToTower_Op{
+			Op: &tower.FixtureOperational{
+				Status: tower.FixtureStatus_FIXTURE_STATUS_FAULTED,
 			},
 		},
 	}
@@ -104,7 +104,7 @@ func TestHandleSendFormRequest(t *testing.T) {
 
 	rfRequest := RequestForm{
 		FixtureID:   "01-01",
-		FormRequest: pb.FormRequest_FORM_REQUEST_FAULT_RESET.String(),
+		FormRequest: tower.FormRequest_FORM_REQUEST_FAULT_RESET.String(),
 	}
 
 	buf, err = json.Marshal(rfRequest)
@@ -134,12 +134,12 @@ func TestHandleSendFormRequest(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var fReset pb.TowerToFixture
+	var fReset tower.TowerToFixture
 	if err = proto.Unmarshal(pMsg.Body, &fReset); err != nil {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, pb.FormRequest_FORM_REQUEST_FAULT_RESET, fReset.GetRecipe().GetFormrequest())
+	assert.Equal(t, tower.FormRequest_FORM_REQUEST_FAULT_RESET, fReset.GetRecipe().GetFormrequest())
 
 	resp, err = http.Get(fmt.Sprintf("http://localhost:%d/form_request", port))
 	if err != nil {

@@ -13,13 +13,13 @@ import (
 	"github.com/phayes/freeport"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
-	pb "stash.teslamotors.com/rr/towerproto"
+	tower "stash.teslamotors.com/rr/towerproto"
 )
 
 func TestHandleCanary(t *testing.T) {
 	fs := NewFixtureState()
 	fs.operational = &fixtureMessage{
-		message:    &pb.FixtureToTower{},
+		message:    &tower.FixtureToTower{},
 		lastSeen:   time.Now(),
 		dataExpiry: time.Second * 10,
 	}

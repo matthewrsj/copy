@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cdcontroller"
-	pb "stash.teslamotors.com/rr/towerproto"
+	tower "stash.teslamotors.com/rr/towerproto"
 )
 
 func TestUnloading_Next(t *testing.T) {
@@ -34,9 +34,9 @@ func TestUnloading_Actions(t *testing.T) {
 
 	updateInternalFixtureState(
 		ul.fxrInfo.FixtureState.operational,
-		&pb.FixtureToTower{
-			Content: &pb.FixtureToTower_Op{
-				Op: &pb.FixtureOperational{Status: pb.FixtureStatus_FIXTURE_STATUS_IDLE},
+		&tower.FixtureToTower{
+			Content: &tower.FixtureToTower_Op{
+				Op: &tower.FixtureOperational{Status: tower.FixtureStatus_FIXTURE_STATUS_IDLE},
 			},
 		},
 	)

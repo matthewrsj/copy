@@ -13,7 +13,7 @@ import (
 	"github.com/phayes/freeport"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
-	pb "stash.teslamotors.com/rr/towerproto"
+	tower "stash.teslamotors.com/rr/towerproto"
 )
 
 func newTestFixtureLocation(id string) string {
@@ -22,7 +22,7 @@ func newTestFixtureLocation(id string) string {
 
 func newTestFixtureStateForFixture(fixture string) *FixtureState {
 	fsm := &fixtureMessage{
-		message: &pb.FixtureToTower{
+		message: &tower.FixtureToTower{
 			Traybarcode:    "TESTBARCODEA",
 			Fixturebarcode: newTestFixtureLocation(fixture),
 			ProcessStep:    "TESTPROCESSSTEP",

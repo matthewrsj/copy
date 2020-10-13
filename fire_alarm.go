@@ -12,12 +12,12 @@ import (
 	"github.com/cenkalti/backoff"
 	"go.uber.org/zap"
 	"stash.teslamotors.com/rr/cdcontroller"
-	pb "stash.teslamotors.com/rr/towerproto"
+	tower "stash.teslamotors.com/rr/towerproto"
 )
 
-func soundTheAlarm(config Configuration, status pb.FireAlarmStatus, location string, logger *zap.SugaredLogger) error {
+func soundTheAlarm(config Configuration, status tower.FireAlarmStatus, location string, logger *zap.SugaredLogger) error {
 	level := cdcontroller.ReasonFireLevel0
-	if status == pb.FireAlarmStatus_FIRE_ALARM_LEVEL_1 {
+	if status == tower.FireAlarmStatus_FIRE_ALARM_LEVEL_1 {
 		level = cdcontroller.ReasonFireLevel1
 	}
 

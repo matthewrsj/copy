@@ -10,7 +10,7 @@ import (
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cdcontroller"
 	"stash.teslamotors.com/rr/protostream"
-	pb "stash.teslamotors.com/rr/towerproto"
+	tower "stash.teslamotors.com/rr/towerproto"
 )
 
 // Idle waits for a PreparedForLoad (or loaded to short circuit) from C/D controller
@@ -24,7 +24,7 @@ type Idle struct {
 
 	MockCellAPI bool
 
-	alarmed pb.FireAlarmStatus
+	alarmed tower.FireAlarmStatus
 	next    statemachine.State
 	err     error
 
@@ -266,18 +266,18 @@ func (i *Idle) monitorForStatus(done <-chan struct{}, active chan<- inProgressIn
 		i.Logger.Debugw("fixture status", "fixture", i.FXRInfo.Name, "status", msg.GetOp().GetStatus().String())
 
 		switch msg.GetOp().GetStatus() {
-		case pb.FixtureStatus_FIXTURE_STATUS_ACTIVE:
+		case tower.FixtureStatus_FIXTURE_STATUS_ACTIVE:
 			// go to in-progress
 			active <- ipInfo
 
 			return
-		case pb.FixtureStatus_FIXTURE_STATUS_COMPLETE:
+		case tower.FixtureStatus_FIXTURE_STATUS_COMPLETE:
 			// go to unload
 			complete <- ipInfo
 
 			return
-		case pb.FixtureStatus_FIXTURE_STATUS_FAULTED:
-			if msg.GetOp().GetFireAlarmStatus() != pb.FireAlarmStatus_FIRE_ALARM_UNKNOWN_UNSPECIFIED {
+		case tower.FixtureStatus_FIXTURE_STATUS_FAULTED:
+			if msg.GetOp().GetFireAlarmStatus() != tower.FireAlarmStatus_FIRE_ALARM_UNKNOWN_UNSPECIFIED {
 				i.Logger.Warnw("fire alarm detected from fixture", "fixture", i.FXRInfo.Name, "alarm", msg.GetOp().GetFireAlarmStatus().String())
 
 				// fire alarm, tell CDC

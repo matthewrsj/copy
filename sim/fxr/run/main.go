@@ -14,7 +14,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"stash.teslamotors.com/ctet/go-socketcan/pkg/socketcan"
 	"stash.teslamotors.com/rr/towercontroller"
-	pb "stash.teslamotors.com/rr/towerproto"
+	tower "stash.teslamotors.com/rr/towerproto"
 )
 
 const _confFileDef = "../../../configuration/statemachine/statemachine.yaml"
@@ -86,11 +86,11 @@ func main() {
 	}
 
 	// msgDiag contains the diagnostic messages from the FXR. Ignored by the TC SM
-	msgDiag := &pb.FixtureToTower{
-		Content: &pb.FixtureToTower_Diag{
-			Diag: &pb.FixtureDiagnostic{
-				Fxr: &pb.Fxr{
-					Sensors: &pb.FxrSensors{
+	msgDiag := &tower.FixtureToTower{
+		Content: &tower.FixtureToTower_Diag{
+			Diag: &tower.FixtureDiagnostic{
+				Fxr: &tower.Fxr{
+					Sensors: &tower.FxrSensors{
 						VBusHv:               1,
 						VBus_24:              2,
 						PositionSwitchClosed: true,
@@ -101,7 +101,7 @@ func main() {
 						IStibFib_24:          7,
 						VSolenoid_24:         8,
 					},
-					Outputs: &pb.FxrOutputs{
+					Outputs: &tower.FxrOutputs{
 						StibEnableLine:     true,
 						FixtureCloseEnable: true,
 					},
@@ -111,11 +111,11 @@ func main() {
 	}
 
 	// msgOp contains the status of the fixture. This what the TC state machine relies on
-	msgOp := &pb.FixtureToTower{
-		Content: &pb.FixtureToTower_Op{
-			Op: &pb.FixtureOperational{
-				Position:        pb.FixturePosition_FIXTURE_POSITION_OPEN,
-				EquipmentStatus: pb.EquipmentStatus_EQUIPMENT_STATUS_IN_OPERATION,
+	msgOp := &tower.FixtureToTower{
+		Content: &tower.FixtureToTower_Op{
+			Op: &tower.FixtureOperational{
+				Position:        tower.FixturePosition_FIXTURE_POSITION_OPEN,
+				EquipmentStatus: tower.EquipmentStatus_EQUIPMENT_STATUS_IN_OPERATION,
 			},
 		},
 	}
@@ -129,18 +129,18 @@ func main() {
 			for {
 				var (
 					buf    []byte
-					msgt2f pb.TowerToFixture
+					msgt2f tower.TowerToFixture
 				)
 
 				log.Println("FIXTURE WAITING FOR MESSAGE FROM TOWER", did.name)
 
 				for {
-					msg := pb.FixtureToTower{
-						Content: &pb.FixtureToTower_Op{
-							Op: &pb.FixtureOperational{
-								Status:          pb.FixtureStatus_FIXTURE_STATUS_READY,
-								EquipmentStatus: pb.EquipmentStatus_EQUIPMENT_STATUS_IN_OPERATION,
-								Position:        pb.FixturePosition_FIXTURE_POSITION_OPEN,
+					msg := tower.FixtureToTower{
+						Content: &tower.FixtureToTower_Op{
+							Op: &tower.FixtureOperational{
+								Status:          tower.FixtureStatus_FIXTURE_STATUS_READY,
+								EquipmentStatus: tower.EquipmentStatus_EQUIPMENT_STATUS_IN_OPERATION,
+								Position:        tower.FixturePosition_FIXTURE_POSITION_OPEN,
 							},
 						},
 						Fixturebarcode: fmt.Sprintf("CM2-63010-%s", did.name),
@@ -197,16 +197,16 @@ func main() {
 					break
 				}
 
-				cells := make([]*pb.Cell, 64)
+				cells := make([]*tower.Cell, 64)
 				cms := msgt2f.Recipe.GetCellMasks()
 				transactionID := msgt2f.TransactionId
 
 				for i, cm := range cms {
 					for bit := 0; bit < 32; bit++ {
 						if cm&(1<<bit) != 0 {
-							cells[i+bit] = &pb.Cell{
-								Cellstatus: pb.CellStatus_CELL_STATUS_COMPLETE,
-								Cellmeasurement: &pb.CellMeasurement{
+							cells[i+bit] = &tower.Cell{
+								Cellstatus: tower.CellStatus_CELL_STATUS_COMPLETE,
+								Cellmeasurement: &tower.CellMeasurement{
 									Current:             1.23,
 									Voltage:             3.47,
 									ChargeAh:            94,
@@ -226,16 +226,16 @@ func main() {
 				msgOp.Fixturebarcode = msgt2f.GetSysinfo().GetFixturebarcode()
 				msgOp.Traybarcode = msgt2f.GetSysinfo().GetTraybarcode()
 				msgOp.ProcessStep = msgt2f.GetSysinfo().GetProcessStep()
-				msgOp.GetOp().Status = pb.FixtureStatus_FIXTURE_STATUS_READY
+				msgOp.GetOp().Status = tower.FixtureStatus_FIXTURE_STATUS_READY
 				msgOp.GetOp().Cells = cells
 				msgOp.TransactionId = transactionID
 
 				for i := 0; i < 10; i++ {
 					switch {
 					case i > 7:
-						msgOp.GetOp().Status = pb.FixtureStatus_FIXTURE_STATUS_COMPLETE
+						msgOp.GetOp().Status = tower.FixtureStatus_FIXTURE_STATUS_COMPLETE
 					case i > 2:
-						msgOp.GetOp().Status = pb.FixtureStatus_FIXTURE_STATUS_ACTIVE
+						msgOp.GetOp().Status = tower.FixtureStatus_FIXTURE_STATUS_ACTIVE
 					}
 
 					log.Println(msgOp.GetOp().Status.String())

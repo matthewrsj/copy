@@ -17,7 +17,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"nanomsg.org/go/mangos/v2"
 	"stash.teslamotors.com/rr/protostream"
-	pb "stash.teslamotors.com/rr/towerproto"
+	tower "stash.teslamotors.com/rr/towerproto"
 )
 
 func TestHandleSendEquipmentRequest(t *testing.T) {
@@ -69,10 +69,10 @@ func TestHandleSendEquipmentRequest(t *testing.T) {
 		_ = srv.Shutdown(context.Background())
 	}()
 
-	status := &pb.FixtureToTower{
-		Content: &pb.FixtureToTower_Op{
-			Op: &pb.FixtureOperational{
-				EquipmentStatus: pb.EquipmentStatus_EQUIPMENT_STATUS_NEEDS_APPROVAL,
+	status := &tower.FixtureToTower{
+		Content: &tower.FixtureToTower_Op{
+			Op: &tower.FixtureOperational{
+				EquipmentStatus: tower.EquipmentStatus_EQUIPMENT_STATUS_NEEDS_APPROVAL,
 			},
 		},
 	}
@@ -102,7 +102,7 @@ func TestHandleSendEquipmentRequest(t *testing.T) {
 
 	rfRequest := RequestEquipment{
 		FixtureID:        "01-01",
-		EquipmentRequest: pb.EquipmentRequest_EQUIPMENT_REQUEST_SELF_TEST_APPROVED.String(),
+		EquipmentRequest: tower.EquipmentRequest_EQUIPMENT_REQUEST_SELF_TEST_APPROVED.String(),
 	}
 
 	buf, err = json.Marshal(rfRequest)
@@ -132,12 +132,12 @@ func TestHandleSendEquipmentRequest(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var eRequest pb.TowerToFixture
+	var eRequest tower.TowerToFixture
 	if err = proto.Unmarshal(pMsg.Body, &eRequest); err != nil {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, pb.EquipmentRequest_EQUIPMENT_REQUEST_SELF_TEST_APPROVED, eRequest.GetEquipmentRequest())
+	assert.Equal(t, tower.EquipmentRequest_EQUIPMENT_REQUEST_SELF_TEST_APPROVED, eRequest.GetEquipmentRequest())
 
 	resp, err = http.Get(fmt.Sprintf("http://localhost:%d/equipment_request", port))
 	if err != nil {

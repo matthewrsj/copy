@@ -13,7 +13,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"stash.teslamotors.com/ctet/go-socketcan/pkg/socketcan"
 	"stash.teslamotors.com/rr/towercontroller"
-	pb "stash.teslamotors.com/rr/towerproto"
+	tower "stash.teslamotors.com/rr/towerproto"
 )
 
 const _confFileDef = "/etc/towercontroller.d/statemachine.yaml"
@@ -24,19 +24,19 @@ func main() {
 
 	flag.Parse()
 
-	var status pb.FixtureStatus
+	var status tower.FixtureStatus
 
 	switch *statName {
 	case "active":
-		status = pb.FixtureStatus_FIXTURE_STATUS_ACTIVE
+		status = tower.FixtureStatus_FIXTURE_STATUS_ACTIVE
 	case "complete":
-		status = pb.FixtureStatus_FIXTURE_STATUS_COMPLETE
+		status = tower.FixtureStatus_FIXTURE_STATUS_COMPLETE
 	case "idle":
-		status = pb.FixtureStatus_FIXTURE_STATUS_IDLE
+		status = tower.FixtureStatus_FIXTURE_STATUS_IDLE
 	case "fault":
-		status = pb.FixtureStatus_FIXTURE_STATUS_FAULTED
+		status = tower.FixtureStatus_FIXTURE_STATUS_FAULTED
 	case "ready":
-		status = pb.FixtureStatus_FIXTURE_STATUS_READY
+		status = tower.FixtureStatus_FIXTURE_STATUS_READY
 	default:
 		log.Fatal("unknown status", *statName)
 	}
@@ -102,9 +102,9 @@ func main() {
 		log.Println("writing", status.String())
 
 		for _, ctx := range fxDevs {
-			msgOp := &pb.FixtureToTower{
-				Content: &pb.FixtureToTower_Op{
-					Op: &pb.FixtureOperational{
+			msgOp := &tower.FixtureToTower{
+				Content: &tower.FixtureToTower_Op{
+					Op: &tower.FixtureOperational{
 						Status: status,
 					},
 				},

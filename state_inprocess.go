@@ -7,7 +7,7 @@ import (
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cdcontroller"
 	"stash.teslamotors.com/rr/protostream"
-	pb "stash.teslamotors.com/rr/towerproto"
+	tower "stash.teslamotors.com/rr/towerproto"
 )
 
 // InProcess monitors the FXR proto for the state to change
@@ -26,9 +26,9 @@ type InProcess struct {
 	fixtureFault    bool
 	mockCellAPI     bool
 	returnToIdle    bool
-	alarmed         pb.FireAlarmStatus
+	alarmed         tower.FireAlarmStatus
 	cells           map[string]cdcontroller.CellData
-	cellResponse    []*pb.Cell
+	cellResponse    []*tower.Cell
 	recipeVersion   int
 
 	fxrInfo *FixtureInfo
@@ -42,7 +42,7 @@ func (i *InProcess) action() {
 		//       then COMPLETE/FAULTED
 		//       if it goes back to IDLE it lost the recipe, so unload
 		var (
-			msg *pb.FixtureToTower
+			msg *tower.FixtureToTower
 			err error
 		)
 
@@ -59,13 +59,13 @@ func (i *InProcess) action() {
 		i.childLogger.Debugw("got FixtureToTower message", "msg", msg.String())
 
 		switch s := msg.GetOp().GetStatus(); s {
-		case pb.FixtureStatus_FIXTURE_STATUS_COMPLETE, pb.FixtureStatus_FIXTURE_STATUS_FAULTED:
+		case tower.FixtureStatus_FIXTURE_STATUS_COMPLETE, tower.FixtureStatus_FIXTURE_STATUS_FAULTED:
 			statusMsg := "fixture done with tray"
 
-			if i.fixtureFault = s == pb.FixtureStatus_FIXTURE_STATUS_FAULTED; i.fixtureFault {
+			if i.fixtureFault = s == tower.FixtureStatus_FIXTURE_STATUS_FAULTED; i.fixtureFault {
 				statusMsg += "; fixture faulted"
 
-				if msg.GetOp().GetFireAlarmStatus() != pb.FireAlarmStatus_FIRE_ALARM_UNKNOWN_UNSPECIFIED {
+				if msg.GetOp().GetFireAlarmStatus() != tower.FireAlarmStatus_FIRE_ALARM_UNKNOWN_UNSPECIFIED {
 					// fire alarm, tell CDC
 					// this is in-band because it will try _forever_ until it succeeds,
 					// but we don't want to go to unload step because it will queue another job for the crane

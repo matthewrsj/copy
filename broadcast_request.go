@@ -10,7 +10,7 @@ import (
 	"go.uber.org/zap"
 	"stash.teslamotors.com/rr/cdcontroller"
 	"stash.teslamotors.com/rr/protostream"
-	pb "stash.teslamotors.com/rr/towerproto"
+	tower "stash.teslamotors.com/rr/towerproto"
 )
 
 // HandleBroadcastRequest handles incoming broadcast requests from the CD Controller
@@ -67,21 +67,21 @@ func HandleBroadcastRequest(publisher *protostream.Socket, logger *zap.SugaredLo
 
 		cl.Infow("sending operation to fixture(s)", "operation", broadcastRequest.Operation.String())
 
-		msg := pb.TowerToFixture{
-			Recipe: &pb.Recipe{}, // need to instantiate this so it isn't nil
+		msg := tower.TowerToFixture{
+			Recipe: &tower.Recipe{}, // need to instantiate this so it isn't nil
 		}
 
 		switch broadcastRequest.Operation {
 		case cdcontroller.OperationStopFormation:
-			msg.GetRecipe().Formrequest = pb.FormRequest_FORM_REQUEST_STOP
+			msg.GetRecipe().Formrequest = tower.FormRequest_FORM_REQUEST_STOP
 		case cdcontroller.OperationPauseFormation:
-			msg.GetRecipe().Formrequest = pb.FormRequest_FORM_REQUEST_PAUSE
+			msg.GetRecipe().Formrequest = tower.FormRequest_FORM_REQUEST_PAUSE
 		case cdcontroller.OperationResumeFormation:
-			msg.GetRecipe().Formrequest = pb.FormRequest_FORM_REQUEST_RESUME
+			msg.GetRecipe().Formrequest = tower.FormRequest_FORM_REQUEST_RESUME
 		case cdcontroller.OperationStopIsoCheck:
 			// TODO: not implemented in towerproto yet
 		case cdcontroller.OperationFaultReset:
-			msg.GetRecipe().Formrequest = pb.FormRequest_FORM_REQUEST_FAULT_RESET
+			msg.GetRecipe().Formrequest = tower.FormRequest_FORM_REQUEST_FAULT_RESET
 		default:
 			// nothing to do
 			err := errors.New("no operation requested")

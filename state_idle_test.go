@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cdcontroller"
-	pb "stash.teslamotors.com/rr/towerproto"
+	tower "stash.teslamotors.com/rr/towerproto"
 )
 
 func TestIdle_Next(t *testing.T) {
@@ -47,7 +47,7 @@ func TestIdle_Actions(t *testing.T) {
 		},
 	}
 
-	updateInternalFixtureState(i.FXRInfo.FixtureState.operational, &pb.FixtureToTower{})
+	updateInternalFixtureState(i.FXRInfo.FixtureState.operational, &tower.FixtureToTower{})
 
 	as := i.Actions()
 

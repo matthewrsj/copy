@@ -8,7 +8,7 @@ import (
 
 	"go.uber.org/zap"
 	"stash.teslamotors.com/rr/protostream"
-	pb "stash.teslamotors.com/rr/towerproto"
+	tower "stash.teslamotors.com/rr/towerproto"
 )
 
 // SendEquipmentRequestEndpoint is where equipment requests are sent to be sent to fixtures
@@ -53,7 +53,7 @@ func HandleSendEquipmentRequest(publisher *protostream.Socket, logger *zap.Sugar
 			return
 		}
 
-		equipReq, ok := pb.EquipmentRequest_value[rf.EquipmentRequest]
+		equipReq, ok := tower.EquipmentRequest_value[rf.EquipmentRequest]
 		if !ok {
 			logger.Errorw("invalid equipment request", "equipment_request", rf.EquipmentRequest)
 			http.Error(w, fmt.Sprintf("invalid form request %s", rf.EquipmentRequest), http.StatusBadRequest)
@@ -61,8 +61,8 @@ func HandleSendEquipmentRequest(publisher *protostream.Socket, logger *zap.Sugar
 			return
 		}
 
-		sendMsg := pb.TowerToFixture{
-			EquipmentRequest: pb.EquipmentRequest(equipReq),
+		sendMsg := tower.TowerToFixture{
+			EquipmentRequest: tower.EquipmentRequest(equipReq),
 		}
 
 		if err := sendProtoMessage(publisher, &sendMsg, fxrInfo.Name); err != nil {

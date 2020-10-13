@@ -10,7 +10,7 @@ import (
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cdcontroller"
 	"stash.teslamotors.com/rr/protostream"
-	pb "stash.teslamotors.com/rr/towerproto"
+	tower "stash.teslamotors.com/rr/towerproto"
 )
 
 // StartProcess sends the recipe information to the FXR
@@ -57,9 +57,9 @@ func (s *StartProcess) action() {
 
 	s.childLogger.Info("sending recipe and other information to FXR")
 
-	twr2Fxr := pb.TowerToFixture{
-		Recipe: &pb.Recipe{Formrequest: pb.FormRequest_FORM_REQUEST_START},
-		Sysinfo: &pb.SystemInfo{
+	twr2Fxr := tower.TowerToFixture{
+		Recipe: &tower.Recipe{Formrequest: tower.FormRequest_FORM_REQUEST_START},
+		Sysinfo: &tower.SystemInfo{
 			Traybarcode:    s.tbc.Raw,
 			Fixturebarcode: s.fxbc.Raw,
 			ProcessStep:    s.processStepName,
@@ -68,7 +68,7 @@ func (s *StartProcess) action() {
 	}
 
 	for _, step := range s.steps {
-		twr2Fxr.Recipe.Steps = append(twr2Fxr.Recipe.Steps, &pb.RecipeStep{
+		twr2Fxr.Recipe.Steps = append(twr2Fxr.Recipe.Steps, &tower.RecipeStep{
 			Mode:            modeStringToEnum(step.Mode),
 			ChargeCurrent:   step.ChargeCurrentAmps,
 			MaxCurrent:      step.MaxCurrentAmps,
@@ -207,7 +207,7 @@ func (s *StartProcess) performHandshake(msg proto.Message) {
 			continue
 		}
 
-		if rMsg.GetOp().GetStatus() != pb.FixtureStatus_FIXTURE_STATUS_READY {
+		if rMsg.GetOp().GetStatus() != tower.FixtureStatus_FIXTURE_STATUS_READY {
 			s.childLogger.Infow("FXR not yet ready for recipe", "status", rMsg.GetOp().GetStatus())
 			time.Sleep(time.Second) // give it a chance to update
 

@@ -8,7 +8,7 @@ import (
 
 	"go.uber.org/zap"
 	"stash.teslamotors.com/rr/cdcontroller"
-	pb "stash.teslamotors.com/rr/towerproto"
+	tower "stash.teslamotors.com/rr/towerproto"
 )
 
 // AvailabilityEndpoint is the endpoint that handles request for fixture availability
@@ -79,8 +79,8 @@ func HandleAvailable(configPath string, logger *zap.SugaredLogger, registry map[
 				zeroAvail := namedAvail{
 					name: location,
 					avail: cdcontroller.FXRAvailable{
-						Status:          pb.FixtureStatus_FIXTURE_STATUS_UNKNOWN_UNSPECIFIED.String(),
-						EquipmentStatus: pb.EquipmentStatus_EQUIPMENT_STATUS_UNKNOWN_UNSPECIFIED.String(),
+						Status:          tower.FixtureStatus_FIXTURE_STATUS_UNKNOWN_UNSPECIFIED.String(),
+						EquipmentStatus: tower.EquipmentStatus_EQUIPMENT_STATUS_UNKNOWN_UNSPECIFIED.String(),
 						Allowed:         fixtureIsAllowed(n, conf.AllowedFixtures),
 					},
 				}

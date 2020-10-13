@@ -9,7 +9,7 @@ import (
 
 	"go.uber.org/zap"
 	"stash.teslamotors.com/rr/protostream"
-	pb "stash.teslamotors.com/rr/towerproto"
+	tower "stash.teslamotors.com/rr/towerproto"
 )
 
 const _defaultDataExpiry = time.Second * 10
@@ -28,7 +28,7 @@ type FixtureState struct {
 }
 
 type fixtureMessage struct {
-	message    *pb.FixtureToTower
+	message    *tower.FixtureToTower
 	lastSeen   time.Time
 	dataExpiry time.Duration
 }
@@ -144,11 +144,11 @@ func (fs *FixtureState) update(msg *protostream.Message) error {
 	}
 
 	switch f2t.Content.(type) {
-	case *pb.FixtureToTower_Op:
+	case *tower.FixtureToTower_Op:
 		updateInternalFixtureState(fs.operational, f2t)
-	case *pb.FixtureToTower_Diag:
+	case *tower.FixtureToTower_Diag:
 		updateInternalFixtureState(fs.diagnostic, f2t)
-	case *pb.FixtureToTower_AlertLog:
+	case *tower.FixtureToTower_AlertLog:
 		updateInternalFixtureState(fs.alert, f2t)
 	default:
 		return fmt.Errorf("received unknown type: %T", f2t.Content)
@@ -157,7 +157,7 @@ func (fs *FixtureState) update(msg *protostream.Message) error {
 	return nil
 }
 
-func updateInternalFixtureState(internal *fixtureMessage, msg *pb.FixtureToTower) {
+func updateInternalFixtureState(internal *fixtureMessage, msg *tower.FixtureToTower) {
 	internal.message = msg
 	internal.lastSeen = time.Now()
 }
@@ -167,18 +167,18 @@ func setExpiry(internal *fixtureMessage, expiry time.Duration) {
 }
 
 // GetOp returns the operational message or an error if it is expired
-func (fs *FixtureState) GetOp() (*pb.FixtureToTower, error) {
+func (fs *FixtureState) GetOp() (*tower.FixtureToTower, error) {
 	return getInternal(fs.operational)
 }
 
 // GetDiag returns the diagnostic message or an error if it is expired
-func (fs *FixtureState) GetDiag() (*pb.FixtureToTower, error) {
+func (fs *FixtureState) GetDiag() (*tower.FixtureToTower, error) {
 	return getInternal(fs.diagnostic)
 }
 
 // GetAlert returns the latest alert message. Will return an error if no alerts have ever been received,
 // but will not return an error due to any data expiry.
-func (fs *FixtureState) GetAlert() (*pb.FixtureToTower, error) {
+func (fs *FixtureState) GetAlert() (*tower.FixtureToTower, error) {
 	if fs.alert.message == nil {
 		return nil, errors.New("no alerts have been received")
 	}
@@ -186,7 +186,7 @@ func (fs *FixtureState) GetAlert() (*pb.FixtureToTower, error) {
 	return fs.alert.message, nil
 }
 
-func getInternal(internal *fixtureMessage) (*pb.FixtureToTower, error) {
+func getInternal(internal *fixtureMessage) (*tower.FixtureToTower, error) {
 	if time.Since(internal.lastSeen) > internal.dataExpiry {
 		return nil, fmt.Errorf("fixture operational data stale; did not receive new message since %s, expect update within %s", internal.lastSeen, internal.dataExpiry)
 	}

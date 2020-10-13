@@ -6,7 +6,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 	"stash.teslamotors.com/rr/cdcontroller"
-	pb "stash.teslamotors.com/rr/towerproto"
+	tower "stash.teslamotors.com/rr/towerproto"
 )
 
 /*
@@ -106,20 +106,20 @@ func LoadRecipe(recipePath, ingredientsPath, recipe string) (cdcontroller.StepCo
 	return ings, nil
 }
 
-func modeStringToEnum(input string) pb.RecipeStep_FormMode {
-	fm, ok := pb.RecipeStep_FormMode_value[input]
+func modeStringToEnum(input string) tower.RecipeStep_FormMode {
+	fm, ok := tower.RecipeStep_FormMode_value[input]
 	if !ok {
-		return pb.RecipeStep_FORM_MODE_UNKNOWN_UNSPECIFIED
+		return tower.RecipeStep_FORM_MODE_UNKNOWN_UNSPECIFIED
 	}
 
-	return pb.RecipeStep_FormMode(fm)
+	return tower.RecipeStep_FormMode(fm)
 }
 
-func endingStyleStringToEnum(input string) pb.RecipeStep_EndingStyle {
-	fm, ok := pb.RecipeStep_EndingStyle_value[input]
+func endingStyleStringToEnum(input string) tower.RecipeStep_EndingStyle {
+	fm, ok := tower.RecipeStep_EndingStyle_value[input]
 	if !ok {
-		return pb.RecipeStep_ENDING_STYLE_UNKNOWN_UNSPECIFIED
+		return tower.RecipeStep_ENDING_STYLE_UNKNOWN_UNSPECIFIED
 	}
 
-	return pb.RecipeStep_EndingStyle(fm)
+	return tower.RecipeStep_EndingStyle(fm)
 }

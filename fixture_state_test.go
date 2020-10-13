@@ -11,7 +11,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"nanomsg.org/go/mangos/v2"
 	"stash.teslamotors.com/rr/protostream"
-	pb "stash.teslamotors.com/rr/towerproto"
+	tower "stash.teslamotors.com/rr/towerproto"
 )
 
 func TestNewFixtureState(t *testing.T) {
@@ -40,16 +40,16 @@ func TestNewFixtureState(t *testing.T) {
 func TestFixtureState_update(t *testing.T) {
 	fs := NewFixtureState()
 
-	msg := mustMarshalProtostreamMessage(t, &pb.FixtureToTower{Fixturebarcode: "test"})
+	msg := mustMarshalProtostreamMessage(t, &tower.FixtureToTower{Fixturebarcode: "test"})
 	if err := fs.update(msg); err == nil {
 		t.Error("no error returned for unknown type")
 	}
 
 	opMsg := mustMarshalProtostreamMessage(
 		t,
-		&pb.FixtureToTower{
-			Content: &pb.FixtureToTower_Op{
-				Op: &pb.FixtureOperational{},
+		&tower.FixtureToTower{
+			Content: &tower.FixtureToTower_Op{
+				Op: &tower.FixtureOperational{},
 			},
 			Fixturebarcode: "test",
 		},
@@ -57,9 +57,9 @@ func TestFixtureState_update(t *testing.T) {
 
 	diagMsg := mustMarshalProtostreamMessage(
 		t,
-		&pb.FixtureToTower{
-			Content: &pb.FixtureToTower_Diag{
-				Diag: &pb.FixtureDiagnostic{},
+		&tower.FixtureToTower{
+			Content: &tower.FixtureToTower_Diag{
+				Diag: &tower.FixtureDiagnostic{},
 			},
 			Fixturebarcode: "test",
 		},
@@ -67,9 +67,9 @@ func TestFixtureState_update(t *testing.T) {
 
 	alertMsg := mustMarshalProtostreamMessage(
 		t,
-		&pb.FixtureToTower{
-			Content: &pb.FixtureToTower_AlertLog{
-				AlertLog: &pb.AlertLog{},
+		&tower.FixtureToTower{
+			Content: &tower.FixtureToTower_AlertLog{
+				AlertLog: &tower.AlertLog{},
 			},
 			Fixturebarcode: "test",
 		},
@@ -81,7 +81,7 @@ func TestFixtureState_update(t *testing.T) {
 		}
 	}
 
-	for _, f := range []func() (*pb.FixtureToTower, error){fs.GetOp, fs.GetDiag, fs.GetAlert} {
+	for _, f := range []func() (*tower.FixtureToTower, error){fs.GetOp, fs.GetDiag, fs.GetAlert} {
 		msg, err := f()
 		if err != nil {
 			t.Error(err)
@@ -101,7 +101,7 @@ func TestFixtureState_GetAlertNil(t *testing.T) {
 
 func TestFixtureState_getInternal(t *testing.T) {
 	fs := NewFixtureState()
-	fs.operational.message = &pb.FixtureToTower{Fixturebarcode: "test"}
+	fs.operational.message = &tower.FixtureToTower{Fixturebarcode: "test"}
 
 	if _, err := getInternal(fs.operational); err == nil {
 		t.Error("got no error when data expiry was violated")

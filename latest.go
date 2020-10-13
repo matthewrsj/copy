@@ -8,7 +8,7 @@ import (
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/encoding/protojson"
-	pb "stash.teslamotors.com/rr/towerproto"
+	tower "stash.teslamotors.com/rr/towerproto"
 )
 
 const _latestFixtureVar = "fixture"
@@ -125,10 +125,10 @@ func getFixtureFromPath(r *http.Request, registry map[string]*FixtureInfo) (*Fix
 	return fxr.FixtureState, nil
 }
 
-func getLatestMessageWithGetter(getter func() (*pb.FixtureToTower, error)) ([]byte, error) {
+func getLatestMessageWithGetter(getter func() (*tower.FixtureToTower, error)) ([]byte, error) {
 	msg, err := getter()
 	if err != nil {
-		msg = &pb.FixtureToTower{}
+		msg = &tower.FixtureToTower{}
 	}
 
 	mo := protojson.MarshalOptions{

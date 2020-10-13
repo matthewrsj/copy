@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 	"stash.teslamotors.com/rr/cdcontroller"
-	pb "stash.teslamotors.com/rr/towerproto"
+	tower "stash.teslamotors.com/rr/towerproto"
 )
 
 func TestHandleAvailable(t *testing.T) {
@@ -36,11 +36,11 @@ func TestHandleAvailable(t *testing.T) {
 	}
 
 	fm := &fixtureMessage{
-		message: &pb.FixtureToTower{
-			Content: &pb.FixtureToTower_Op{
-				Op: &pb.FixtureOperational{
-					Status:          pb.FixtureStatus_FIXTURE_STATUS_IDLE,
-					EquipmentStatus: pb.EquipmentStatus_EQUIPMENT_STATUS_IN_OPERATION,
+		message: &tower.FixtureToTower{
+			Content: &tower.FixtureToTower_Op{
+				Op: &tower.FixtureOperational{
+					Status:          tower.FixtureStatus_FIXTURE_STATUS_IDLE,
+					EquipmentStatus: tower.EquipmentStatus_EQUIPMENT_STATUS_IN_OPERATION,
 				},
 			},
 		},

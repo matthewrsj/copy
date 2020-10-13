@@ -12,7 +12,7 @@ import (
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cdcontroller"
 	"stash.teslamotors.com/rr/protostream"
-	pb "stash.teslamotors.com/rr/towerproto"
+	tower "stash.teslamotors.com/rr/towerproto"
 )
 
 const _unloadEndpoint = "/unload"
@@ -30,7 +30,7 @@ type EndProcess struct {
 	tbc             cdcontroller.TrayBarcode
 	fxbc            cdcontroller.FixtureBarcode
 	cells           map[string]cdcontroller.CellData
-	cellResponse    []*pb.Cell
+	cellResponse    []*tower.Cell
 	processStepName string
 	smFatal         bool
 	fixtureFault    bool
@@ -205,7 +205,7 @@ func (e *EndProcess) setCellStatuses() {
 
 	for i, cell := range e.cellResponse {
 		status := cdcontroller.StatusPassed
-		if cell.GetCellstatus() != pb.CellStatus_CELL_STATUS_COMPLETE {
+		if cell.GetCellstatus() != tower.CellStatus_CELL_STATUS_COMPLETE {
 			status = cdcontroller.StatusFailed
 		}
 
@@ -277,7 +277,7 @@ func (e *EndProcess) waitForOpen() {
 			continue
 		}
 
-		if msg.GetOp().GetPosition() == pb.FixturePosition_FIXTURE_POSITION_OPEN {
+		if msg.GetOp().GetPosition() == tower.FixturePosition_FIXTURE_POSITION_OPEN {
 			break
 		}
 

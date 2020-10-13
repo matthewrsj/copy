@@ -8,7 +8,7 @@ import (
 
 	"go.uber.org/zap"
 	"stash.teslamotors.com/rr/protostream"
-	pb "stash.teslamotors.com/rr/towerproto"
+	tower "stash.teslamotors.com/rr/towerproto"
 )
 
 // SendFormRequestEndpoint handles incoming requests to send form requests to a fixture
@@ -54,7 +54,7 @@ func HandleSendFormRequest(publisher *protostream.Socket, logger *zap.SugaredLog
 			return
 		}
 
-		formReq, ok := pb.FormRequest_value[rf.FormRequest]
+		formReq, ok := tower.FormRequest_value[rf.FormRequest]
 		if !ok {
 			logger.Errorw("invalid form request", "form_request", rf.FormRequest)
 			http.Error(w, fmt.Sprintf("invalid form request %s", rf.FormRequest), http.StatusBadRequest)
@@ -62,9 +62,9 @@ func HandleSendFormRequest(publisher *protostream.Socket, logger *zap.SugaredLog
 			return
 		}
 
-		sendMsg := pb.TowerToFixture{
-			Recipe: &pb.Recipe{
-				Formrequest: pb.FormRequest(formReq),
+		sendMsg := tower.TowerToFixture{
+			Recipe: &tower.Recipe{
+				Formrequest: tower.FormRequest(formReq),
 			},
 		}
 

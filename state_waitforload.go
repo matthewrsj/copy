@@ -8,7 +8,7 @@ import (
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cdcontroller"
 	"stash.teslamotors.com/rr/protostream"
-	pb "stash.teslamotors.com/rr/towerproto"
+	tower "stash.teslamotors.com/rr/towerproto"
 )
 
 // WaitForLoad waits for a loaded message from the C/D controller
@@ -29,7 +29,7 @@ type WaitForLoad struct {
 	recipeVersion   int
 	mockCellAPI     bool
 	resetToIdle     bool
-	alarmed         pb.FireAlarmStatus
+	alarmed         tower.FireAlarmStatus
 
 	fxrInfo *FixtureInfo
 
@@ -62,7 +62,7 @@ poll:
 				continue
 			}
 
-			if msg.GetOp().GetStatus() == pb.FixtureStatus_FIXTURE_STATUS_FAULTED && msg.GetOp().GetFireAlarmStatus() != pb.FireAlarmStatus_FIRE_ALARM_UNKNOWN_UNSPECIFIED {
+			if msg.GetOp().GetStatus() == tower.FixtureStatus_FIXTURE_STATUS_FAULTED && msg.GetOp().GetFireAlarmStatus() != tower.FireAlarmStatus_FIRE_ALARM_UNKNOWN_UNSPECIFIED {
 				w.Logger.Warnw("fire alarm detected from fixture", "fixture", w.fxrInfo.Name, "alarm", msg.GetOp().GetFireAlarmStatus().String())
 
 				// fire alarm, tell CDC

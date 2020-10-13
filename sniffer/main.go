@@ -17,7 +17,7 @@ import (
 
 	"google.golang.org/protobuf/proto"
 	"stash.teslamotors.com/ctet/go-socketcan/pkg/socketcan"
-	pb "stash.teslamotors.com/rr/towerproto"
+	tower "stash.teslamotors.com/rr/towerproto"
 )
 
 type canIDs struct {
@@ -138,7 +138,7 @@ func main() {
 
 					var foundMsg bool
 
-					for _, msg := range []proto.Message{&pb.FixtureToTower{}, &pb.TowerToFixture{}} {
+					for _, msg := range []proto.Message{&tower.FixtureToTower{}, &tower.TowerToFixture{}} {
 						if err := proto.Unmarshal(buf, msg); err != nil {
 							continue
 						}

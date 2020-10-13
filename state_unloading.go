@@ -7,7 +7,7 @@ import (
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cdcontroller"
 	"stash.teslamotors.com/rr/protostream"
-	pb "stash.teslamotors.com/rr/towerproto"
+	tower "stash.teslamotors.com/rr/towerproto"
 )
 
 // Unloading waits for the fixture to go back to IDLE before returning to the idle state
@@ -44,7 +44,7 @@ func (u *Unloading) action() {
 		u.childLogger.Debugw("received status", "status", status.String())
 
 		// fixture will stay in fault, don't wait for it to go to idle before we go back to idle
-		if status == pb.FixtureStatus_FIXTURE_STATUS_IDLE || status == pb.FixtureStatus_FIXTURE_STATUS_FAULTED {
+		if status == tower.FixtureStatus_FIXTURE_STATUS_IDLE || status == tower.FixtureStatus_FIXTURE_STATUS_FAULTED {
 			u.childLogger.Info("tray unloaded")
 			break
 		}

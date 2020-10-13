@@ -12,7 +12,7 @@ import (
 	"go.uber.org/zap"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/protostream"
-	pb "stash.teslamotors.com/rr/towerproto"
+	tower "stash.teslamotors.com/rr/towerproto"
 )
 
 func TestEndProcess_Action(t *testing.T) {
@@ -29,15 +29,15 @@ func TestEndProcess_Action(t *testing.T) {
 			},
 		},
 		CellAPIClient: cdcontroller.NewCellAPIClient(""),
-		cellResponse: []*pb.Cell{
+		cellResponse: []*tower.Cell{
 			{
-				Cellstatus: pb.CellStatus_CELL_STATUS_COMPLETE,
+				Cellstatus: tower.CellStatus_CELL_STATUS_COMPLETE,
 			},
 			{
-				Cellstatus: pb.CellStatus_CELL_STATUS_FAILED,
+				Cellstatus: tower.CellStatus_CELL_STATUS_FAILED,
 			},
 			{
-				Cellstatus: pb.CellStatus_CELL_STATUS_NONE_UNSPECIFIED,
+				Cellstatus: tower.CellStatus_CELL_STATUS_NONE_UNSPECIFIED,
 			},
 		},
 		cells: map[string]cdcontroller.CellData{
@@ -65,10 +65,10 @@ func TestEndProcess_Action(t *testing.T) {
 		fixtureFault: true,
 	}
 
-	updateInternalFixtureState(ep.fxrInfo.FixtureState.operational, &pb.FixtureToTower{
-		Content: &pb.FixtureToTower_Op{
-			Op: &pb.FixtureOperational{
-				Position: pb.FixturePosition_FIXTURE_POSITION_OPEN,
+	updateInternalFixtureState(ep.fxrInfo.FixtureState.operational, &tower.FixtureToTower{
+		Content: &tower.FixtureToTower_Op{
+			Op: &tower.FixtureOperational{
+				Position: tower.FixturePosition_FIXTURE_POSITION_OPEN,
 			},
 		},
 	})
@@ -103,10 +103,10 @@ func TestEndProcess_Action(t *testing.T) {
 	)
 	defer scs.Unpatch()
 
-	msg, err := marshalMessage(&pb.FixtureToTower{
-		Content: &pb.FixtureToTower_Op{
-			Op: &pb.FixtureOperational{
-				Position: pb.FixturePosition_FIXTURE_POSITION_OPEN,
+	msg, err := marshalMessage(&tower.FixtureToTower{
+		Content: &tower.FixtureToTower_Op{
+			Op: &tower.FixtureOperational{
+				Position: tower.FixturePosition_FIXTURE_POSITION_OPEN,
 			},
 		},
 	})
@@ -140,15 +140,15 @@ func TestEndProcess_ActionBadOrientation(t *testing.T) {
 			},
 		},
 		CellAPIClient: cdcontroller.NewCellAPIClient(""),
-		cellResponse: []*pb.Cell{
+		cellResponse: []*tower.Cell{
 			{
-				Cellstatus: pb.CellStatus_CELL_STATUS_COMPLETE,
+				Cellstatus: tower.CellStatus_CELL_STATUS_COMPLETE,
 			},
 			{
-				Cellstatus: pb.CellStatus_CELL_STATUS_FAILED,
+				Cellstatus: tower.CellStatus_CELL_STATUS_FAILED,
 			},
 			{
-				Cellstatus: pb.CellStatus_CELL_STATUS_NONE_UNSPECIFIED,
+				Cellstatus: tower.CellStatus_CELL_STATUS_NONE_UNSPECIFIED,
 			},
 		},
 		cells: map[string]cdcontroller.CellData{
@@ -176,10 +176,10 @@ func TestEndProcess_ActionBadOrientation(t *testing.T) {
 		fixtureFault: true,
 	}
 
-	updateInternalFixtureState(ep.fxrInfo.FixtureState.operational, &pb.FixtureToTower{
-		Content: &pb.FixtureToTower_Op{
-			Op: &pb.FixtureOperational{
-				Position: pb.FixturePosition_FIXTURE_POSITION_OPEN,
+	updateInternalFixtureState(ep.fxrInfo.FixtureState.operational, &tower.FixtureToTower{
+		Content: &tower.FixtureToTower_Op{
+			Op: &tower.FixtureOperational{
+				Position: tower.FixturePosition_FIXTURE_POSITION_OPEN,
 			},
 		},
 	})
@@ -201,10 +201,10 @@ func TestEndProcess_ActionBadOrientation(t *testing.T) {
 	)
 	defer ups.Unpatch()
 
-	msg, err := marshalMessage(&pb.FixtureToTower{
-		Content: &pb.FixtureToTower_Op{
-			Op: &pb.FixtureOperational{
-				Position: pb.FixturePosition_FIXTURE_POSITION_OPEN,
+	msg, err := marshalMessage(&tower.FixtureToTower{
+		Content: &tower.FixtureToTower_Op{
+			Op: &tower.FixtureOperational{
+				Position: tower.FixturePosition_FIXTURE_POSITION_OPEN,
 			},
 		},
 	})
@@ -238,15 +238,15 @@ func TestEndProcess_ActionShortMap(t *testing.T) {
 			},
 		},
 		CellAPIClient: cdcontroller.NewCellAPIClient(""),
-		cellResponse: []*pb.Cell{
+		cellResponse: []*tower.Cell{
 			{
-				Cellstatus: pb.CellStatus_CELL_STATUS_COMPLETE,
+				Cellstatus: tower.CellStatus_CELL_STATUS_COMPLETE,
 			},
 			{
-				Cellstatus: pb.CellStatus_CELL_STATUS_FAILED,
+				Cellstatus: tower.CellStatus_CELL_STATUS_FAILED,
 			},
 			{
-				Cellstatus: pb.CellStatus_CELL_STATUS_NONE_UNSPECIFIED,
+				Cellstatus: tower.CellStatus_CELL_STATUS_NONE_UNSPECIFIED,
 			},
 		},
 		cells: map[string]cdcontroller.CellData{
@@ -274,10 +274,10 @@ func TestEndProcess_ActionShortMap(t *testing.T) {
 		fixtureFault: true,
 	}
 
-	updateInternalFixtureState(ep.fxrInfo.FixtureState.operational, &pb.FixtureToTower{
-		Content: &pb.FixtureToTower_Op{
-			Op: &pb.FixtureOperational{
-				Position: pb.FixturePosition_FIXTURE_POSITION_OPEN,
+	updateInternalFixtureState(ep.fxrInfo.FixtureState.operational, &tower.FixtureToTower{
+		Content: &tower.FixtureToTower_Op{
+			Op: &tower.FixtureOperational{
+				Position: tower.FixturePosition_FIXTURE_POSITION_OPEN,
 			},
 		},
 	})
@@ -299,10 +299,10 @@ func TestEndProcess_ActionShortMap(t *testing.T) {
 	)
 	defer ups.Unpatch()
 
-	msg, err := marshalMessage(&pb.FixtureToTower{
-		Content: &pb.FixtureToTower_Op{
-			Op: &pb.FixtureOperational{
-				Position: pb.FixturePosition_FIXTURE_POSITION_OPEN,
+	msg, err := marshalMessage(&tower.FixtureToTower{
+		Content: &tower.FixtureToTower_Op{
+			Op: &tower.FixtureOperational{
+				Position: tower.FixturePosition_FIXTURE_POSITION_OPEN,
 			},
 		},
 	})
@@ -337,15 +337,15 @@ func TestEndProcess_ActionBadSetCellStatus(t *testing.T) {
 			},
 		},
 		CellAPIClient: cdcontroller.NewCellAPIClient(""),
-		cellResponse: []*pb.Cell{
+		cellResponse: []*tower.Cell{
 			{
-				Cellstatus: pb.CellStatus_CELL_STATUS_COMPLETE,
+				Cellstatus: tower.CellStatus_CELL_STATUS_COMPLETE,
 			},
 			{
-				Cellstatus: pb.CellStatus_CELL_STATUS_FAILED,
+				Cellstatus: tower.CellStatus_CELL_STATUS_FAILED,
 			},
 			{
-				Cellstatus: pb.CellStatus_CELL_STATUS_NONE_UNSPECIFIED,
+				Cellstatus: tower.CellStatus_CELL_STATUS_NONE_UNSPECIFIED,
 			},
 		},
 		cells: map[string]cdcontroller.CellData{
@@ -373,10 +373,10 @@ func TestEndProcess_ActionBadSetCellStatus(t *testing.T) {
 		fixtureFault: true,
 	}
 
-	updateInternalFixtureState(ep.fxrInfo.FixtureState.operational, &pb.FixtureToTower{
-		Content: &pb.FixtureToTower_Op{
-			Op: &pb.FixtureOperational{
-				Position: pb.FixturePosition_FIXTURE_POSITION_OPEN,
+	updateInternalFixtureState(ep.fxrInfo.FixtureState.operational, &tower.FixtureToTower{
+		Content: &tower.FixtureToTower_Op{
+			Op: &tower.FixtureOperational{
+				Position: tower.FixturePosition_FIXTURE_POSITION_OPEN,
 			},
 		},
 	})
@@ -411,10 +411,10 @@ func TestEndProcess_ActionBadSetCellStatus(t *testing.T) {
 	)
 	defer scs.Unpatch()
 
-	msg, err := marshalMessage(&pb.FixtureToTower{
-		Content: &pb.FixtureToTower_Op{
-			Op: &pb.FixtureOperational{
-				Position: pb.FixturePosition_FIXTURE_POSITION_OPEN,
+	msg, err := marshalMessage(&tower.FixtureToTower{
+		Content: &tower.FixtureToTower_Op{
+			Op: &tower.FixtureOperational{
+				Position: tower.FixturePosition_FIXTURE_POSITION_OPEN,
 			},
 		},
 	})

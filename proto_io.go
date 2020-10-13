@@ -7,7 +7,7 @@ import (
 
 	"google.golang.org/protobuf/proto"
 	"stash.teslamotors.com/rr/protostream"
-	pb "stash.teslamotors.com/rr/towerproto"
+	tower "stash.teslamotors.com/rr/towerproto"
 )
 
 func marshalProtoEvent(msg proto.Message, fxrName string) ([]byte, error) {
@@ -46,8 +46,8 @@ func sendProtoMessage(publisher *protostream.Socket, msg proto.Message, fxrName 
 	return nil
 }
 
-func unmarshalProtoMessage(lMsg *protostream.Message) (*pb.FixtureToTower, error) {
-	var msg pb.FixtureToTower
+func unmarshalProtoMessage(lMsg *protostream.Message) (*tower.FixtureToTower, error) {
+	var msg tower.FixtureToTower
 
 	var event protostream.ProtoMessage
 

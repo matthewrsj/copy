@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 	"stash.teslamotors.com/rr/cdcontroller"
-	pb "stash.teslamotors.com/rr/towerproto"
+	tower "stash.teslamotors.com/rr/towerproto"
 )
 
 func Test_soundTheAlarm(t *testing.T) {
@@ -70,7 +70,7 @@ func Test_soundTheAlarm(t *testing.T) {
 			Process: "63",
 			Aisle:   "010",
 		},
-	}, pb.FireAlarmStatus_FIRE_ALARM_LEVEL_0,
+	}, tower.FireAlarmStatus_FIRE_ALARM_LEVEL_0,
 		"CM2-63010-01-01",
 		zap.NewExample().Sugar(),
 	); err != nil {

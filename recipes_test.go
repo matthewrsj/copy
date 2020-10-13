@@ -8,7 +8,7 @@ import (
 	"bou.ke/monkey"
 	"github.com/stretchr/testify/assert"
 	"stash.teslamotors.com/rr/cdcontroller"
-	pb "stash.teslamotors.com/rr/towerproto"
+	tower "stash.teslamotors.com/rr/towerproto"
 )
 
 const (
@@ -170,12 +170,12 @@ func Test_loadRecipeNoRecipe(t *testing.T) {
 func Test_modeStringToEnum(t *testing.T) {
 	testCases := []struct {
 		in  string
-		exp pb.RecipeStep_FormMode
+		exp tower.RecipeStep_FormMode
 	}{
-		{"FORM_MODE_CC", pb.RecipeStep_FORM_MODE_CC},
-		{"FORM_MODE_CV", pb.RecipeStep_FORM_MODE_CV},
-		{"FORM_MODE", pb.RecipeStep_FORM_MODE_UNKNOWN_UNSPECIFIED},
-		{"", pb.RecipeStep_FORM_MODE_UNKNOWN_UNSPECIFIED},
+		{"FORM_MODE_CC", tower.RecipeStep_FORM_MODE_CC},
+		{"FORM_MODE_CV", tower.RecipeStep_FORM_MODE_CV},
+		{"FORM_MODE", tower.RecipeStep_FORM_MODE_UNKNOWN_UNSPECIFIED},
+		{"", tower.RecipeStep_FORM_MODE_UNKNOWN_UNSPECIFIED},
 	}
 
 	for _, tc := range testCases {
