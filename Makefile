@@ -8,55 +8,23 @@
 
 GO_PACKAGE_PREFIX := github.com/matthewrsj/copy
 
-.PHONY: gopath
-
-# Strictly speaking we should check if it the directory is inside an
-# actual GOPATH, but the directory structure matching is likely enough.
-ifeq (,$(findstring ${GO_PACKAGE_PREFIX},${CURDIR}))
-LOCAL_GOPATH := ${CURDIR}/.gopath
-export GOPATH := ${LOCAL_GOPATH}
-gopath:
-	@rm -rf ${LOCAL_GOPATH}/src
-	@mkdir -p ${LOCAL_GOPATH}/src/${GO_PACKAGE_PREFIX}
-	@cp -af * ${LOCAL_GOPATH}/src/${GO_PACKAGE_PREFIX}
-	@echo "Prepared a local GOPATH=${GOPATH}"
-else
-LOCAL_GOPATH :=
-GOPATH ?= ${HOME}/go
-gopath:
-	@echo "Code already in existing GOPATH=${GOPATH}"
-endif
-
 .PHONY: check
 
 .DEFAULT_GOAL := check
 
-check: gopath
+check:
 	go test -cover ${GO_PACKAGE_PREFIX}/...
 
 # TODO: since Go 1.10 we have support for passing multiple packages
 # to coverprofile. Update this to work on all packages.
 .PHONY: checkcoverage
-checkcoverage: gopath
+checkcoverage:
 	go test -cover . -coverprofile=coverage.out
 	go tool cover -html=coverage.out
 
 .PHONY: lint
-lint: gopath
-	@gometalinter.v2 --deadline=10m --tests --vendor --disable-all \
-	--enable=misspell \
-	--enable=vet \
-	--enable=ineffassign \
-	--enable=gofmt \
-	--enable=gocyclo --cyclo-over=15 \
-	--enable=golint \
-	--enable=deadcode \
-	--enable=varcheck \
-	--enable=structcheck \
-	--enable=unused \
-	--enable=vetshadow \
-	--enable=errcheck \
-	./...
+lint:
+	@golangci-lint run ./...
 
 clean:
 ifeq (,${LOCAL_GOPATH})
