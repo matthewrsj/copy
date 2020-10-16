@@ -8,23 +8,22 @@ import (
 
 func TestLinkString(t *testing.T) {
 	l := link{base{path: "foo"}}
-	ls := l.String()
-	if ls != "link: foo" {
+	if ls := l.String(); ls != "link: foo" {
 		t.Errorf("expected 'link: foo' but got '%s'", ls)
 	}
 }
 
 func TestLinkPath(t *testing.T) {
 	l := link{base{path: "foo"}}
-	lp := l.Path()
-	if lp != "foo" {
+
+	if lp := l.Path(); lp != "foo" {
 		t.Errorf("expected 'foo' but got '%s'", lp)
 	}
 }
 
 func TestLinkInfo(t *testing.T) {
 	d := mustCreateTestDirectory(t, "", "directory")
-	f := mustCreateTestFile(t, filepath.Join(d, "file"), "test")
+	f := mustCreateTestFile(t, filepath.Join(d, "file"))
 	l := filepath.Join(d, "link")
 	mustCreateTestLink(t, l, filepath.Join(d, f.Name()))
 
@@ -32,10 +31,12 @@ func TestLinkInfo(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	lo, err := newObject(l)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	li := lo.Info()
 	// smoke test
 	if li.Name() != le.Name() {

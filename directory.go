@@ -33,14 +33,17 @@ func (d directory) copyTo(dst string, linkOrCopy bool) error {
 			return err
 		}
 	}
+
 	// copy each child recursively
 	for _, child := range children {
 		childSrc := filepath.Join(d.path, child.Name())
 		childDst := filepath.Join(dst, child.Name())
+
 		obj, err := newObject(childSrc)
 		if err != nil {
 			return err
 		}
+
 		if err = obj.copyTo(childDst, linkOrCopy); err != nil {
 			return err
 		}

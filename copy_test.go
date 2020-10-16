@@ -11,30 +11,37 @@ import (
 
 func mustCreateTestDirectory(t *testing.T, parent, name string) string {
 	t.Helper()
+
 	d, err := ioutil.TempDir(parent, name)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	return d
 }
 
-func mustCreateTestFile(t *testing.T, path, content string) *os.File {
+func mustCreateTestFile(t *testing.T, path string) *os.File {
 	t.Helper()
+
 	f, err := os.Create(path)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err = f.Write([]byte(content)); err != nil {
+
+	if _, err = f.Write([]byte("test")); err != nil {
 		t.Fatal(err)
 	}
+
 	if err = f.Close(); err != nil {
 		t.Fatal(err)
 	}
+
 	return f
 }
 
 func mustCreateTestLink(t *testing.T, linkname, target string) {
 	t.Helper()
+
 	if err := os.Symlink(target, linkname); err != nil {
 		t.Fatal(err)
 	}
@@ -42,7 +49,7 @@ func mustCreateTestLink(t *testing.T, linkname, target string) {
 
 func TestNewObject(t *testing.T) {
 	d := mustCreateTestDirectory(t, "", "directory")
-	f := mustCreateTestFile(t, filepath.Join(d, "file"), "test")
+	f := mustCreateTestFile(t, filepath.Join(d, "file"))
 	l := filepath.Join(d, "link")
 	mustCreateTestLink(t, l, filepath.Join(d, f.Name()))
 	testCases := []struct {
@@ -80,10 +87,12 @@ func TestNewObjectError(t *testing.T) {
 
 func mustBeSameFile(t *testing.T, f1, f2 string) {
 	t.Helper()
+
 	f1i, err := os.Lstat(f1)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	f2i, err := os.Lstat(f2)
 	if err != nil {
 		t.Fatal(err)
@@ -119,7 +128,7 @@ func mustBeSameFile(t *testing.T, f1, f2 string) {
 func TestCopyAll(t *testing.T) {
 	d := mustCreateTestDirectory(t, "", "copyall")
 	d2 := mustCreateTestDirectory(t, d, "copyallchild")
-	f := mustCreateTestFile(t, filepath.Join(d2, "file1"), "test")
+	f := mustCreateTestFile(t, filepath.Join(d2, "file1"))
 	mustCreateTestLink(t, filepath.Join(d2, "link1"), filepath.Join(d2, "file1"))
 	dst := filepath.Join(d, "copyallcopy")
 
@@ -140,7 +149,7 @@ func TestCopyAllError(t *testing.T) {
 
 func TestLinkOrCopy(t *testing.T) {
 	d := mustCreateTestDirectory(t, "", "copyall")
-	f := mustCreateTestFile(t, filepath.Join(d, "file1"), "test")
+	f := mustCreateTestFile(t, filepath.Join(d, "file1"))
 	dst := filepath.Join(d, "file2")
 
 	if err := LinkOrCopy(f.Name(), dst); err != nil {
@@ -153,7 +162,7 @@ func TestLinkOrCopy(t *testing.T) {
 func TestLinkOrCopyDirectory(t *testing.T) {
 	d := mustCreateTestDirectory(t, "", "copyall")
 	d2 := mustCreateTestDirectory(t, d, "copyallchild")
-	f := mustCreateTestFile(t, filepath.Join(d2, "file1"), "test")
+	f := mustCreateTestFile(t, filepath.Join(d2, "file1"))
 	dst := filepath.Join(d, "copyallcopy")
 
 	if err := LinkOrCopy(d2, dst); err != nil {

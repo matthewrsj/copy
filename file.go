@@ -31,13 +31,12 @@ func (f file) copyTo(dst string, linkOrCopy bool) error {
 		}
 	}
 
-	if err := os.Remove(dst); err != nil && !os.IsNotExist(err) {
+	if err = os.Remove(dst); err != nil && !os.IsNotExist(err) {
 		return err
 	}
 
 	if linkOrCopy {
-		err := os.Link(f.path, dst)
-		if err == nil {
+		if err = os.Link(f.path, dst); err != nil {
 			return nil
 		}
 	}
@@ -47,6 +46,7 @@ func (f file) copyTo(dst string, linkOrCopy bool) error {
 	if err != nil {
 		return err
 	}
+
 	defer closeFile(df)
 
 	// change dst file to have src mode
@@ -59,10 +59,12 @@ func (f file) copyTo(dst string, linkOrCopy bool) error {
 	if err != nil {
 		return err
 	}
+
 	defer closeFile(sf)
 
 	// copy contents
 	_, err = io.Copy(df, sf)
+
 	return err
 }
 
