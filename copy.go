@@ -1,3 +1,5 @@
+// Package copy provides functionality to recursively copy files, directories or links. When copying it attempts a
+// hardline before falling back to the more expensive direct copy if the link fails.
 package copy
 
 import (
@@ -18,6 +20,7 @@ func newObject(path string) (copyObject, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	switch {
 	case fi.Mode()&os.ModeSymlink != 0:
 		return newLink(path, fi), nil
@@ -36,6 +39,7 @@ func All(src, dst string) error {
 	if err != nil {
 		return err
 	}
+
 	return obj.copyTo(dst, false)
 }
 
@@ -48,6 +52,7 @@ func LinkOrCopy(src, dst string) error {
 	if err != nil {
 		return err
 	}
+
 	return obj.copyTo(dst, true)
 }
 
