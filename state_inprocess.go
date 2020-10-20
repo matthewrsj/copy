@@ -66,6 +66,7 @@ func (i *InProcess) action() {
 				statusMsg += "; fixture faulted"
 
 				if msg.GetOp().GetFireAlarmStatus() != tower.FireAlarmStatus_FIRE_ALARM_UNKNOWN_UNSPECIFIED {
+					i.childLogger.Warnw("sounding the fire alarm", "alarm", msg.GetOp().GetFireAlarmStatus().String())
 					// fire alarm, tell CDC
 					// this is in-band because it will try _forever_ until it succeeds,
 					// but we don't want to go to unload step because it will queue another job for the crane
@@ -75,6 +76,7 @@ func (i *InProcess) action() {
 					if err := soundTheAlarm(i.Config, msg.GetOp().GetFireAlarmStatus(), i.fxrInfo.Name, i.childLogger); err != nil {
 						// basically couldn't marshal the request. Return to idle where we will keep trying for as
 						// long as the alarm exists
+						i.childLogger.Errorw("sound the fire alarm", "error", err)
 						return
 					}
 
