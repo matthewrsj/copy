@@ -31,13 +31,13 @@ func TestEndProcess_Action(t *testing.T) {
 		CellAPIClient: cdcontroller.NewCellAPIClient(""),
 		cellResponse: []*tower.Cell{
 			{
-				Cellstatus: tower.CellStatus_CELL_STATUS_COMPLETE,
+				Status: tower.CellStatus_CELL_STATUS_COMPLETE,
 			},
 			{
-				Cellstatus: tower.CellStatus_CELL_STATUS_FAILED,
+				Status: tower.CellStatus_CELL_STATUS_FAILED,
 			},
 			{
-				Cellstatus: tower.CellStatus_CELL_STATUS_NONE_UNSPECIFIED,
+				Status: tower.CellStatus_CELL_STATUS_NONE_UNSPECIFIED,
 			},
 		},
 		cells: map[string]cdcontroller.CellData{
@@ -142,13 +142,13 @@ func TestEndProcess_ActionBadOrientation(t *testing.T) {
 		CellAPIClient: cdcontroller.NewCellAPIClient(""),
 		cellResponse: []*tower.Cell{
 			{
-				Cellstatus: tower.CellStatus_CELL_STATUS_COMPLETE,
+				Status: tower.CellStatus_CELL_STATUS_COMPLETE,
 			},
 			{
-				Cellstatus: tower.CellStatus_CELL_STATUS_FAILED,
+				Status: tower.CellStatus_CELL_STATUS_FAILED,
 			},
 			{
-				Cellstatus: tower.CellStatus_CELL_STATUS_NONE_UNSPECIFIED,
+				Status: tower.CellStatus_CELL_STATUS_NONE_UNSPECIFIED,
 			},
 		},
 		cells: map[string]cdcontroller.CellData{
@@ -240,13 +240,13 @@ func TestEndProcess_ActionShortMap(t *testing.T) {
 		CellAPIClient: cdcontroller.NewCellAPIClient(""),
 		cellResponse: []*tower.Cell{
 			{
-				Cellstatus: tower.CellStatus_CELL_STATUS_COMPLETE,
+				Status: tower.CellStatus_CELL_STATUS_COMPLETE,
 			},
 			{
-				Cellstatus: tower.CellStatus_CELL_STATUS_FAILED,
+				Status: tower.CellStatus_CELL_STATUS_FAILED,
 			},
 			{
-				Cellstatus: tower.CellStatus_CELL_STATUS_NONE_UNSPECIFIED,
+				Status: tower.CellStatus_CELL_STATUS_NONE_UNSPECIFIED,
 			},
 		},
 		cells: map[string]cdcontroller.CellData{
@@ -339,13 +339,13 @@ func TestEndProcess_ActionBadSetCellStatus(t *testing.T) {
 		CellAPIClient: cdcontroller.NewCellAPIClient(""),
 		cellResponse: []*tower.Cell{
 			{
-				Cellstatus: tower.CellStatus_CELL_STATUS_COMPLETE,
+				Status: tower.CellStatus_CELL_STATUS_COMPLETE,
 			},
 			{
-				Cellstatus: tower.CellStatus_CELL_STATUS_FAILED,
+				Status: tower.CellStatus_CELL_STATUS_FAILED,
 			},
 			{
-				Cellstatus: tower.CellStatus_CELL_STATUS_NONE_UNSPECIFIED,
+				Status: tower.CellStatus_CELL_STATUS_NONE_UNSPECIFIED,
 			},
 		},
 		cells: map[string]cdcontroller.CellData{

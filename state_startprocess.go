@@ -58,13 +58,13 @@ func (s *StartProcess) action() {
 	s.childLogger.Info("sending recipe and other information to FXR")
 
 	twr2Fxr := tower.TowerToFixture{
-		Recipe: &tower.Recipe{Formrequest: tower.FormRequest_FORM_REQUEST_START},
-		Sysinfo: &tower.SystemInfo{
-			Traybarcode:    s.tbc.Raw,
-			Fixturebarcode: s.fxbc.Raw,
-			ProcessStep:    s.processStepName,
+		Recipe: &tower.Recipe{FormRequest: tower.FormRequest_FORM_REQUEST_START},
+		Info: &tower.Info{
+			TrayBarcode:     s.tbc.Raw,
+			FixtureLocation: s.fxbc.Raw,
+			RecipeName:      s.processStepName,
+			TransactionId:   s.transactID,
 		},
-		TransactionId: s.transactID,
 	}
 
 	for _, step := range s.steps {
@@ -247,10 +247,10 @@ func (s *StartProcess) performHandshake(msg proto.Message) {
 			continue
 		}
 
-		if rMsg.TransactionId != s.transactID {
+		if rMsg.GetInfo().GetTransactionId() != s.transactID {
 			s.childLogger.Warnw(
 				"transaction ID from FXR did not match transaction ID sent",
-				"fxr_transaction_id", rMsg.TransactionId, "sent_transaction_id", s.transactID,
+				"fxr_transaction_id", rMsg.GetInfo().GetTransactionId(), "sent_transaction_id", s.transactID,
 			)
 			time.Sleep(time.Second) // give it a chance to update
 

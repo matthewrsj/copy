@@ -143,7 +143,9 @@ func main() {
 								Position:        tower.FixturePosition_FIXTURE_POSITION_OPEN,
 							},
 						},
-						Fixturebarcode: fmt.Sprintf("CM2-63010-%s", did.name),
+						Info: &tower.Info{
+							FixtureLocation: fmt.Sprintf("CM2-63010-%s", did.name),
+						},
 					}
 
 					jb, err := proto.Marshal(&msg)
@@ -174,39 +176,38 @@ func main() {
 						continue
 					}
 
-					if msgt2f.GetSysinfo().GetProcessStep() == "" {
+					if msgt2f.GetInfo().GetRecipeName() == "" {
 						// not what we are looking for
 						log.Println("empty process step")
 						continue
 					}
 
-					if !strings.HasSuffix(strings.TrimSpace(msgt2f.GetSysinfo().GetFixturebarcode()), strings.TrimSpace(did.name)) {
+					if !strings.HasSuffix(strings.TrimSpace(msgt2f.GetInfo().GetFixtureLocation()), strings.TrimSpace(did.name)) {
 						// not what we are looking for
 						log.Println("wrong fixture")
 						continue
 					}
 
-					if msgt2f.TransactionId == "" {
-						log.Println("invalid transaction ID", msgt2f.TransactionId)
+					if msgt2f.GetInfo().GetTransactionId() == "" {
+						log.Println("invalid transaction ID", msgt2f.GetInfo().GetTransactionId())
 						continue
 					}
 
 					// received a process to run
-					log.Println("RUNNING PROCESS", msgt2f.GetSysinfo().GetProcessStep())
+					log.Println("RUNNING PROCESS", msgt2f.GetInfo().GetRecipeName())
 
 					break
 				}
 
 				cells := make([]*tower.Cell, 64)
 				cms := msgt2f.Recipe.GetCellMasks()
-				transactionID := msgt2f.TransactionId
 
 				for i, cm := range cms {
 					for bit := 0; bit < 32; bit++ {
 						if cm&(1<<bit) != 0 {
 							cells[i+bit] = &tower.Cell{
-								Cellstatus: tower.CellStatus_CELL_STATUS_COMPLETE,
-								Cellmeasurement: &tower.CellMeasurement{
+								Status: tower.CellStatus_CELL_STATUS_COMPLETE,
+								Measurement: &tower.CellMeasurement{
 									Current:             1.23,
 									Voltage:             3.47,
 									ChargeAh:            94,
@@ -219,16 +220,10 @@ func main() {
 					}
 				}
 
-				msgDiag.Fixturebarcode = msgt2f.GetSysinfo().GetFixturebarcode()
-				msgDiag.Traybarcode = msgt2f.GetSysinfo().GetTraybarcode()
-				msgDiag.ProcessStep = msgt2f.GetSysinfo().GetProcessStep()
-				msgDiag.TransactionId = transactionID
-				msgOp.Fixturebarcode = msgt2f.GetSysinfo().GetFixturebarcode()
-				msgOp.Traybarcode = msgt2f.GetSysinfo().GetTraybarcode()
-				msgOp.ProcessStep = msgt2f.GetSysinfo().GetProcessStep()
+				msgDiag.Info = msgt2f.GetInfo()
+				msgOp.Info = msgt2f.GetInfo()
 				msgOp.GetOp().Status = tower.FixtureStatus_FIXTURE_STATUS_READY
 				msgOp.GetOp().Cells = cells
-				msgOp.TransactionId = transactionID
 
 				for i := 0; i < 10; i++ {
 					switch {
@@ -260,7 +255,7 @@ func main() {
 					time.Sleep(time.Second)
 				}
 
-				log.Println("DONE WITH PROCESS", msgt2f.GetSysinfo().GetProcessStep())
+				log.Println("DONE WITH PROCESS", msgt2f.GetInfo().GetRecipeName())
 			}
 		}(devices)
 	}

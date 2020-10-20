@@ -18,5 +18,5 @@ require (
 	stash.teslamotors.com/ctet/statemachine/v2 v2.0.1
 	stash.teslamotors.com/rr/cdcontroller v0.2.2
 	stash.teslamotors.com/rr/protostream v0.1.3
-	stash.teslamotors.com/rr/towerproto v0.0.13
+	stash.teslamotors.com/rr/towerproto v0.3.0
 )

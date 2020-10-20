@@ -51,22 +51,24 @@ func TestInProcess_Action(t *testing.T) {
 					Status: tower.FixtureStatus_FIXTURE_STATUS_COMPLETE,
 					Cells: []*tower.Cell{
 						{
-							Cellstatus: tower.CellStatus_CELL_STATUS_COMPLETE,
-							Cellmeasurement: &tower.CellMeasurement{
+							Status: tower.CellStatus_CELL_STATUS_COMPLETE,
+							Measurement: &tower.CellMeasurement{
 								Current: 3.49,
 							},
 						},
 						{
-							Cellstatus: tower.CellStatus_CELL_STATUS_COMPLETE,
-							Cellmeasurement: &tower.CellMeasurement{
+							Status: tower.CellStatus_CELL_STATUS_COMPLETE,
+							Measurement: &tower.CellMeasurement{
 								Current: 3.49,
 							},
 						},
 					},
 				},
 			},
-			Traybarcode:    "",
-			Fixturebarcode: ipState.fxbc.Raw,
+			Info: &tower.Info{
+				TrayBarcode:     "",
+				FixtureLocation: ipState.fxbc.Raw,
+			},
 		},
 	)
 

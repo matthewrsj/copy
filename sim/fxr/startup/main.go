@@ -108,10 +108,12 @@ func main() {
 						Status: status,
 					},
 				},
-				Fixturebarcode: ctx.fxbc,
-				Traybarcode:    ctx.tbc,
-				ProcessStep:    ctx.pstep,
-				TransactionId:  "1",
+				Info: &tower.Info{
+					FixtureLocation: ctx.fxbc,
+					TrayBarcode:     ctx.tbc,
+					RecipeName:      ctx.pstep,
+					TransactionId:   "1",
+				},
 			}
 
 			pkt, err := proto.Marshal(msgOp)

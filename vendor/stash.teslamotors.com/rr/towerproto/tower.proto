@@ -1,5 +1,5 @@
 syntax            = "proto3";
-option go_package = "tower";
+option go_package = ".;tower";
 
 // https://confluence.teslamotors.com/x/fFElIg
 
@@ -102,11 +102,12 @@ message FxrSensors {
 }
 
 message FxrInternal {
-  float stack_usage_system = 7;
-  float stack_usage_1khz   = 8;
-  float stack_usage_10hz   = 9;
-  float stack_usage_uds    = 10;
-  float stack_usage_nvram  = 11;
+  float  stack_usage_system = 7;
+  float  stack_usage_1khz   = 8;
+  float  stack_usage_10hz   = 9;
+  float  stack_usage_uds    = 10;
+  float  stack_usage_nvram  = 11;
+  uint32 uptime_s           = 12; // uptime in seconds
 }
 
 message FxrOutputs {
@@ -172,6 +173,7 @@ message FibInternal {
   float stack_usage_10hz   = 9;
   float stack_usage_uds    = 10;
   float stack_usage_nvram  = 11;
+  int32 uptime_s           = 12; // uptime in seconds
 }
 
 enum FanStatus {
@@ -230,25 +232,27 @@ enum StibFormState {
 }
 
 message StibSensors {
-  float bus_voltage     = 1;
-  float string_voltage  = 2;
-  float string_current  = 3;
-  float phase_1_temp    = 4;
-  float phase_2_temp    = 5;
-  float shunt_temp      = 6;
-  float pcb_temp        = 7;
-  float phase_1_current = 8;
-  float phase_2_current = 9;
-  float shunt_current   = 10;
-  float v_bus_24        = 11;
-  bool  cib_online      = 12;
+  float bus_voltage           = 1;
+  float string_voltage        = 2;
+  float string_current        = 3;
+  float phase_1_temp          = 4;
+  float phase_2_temp          = 5;
+  float shunt_temp            = 6;
+  float pcb_temp              = 7;
+  float phase_1_current       = 8;
+  float phase_2_current       = 9;
+  float shunt_current         = 10;
+  float v_bus_24              = 11;
+  bool  cib_online            = 12;
+  float cib_stib_vstring_diff = 13;
 }
 
 message CibSensors {
-  float string_current = 1;
-  float die_temp       = 2;
-  float v_ref_2        = 3; // Vref2 3V internal reference voltage in LION chip
-  float v_rail_5v      = 4;
+  float  string_current = 1;
+  float  die_temp       = 2;
+  float  v_ref_2        = 3; // Vref2 3V internal reference voltage in LION chip
+  float  v_rail_5v      = 4;
+  string serial         = 5; // 6-byte serial converted to ascii
 }
 
 message StibOutputs {
@@ -265,6 +269,7 @@ message StibInternal {
   StibDCDCState dcdc_state     = 1;
   StibFormState form_state     = 2;
   StibDCDCState dcdc_state_req = 3;
+  int32         uptime_s       = 4; // uptime in seconds
 }
 
 message Stib {
@@ -296,8 +301,10 @@ message CellMeasurement {
 }
 
 message Cell {
-  CellStatus      cellstatus      = 1;
-  CellMeasurement cellmeasurement = 2;
+  CellStatus      status      = 1;
+  CellMeasurement measurement = 2;
+  string          serial      = 3;
+  string          position    = 4;
 }
 
 enum FixtureStatus {
@@ -349,6 +356,7 @@ message FixtureOperational {
   bool                tray_present          = 6; // tray is present (independent of fixture status)
   FireAlarmStatus     fire_alarm_status     = 7;
   IsolationTestStatus isolation_test_status = 8;
+  uint32              runtime_s             = 9; // how long current recipe has been running in seconds
 }
 
 message FixtureDiagnostic {
@@ -364,10 +372,8 @@ message FixtureToTower {
     FixtureDiagnostic  diag      = 2;
     AlertLog           alert_log = 7;
   }
-  string traybarcode    = 3;
-  string fixturebarcode = 4;
-  string process_step   = 5;
-  string transaction_id = 6;
+  Info     info     = 8;
+  Versions versions = 9;
 }
 
 message RecipeStep {
@@ -410,15 +416,22 @@ enum FormRequest {
 }
 
 message Recipe {
-  repeated RecipeStep steps       = 1;
-  repeated uint32     cell_masks  = 2;
-  FormRequest         formrequest = 3;
+  repeated RecipeStep steps        = 1;
+  repeated uint32     cell_masks   = 2;
+  FormRequest         form_request = 3;
 }
 
-message SystemInfo {
-  string traybarcode    = 1;
-  string fixturebarcode = 2;
-  string process_step   = 3;
+message Info {
+  string tray_barcode     = 1;
+  string fixture_location = 2;
+  string recipe_name      = 3;
+  uint32 recipe_version   = 4;
+  string transaction_id   = 5; // KSUID, K-Sortable Unique IDentifier
+}
+
+message Versions {
+  string software_version = 1;
+  uint32 protocol_version = 2;
 }
 
 enum EquipmentRequest {
@@ -436,8 +449,8 @@ enum IsolationTestRequest {
 
 message TowerToFixture {
   Recipe               recipe                 = 1;
-  SystemInfo           sysinfo                = 2;
-  string               transaction_id         = 3;
+  Info                 info                   = 2;
   EquipmentRequest     equipment_request      = 4;
   IsolationTestRequest isolation_test_request = 5;
+  Versions             versions               = 6;
 }

@@ -139,7 +139,7 @@ func TestHandleSendFormRequest(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, tower.FormRequest_FORM_REQUEST_FAULT_RESET, fReset.GetRecipe().GetFormrequest())
+	assert.Equal(t, tower.FormRequest_FORM_REQUEST_FAULT_RESET, fReset.GetRecipe().GetFormRequest())
 
 	resp, err = http.Get(fmt.Sprintf("http://localhost:%d/form_request", port))
 	if err != nil {

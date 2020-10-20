@@ -23,10 +23,12 @@ func newTestFixtureLocation(id string) string {
 func newTestFixtureStateForFixture(fixture string) *FixtureState {
 	fsm := &fixtureMessage{
 		message: &tower.FixtureToTower{
-			Traybarcode:    "TESTBARCODEA",
-			Fixturebarcode: newTestFixtureLocation(fixture),
-			ProcessStep:    "TESTPROCESSSTEP",
-			TransactionId:  "1",
+			Info: &tower.Info{
+				TrayBarcode:     "TESTBARCODEA",
+				FixtureLocation: newTestFixtureLocation(fixture),
+				RecipeName:      "TESTPROCESSSTEP",
+				TransactionId:   "1",
+			},
 		},
 		lastSeen:   time.Now(),
 		dataExpiry: time.Second * 10,

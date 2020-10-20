@@ -205,7 +205,7 @@ func (e *EndProcess) setCellStatuses() {
 
 	for i, cell := range e.cellResponse {
 		status := cdcontroller.StatusPassed
-		if cell.GetCellstatus() != tower.CellStatus_CELL_STATUS_COMPLETE {
+		if cell.GetStatus() != tower.CellStatus_CELL_STATUS_COMPLETE {
 			status = cdcontroller.StatusFailed
 		}
 
@@ -236,7 +236,7 @@ func (e *EndProcess) setCellStatuses() {
 		stats[position] = cellStats{
 			Serial:      cellInfo.Serial,
 			CellPFToAPI: status,
-			Status:      cell.GetCellstatus().String(),
+			Status:      cell.GetStatus().String(),
 		}
 
 		cpf = append(cpf, cdcontroller.CellPFData{

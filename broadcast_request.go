@@ -73,15 +73,15 @@ func HandleBroadcastRequest(publisher *protostream.Socket, logger *zap.SugaredLo
 
 		switch broadcastRequest.Operation {
 		case cdcontroller.OperationStopFormation:
-			msg.GetRecipe().Formrequest = tower.FormRequest_FORM_REQUEST_STOP
+			msg.GetRecipe().FormRequest = tower.FormRequest_FORM_REQUEST_STOP
 		case cdcontroller.OperationPauseFormation:
-			msg.GetRecipe().Formrequest = tower.FormRequest_FORM_REQUEST_PAUSE
+			msg.GetRecipe().FormRequest = tower.FormRequest_FORM_REQUEST_PAUSE
 		case cdcontroller.OperationResumeFormation:
-			msg.GetRecipe().Formrequest = tower.FormRequest_FORM_REQUEST_RESUME
+			msg.GetRecipe().FormRequest = tower.FormRequest_FORM_REQUEST_RESUME
 		case cdcontroller.OperationStopIsoCheck:
 			// TODO: not implemented in towerproto yet
 		case cdcontroller.OperationFaultReset:
-			msg.GetRecipe().Formrequest = tower.FormRequest_FORM_REQUEST_FAULT_RESET
+			msg.GetRecipe().FormRequest = tower.FormRequest_FORM_REQUEST_FAULT_RESET
 		default:
 			// nothing to do
 			err := errors.New("no operation requested")
@@ -99,7 +99,7 @@ func HandleBroadcastRequest(publisher *protostream.Socket, logger *zap.SugaredLo
 				return
 			}
 
-			cl.Infow("sent proto message to fixture", "fixture", target, "request", msg.GetRecipe().GetFormrequest().String())
+			cl.Infow("sent proto message to fixture", "fixture", target, "request", msg.GetRecipe().GetFormRequest().String())
 		}
 
 		cl.Debug("done sending broadcasts")

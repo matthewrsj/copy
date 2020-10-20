@@ -1,53 +1,54 @@
 syntax            = "proto3";
-option go_package = "tower";
+option go_package = ".;tower";
 
 message StibAlert {
   enum AlertId {
-    STIB_NONE                           = 0;
-    STIB_a001_SwAppBoot                 = 1;
-    STIB_a002_HalError                  = 2;
-    STIB_a003_WatchDog                  = 3;
-    STIB_a004_CpuOverRun                = 4;
-    STIB_a005_CANBusReset               = 5;
-    STIB_a006_STIBrx_MIA                = 6;
-    STIB_a007_TaskStackOverrun          = 7;
-    STIB_a008_unused                    = 8;
-    STIB_a009_unused                    = 9;
-    STIB_a010_EnumerationWriteFail      = 10;
-    STIB_a011_AllegroHwOC               = 11;
-    STIB_a012_ComparatorHwOC            = 12;
-    STIB_a013_SwOC                      = 13;
-    STIB_a014_BusUV                     = 14;
-    STIB_a015_BusOV                     = 15;
-    STIB_a016_StringOV                  = 16;
-    STIB_a017_StringUV                  = 17;
-    STIB_a018_SwitchTempTooHigh         = 18;
-    STIB_a019_ShuntTempTooHigh          = 19;
-    STIB_a020_VoltageMatchingTimeout    = 20;
-    STIB_a021_LossOfCurrentControl      = 21;
-    STIB_a022_SensorOffsetTooHigh       = 22;
-    STIB_a023_EnableLineLost            = 23;
-    STIB_a024_irefCorrectionIrrational  = 24;
-    STIB_a025_unused                    = 25;
-    STIB_a026_unused                    = 26;
-    STIB_a027_unused                    = 27;
-    STIB_a028_AppliedCurrentIsSaturated = 28;
-    STIB_a029_CellSafetyCheckFailed     = 29;
-    STIB_a030_CellQualityCheckFailed    = 30;
-    STIB_a031_CellOV                    = 31;
-    STIB_a032_CellUV                    = 32;
-    STIB_a033_CellDvDT                  = 33;
-    STIB_a034_PogoVIrrational           = 34;
-    STIB_a035_CibFaulted                = 35;
-    STIB_a036_CellTempTooHigh           = 36;
-    STIB_a037_FormationTimeout          = 37;
-    STIB_a038_FormationCheckFailed      = 38;
-    STIB_a039_unused                    = 39;
-    STIB_a040_unused                    = 40;
-    STIB_a041_CIBDataInvalid            = 41;
-    STIB_a043_CIBNotConnected           = 43;
-    STIB_a044_CIBCellSwitchWriteFail    = 44;
-    STIB_a045_CIB_NegVoltageProtection  = 45;
+    STIB_NONE                               = 0;
+    STIB_a001_SwAppBoot                     = 1001;
+    STIB_a002_HalError                      = 1002;
+    STIB_a003_WatchDog                      = 1003;
+    STIB_a004_CpuOverRun                    = 1004;
+    STIB_a005_CANBusReset                   = 1005;
+    STIB_a006_STIBrx_MIA                    = 1006;
+    STIB_a007_TaskStackOverrun              = 1007;
+    STIB_a008_unused                        = 1008;
+    STIB_a009_unused                        = 1009;
+    STIB_a010_EnumerationWriteFail          = 1010;
+    STIB_a011_AllegroHwOC                   = 1011;
+    STIB_a012_ComparatorHwOC                = 1012;
+    STIB_a013_SwOC                          = 1013;
+    STIB_a014_BusUV                         = 1014;
+    STIB_a015_BusOV                         = 1015;
+    STIB_a016_StringOV                      = 1016;
+    STIB_a017_StringUV                      = 1017;
+    STIB_a018_SwitchTempTooHigh             = 1018;
+    STIB_a019_ShuntTempTooHigh              = 1019;
+    STIB_a020_VoltageMatchingTimeout        = 1020;
+    STIB_a021_LossOfCurrentControl          = 1021;
+    STIB_a022_SensorOffsetTooHigh           = 1022;
+    STIB_a023_EnableLineLost                = 1023;
+    STIB_a024_irefCorrectionIrrational      = 1024;
+    STIB_a025_unused                        = 1025;
+    STIB_a026_unused                        = 1026;
+    STIB_a027_unused                        = 1027;
+    STIB_a028_AppliedCurrentIsSaturated     = 1028;
+    STIB_a029_CellSafetyCheckFailed         = 1029;
+    STIB_a030_CellQualityCheckFailed        = 1030;
+    STIB_a031_CellOV                        = 1031;
+    STIB_a032_CellUV                        = 1032;
+    STIB_a033_CellDvDT                      = 1033;
+    STIB_a034_PogoVIrrational               = 1034;
+    STIB_a035_CibFaulted                    = 1035;
+    STIB_a036_CellTempTooHigh               = 1036;
+    STIB_a037_FormationTimeout              = 1037;
+    STIB_a038_FormationCheckFailed          = 1038;
+    STIB_a039_unused                        = 1039;
+    STIB_a040_unused                        = 1040;
+    STIB_a041_CIBDataInvalid                = 1041;
+    STIB_a043_CIBNotConnected               = 1043;
+    STIB_a044_CIBCellSwitchWriteFail        = 1044;
+    STIB_a045_CIB_NegVoltageProtection      = 1045;
+    STIB_a046_CIB_STIB_VStringDiffCheckFail = 1046;
   }
 
   message a004_CpuOverRun {
@@ -67,6 +68,64 @@ message StibAlert {
   }
 
   message a010_EnumerationWriteFail {}
+
+  message a012_ComparatorHwOC {
+    float bus_voltage      = 1; // V
+    float string_voltage   = 2; // V
+    float iphase_1         = 3; // A
+    float iphase_2         = 4; // A
+    bool  iphase_1_ovr_pos = 5;
+    bool  iphase_1_ovr_neg = 6;
+    bool  iphase_2_ovr_pos = 7;
+    bool  iphase_2_ovr_neg = 8;
+  }
+
+  message a013_SwOC {
+    float bus_voltage    = 1; // V
+    float string_voltage = 2; // V
+    float iphase_1       = 3; // A
+    float iphase_2       = 4; // A
+    float conv_iout      = 5; // A
+  }
+
+  message a014_BusUV {
+    float bus_voltage    = 1; // V
+    float string_voltage = 2; // V
+    float iphase_1       = 3; // A
+    float iphase_2       = 4; // A
+    float conv_iout      = 5; // A
+  }
+
+  message a015_BusOV {
+    float bus_voltage    = 1; // V
+    float string_voltage = 2; // V
+    float iphase_1       = 3; // A
+    float iphase_2       = 4; // A
+    float conv_iout      = 5; // A
+  }
+
+  message a016_StringOV {
+    float bus_voltage    = 1; // V
+    float string_voltage = 2; // V
+    float iphase_1       = 3; // A
+    float iphase_2       = 4; // A
+    float conv_iout      = 5; // A
+  }
+
+  message a017_StringUV {
+    float bus_voltage    = 1; // V
+    float string_voltage = 2; // V
+    float iphase_1       = 3; // A
+    float iphase_2       = 4; // A
+    float conv_iout      = 5; // A
+  }
+
+  message a018_SwitchTempTooHigh {
+    float tphase_1     = 1; // degC
+    float tphase_2     = 2; // degC
+    bool  tphase_1_ovr = 3;
+    bool  tphase_2_ovr = 4;
+  }
 
   message a020_VoltageMatchingTimeout {
     float  string_voltage = 1; // V
@@ -148,6 +207,8 @@ message StibAlert {
 
   message a044_CIBCellSwitchWriteFail { uint32 cell_switch_data = 1; }
 
+  message a046_CIB_STIB_VStringDiffCheckFail { float cib_stib_vstring_diff = 1; }
+
   message a037_FormationTimeout {
     uint32 form_state  = 1;
     uint32 step_time_s = 2; // s
@@ -162,32 +223,34 @@ message StibAlert {
   uint32  stib_index = 2;
 
   oneof AlertData {
-    a004_CpuOverRun                a004 = 4;
-    a007_TaskStackOverrun          a007 = 7;
-    a010_EnumerationWriteFail      a010 = 10;
-    a020_VoltageMatchingTimeout    a020 = 20;
-    a024_irefCorrectionIrrational  a024 = 24;
-    a028_AppliedCurrentIsSaturated a028 = 28;
-    a029_CellSafetyCheckFailed     a029 = 29;
-    a030_CellQualityCheckFailed    a030 = 30;
-    a031_CellOV                    a031 = 31;
-    a032_CellUV                    a032 = 32;
-    a034_PogoVIrrational           a034 = 34;
-    a036_CellTempTooHigh           a036 = 36;
-    a037_FormationTimeout          a037 = 37;
-    a038_FormationCheckFailed      a038 = 38;
-    a041_CIBDataInvalid            a041 = 41;
-    a044_CIBCellSwitchWriteFail    a044 = 44;
-    a045_CIB_NegVoltageProtection  a045 = 45;
+    a004_CpuOverRun                    a004 = 1004;
+    a007_TaskStackOverrun              a007 = 1007;
+    a010_EnumerationWriteFail          a010 = 1010;
+    a020_VoltageMatchingTimeout        a020 = 1020;
+    a024_irefCorrectionIrrational      a024 = 1024;
+    a028_AppliedCurrentIsSaturated     a028 = 1028;
+    a029_CellSafetyCheckFailed         a029 = 1029;
+    a030_CellQualityCheckFailed        a030 = 1030;
+    a031_CellOV                        a031 = 1031;
+    a032_CellUV                        a032 = 1032;
+    a034_PogoVIrrational               a034 = 1034;
+    a036_CellTempTooHigh               a036 = 1036;
+    a037_FormationTimeout              a037 = 1037;
+    a038_FormationCheckFailed          a038 = 1038;
+    a041_CIBDataInvalid                a041 = 1041;
+    a044_CIBCellSwitchWriteFail        a044 = 1044;
+    a045_CIB_NegVoltageProtection      a045 = 1045;
+    a046_CIB_STIB_VStringDiffCheckFail a046 = 1046;
   }
 }
 
 message FibAlert {
   enum AlertId {
     FIB_NONE                 = 0;
-    FIB_a001_SwAppBoot       = 1;
-    FIB_a002_watchdogExpired = 2;
-    FIB_a003_internalFault   = 3;
+    FIB_a001_SwAppBoot       = 1001;
+    FIB_a002_watchdogExpired = 1002;
+    FIB_a003_internalFault   = 1003;
+    FIB_a004_FanRpmFault     = 1004;
   }
 
   message a002_watchdogExpired {
@@ -197,39 +260,55 @@ message FibAlert {
 
   message a003_internalFault {}
 
+  message a004_FanRpmFault {
+    uint32 fan_index    = 1;
+    uint32 fan_rpm      = 2; // rpm
+    uint32 fan_pwm_duty = 3;
+    float  fan_current  = 4; // A
+  }
+
   AlertId alert_id = 1;
 
   oneof AlertData {
-    a002_watchdogExpired a002 = 2;
-    a003_internalFault   a003 = 3;
+    a002_watchdogExpired a002 = 1002;
+    a003_internalFault   a003 = 1003;
+    a004_FanRpmFault     a004 = 1004;
   }
 }
 
 message FxrAlert {
   enum AlertId {
-    FXR_NONE                           = 0;
-    FXR_a001_SwAppBoot                 = 1;
-    FXR_a002_watchdogExpired           = 2;
-    FXR_a003_internalFault             = 3;
-    FXR_a004_STIB00_MIA                = 4;
-    FXR_a005_STIB01_MIA                = 5;
-    FXR_a006_STIB02_MIA                = 6;
-    FXR_a007_STIB03_MIA                = 7;
-    FXR_a008_FIB_MIA                   = 8;
-    FXR_a009_isoDiagCheckFail          = 9;
-    FXR_a010_isolationFault            = 10;
-    FXR_a011_isolationDegradationFault = 11;
-    FXR_a012_enumerationWriteFail      = 12;
-    FXR_a013_appGitHashMismatch        = 13;
-    FXR_a014_state_machine_fault       = 14;
-    FXR_a015_fixture_position_fault    = 15;
-    FXR_a016_stibs_faulted             = 16;
-    FXR_a017_tray_missing              = 17;
-    FXR_a018_stib_step_timeout         = 18;
-    FXR_a019_fixture_pos_sm_faulted    = 19;
-    FXR_a020_thermal_event_level_0     = 20;
-    FXR_a021_thermal_event_level_1     = 21;
+    FXR_NONE                            = 0;
+    FXR_a001_SwAppBoot                  = 1001;
+    FXR_a002_watchdogExpired            = 1002;
+    FXR_a003_internalFault              = 1003;
+    FXR_a004_STIB00_MIA                 = 1004;
+    FXR_a005_STIB01_MIA                 = 1005;
+    FXR_a006_STIB02_MIA                 = 1006;
+    FXR_a007_STIB03_MIA                 = 1007;
+    FXR_a008_FIB_MIA                    = 1008;
+    FXR_a009_isoDiagCheckFail           = 1009;
+    FXR_a010_isolationFault             = 1010;
+    FXR_a011_isolationDegradationFault  = 1011;
+    FXR_a012_enumerationWriteFail       = 1012;
+    FXR_a013_appGitHashMismatch         = 1013;
+    FXR_a014_state_machine_fault        = 1014;
+    FXR_a015_fixture_position_fault     = 1015;
+    FXR_a016_stibs_faulted              = 1016;
+    FXR_a017_tray_missing               = 1017;
+    FXR_a018_fixture_control_sm_timeout = 1018;
+    FXR_a019_fixture_pos_sm_faulted     = 1019;
+    FXR_a020_thermal_event_level_0      = 1020;
+    FXR_a021_thermal_event_level_1      = 1021;
+    FXR_a022_git_mismatch_timeout       = 1022;
+    FXR_a023_HVBus_UV_fault             = 1023;
+    FXR_a024_HVBus_OV_fault             = 1024;
+    FXR_a025_EquipmentNeedsMaintenance  = 1025;
+    FXR_a027_24VBus_UV_fault            = 1027;
+    FXR_a028_24VBus_OV_fault            = 1028;
   }
+
+  message a001_SwAppBoot {}
 
   message a002_watchdogExpired {
     float TaskId = 1; // us
@@ -275,19 +354,26 @@ message FxrAlert {
     bool stib03AppGitHashMismatch = 5;
   }
 
-  message a014_state_machine_fault { float state_machine_state = 1; }
+  message a014_state_machine_fault {
+    uint32 state_machine_state = 1;
+    uint32 faulting_alert_id   = 2;
+  }
 
   message a015_fixture_position_fault {
-    float fixture_position    = 1;
-    float state_machine_state = 2;
-    float fixture_state       = 3;
+    float  fixture_position    = 1;
+    float  state_machine_state = 2;
+    uint32 fixture_state       = 3;
   }
 
   message a016_stibs_faulted {}
 
   message a017_tray_missing { float state_machine_state = 1; }
 
-  message a018_stib_step_timeout {}
+  message a018_fixture_control_sm_timeout {
+    uint32          fixture_control_state = 1;
+    repeated uint32 stib_form_state       = 2;
+    repeated uint32 stib_dcdc_state       = 3;
+  }
 
   message a019_fixture_pos_sm_faulted {
     enum fault_reason {
@@ -310,29 +396,54 @@ message FxrAlert {
 
   message a021_thermal_event_level_1 { float threshold = 1; }
 
+  message a022_git_mismatch_timeout {}
+
+  message a023_busHV_uv_fault { float voltage = 1; }
+
+  message a024_busHV_ov_fault { float voltage = 1; }
+
+  message a025_EquipmentNeedsMaintenance {
+    int32 prev_status               = 1; // what equipment status transitioning from
+    int32 faulting_alert_id         = 2; // alert id causing transition if non-zero
+    bool  fixture_status_faulted    = 3; // if fixture status faulted is causing transition
+    bool  equipment_maintenance_req = 4; // if needs maintenance was requested via equipment request
+    bool  cells_incomplete          = 5; // fail due to cell(s) not complete during commissioning recipe
+  }
+
+  message a027_bus24V_uv_fault { float voltage = 1; }
+
+  message a028_bus24V_ov_fault { float voltage = 1; }
+
   AlertId alert_id = 1;
 
   oneof AlertData {
-    a002_watchdogExpired           a002 = 2;
-    a003_internalFault             a003 = 3;
-    a004_STIB00_MIA                a004 = 4;
-    a005_STIB01_MIA                a005 = 5;
-    a006_STIB02_MIA                a006 = 6;
-    a007_STIB03_MIA                a007 = 7;
-    a008_FIB_MIA                   a008 = 8;
-    a009_isoDiagCheckFail          a009 = 9;
-    a010_isolationFault            a010 = 10;
-    a011_isolationDegradationFault a011 = 11;
-    a012_enumerationWriteFail      a012 = 12;
-    a013_appGitHashMismatch        a013 = 13;
-    a014_state_machine_fault       a014 = 14;
-    a015_fixture_position_fault    a015 = 15;
-    a016_stibs_faulted             a016 = 16;
-    a017_tray_missing              a017 = 17;
-    a018_stib_step_timeout         a018 = 18;
-    a019_fixture_pos_sm_faulted    a019 = 19;
-    a020_thermal_event_level_0     a020 = 20;
-    a021_thermal_event_level_1     a021 = 21;
+    a001_SwAppBoot                  a001 = 1001;
+    a002_watchdogExpired            a002 = 1002;
+    a003_internalFault              a003 = 1003;
+    a004_STIB00_MIA                 a004 = 1004;
+    a005_STIB01_MIA                 a005 = 1005;
+    a006_STIB02_MIA                 a006 = 1006;
+    a007_STIB03_MIA                 a007 = 1007;
+    a008_FIB_MIA                    a008 = 1008;
+    a009_isoDiagCheckFail           a009 = 1009;
+    a010_isolationFault             a010 = 1010;
+    a011_isolationDegradationFault  a011 = 1011;
+    a012_enumerationWriteFail       a012 = 1012;
+    a013_appGitHashMismatch         a013 = 1013;
+    a014_state_machine_fault        a014 = 1014;
+    a015_fixture_position_fault     a015 = 1015;
+    a016_stibs_faulted              a016 = 1016;
+    a017_tray_missing               a017 = 1017;
+    a018_fixture_control_sm_timeout a018 = 1018;
+    a019_fixture_pos_sm_faulted     a019 = 1019;
+    a020_thermal_event_level_0      a020 = 1020;
+    a021_thermal_event_level_1      a021 = 1021;
+    a022_git_mismatch_timeout       a022 = 1022;
+    a023_busHV_uv_fault             a023 = 1023;
+    a024_busHV_ov_fault             a024 = 1024;
+    a025_EquipmentNeedsMaintenance  a025 = 1025;
+    a027_bus24V_uv_fault            a027 = 1027;
+    a028_bus24V_ov_fault            a028 = 1028;
   }
 }
 

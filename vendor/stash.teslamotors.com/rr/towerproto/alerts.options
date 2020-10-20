@@ -1,1 +1,3 @@
 AlertMatrix.alert_matrices max_count:2
+FxrAlert.a018_fixture_control_sm_timeout.stib_form_state max_count:4
+FxrAlert.a018_fixture_control_sm_timeout.stib_dcdc_state max_count:4

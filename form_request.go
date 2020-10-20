@@ -64,7 +64,7 @@ func HandleSendFormRequest(publisher *protostream.Socket, logger *zap.SugaredLog
 
 		sendMsg := tower.TowerToFixture{
 			Recipe: &tower.Recipe{
-				Formrequest: tower.FormRequest(formReq),
+				FormRequest: tower.FormRequest(formReq),
 			},
 		}
 

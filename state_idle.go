@@ -257,10 +257,10 @@ func (i *Idle) monitorForStatus(done <-chan struct{}, active chan<- inProgressIn
 		}
 
 		ipInfo := inProgressInfo{
-			transactionID:  msg.GetTransactionId(),
-			processStep:    msg.GetProcessStep(),
+			transactionID:  msg.GetInfo().GetTransactionId(),
+			processStep:    msg.GetInfo().GetRecipeName(),
 			fixtureBarcode: fxrID,
-			trayBarcode:    msg.GetTraybarcode(),
+			trayBarcode:    msg.GetInfo().GetTrayBarcode(),
 		}
 
 		i.Logger.Debugw("fixture status", "fixture", i.FXRInfo.Name, "status", msg.GetOp().GetStatus().String())

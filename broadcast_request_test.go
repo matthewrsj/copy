@@ -126,5 +126,5 @@ func TestHandleBroadcastRequest(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, tower.FormRequest_FORM_REQUEST_STOP, fStop.GetRecipe().GetFormrequest())
+	assert.Equal(t, tower.FormRequest_FORM_REQUEST_STOP, fStop.GetRecipe().GetFormRequest())
 }

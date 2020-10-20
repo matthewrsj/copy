@@ -40,7 +40,7 @@ func TestNewFixtureState(t *testing.T) {
 func TestFixtureState_update(t *testing.T) {
 	fs := NewFixtureState()
 
-	msg := mustMarshalProtostreamMessage(t, &tower.FixtureToTower{Fixturebarcode: "test"})
+	msg := mustMarshalProtostreamMessage(t, &tower.FixtureToTower{Info: &tower.Info{FixtureLocation: "test"}})
 	if err := fs.update(msg); err == nil {
 		t.Error("no error returned for unknown type")
 	}
@@ -51,7 +51,9 @@ func TestFixtureState_update(t *testing.T) {
 			Content: &tower.FixtureToTower_Op{
 				Op: &tower.FixtureOperational{},
 			},
-			Fixturebarcode: "test",
+			Info: &tower.Info{
+				FixtureLocation: "test",
+			},
 		},
 	)
 
@@ -61,7 +63,9 @@ func TestFixtureState_update(t *testing.T) {
 			Content: &tower.FixtureToTower_Diag{
 				Diag: &tower.FixtureDiagnostic{},
 			},
-			Fixturebarcode: "test",
+			Info: &tower.Info{
+				FixtureLocation: "test",
+			},
 		},
 	)
 
@@ -71,7 +75,9 @@ func TestFixtureState_update(t *testing.T) {
 			Content: &tower.FixtureToTower_AlertLog{
 				AlertLog: &tower.AlertLog{},
 			},
-			Fixturebarcode: "test",
+			Info: &tower.Info{
+				FixtureLocation: "test",
+			},
 		},
 	)
 
@@ -88,7 +94,7 @@ func TestFixtureState_update(t *testing.T) {
 			continue
 		}
 
-		assert.Equal(t, "test", msg.Fixturebarcode)
+		assert.Equal(t, "test", msg.GetInfo().GetFixtureLocation())
 	}
 }
 
@@ -101,7 +107,7 @@ func TestFixtureState_GetAlertNil(t *testing.T) {
 
 func TestFixtureState_getInternal(t *testing.T) {
 	fs := NewFixtureState()
-	fs.operational.message = &tower.FixtureToTower{Fixturebarcode: "test"}
+	fs.operational.message = &tower.FixtureToTower{Info: &tower.Info{FixtureLocation: "test"}}
 
 	if _, err := getInternal(fs.operational); err == nil {
 		t.Error("got no error when data expiry was violated")
@@ -114,7 +120,7 @@ func TestFixtureState_getInternal(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, "test", op.Fixturebarcode)
+	assert.Equal(t, "test", op.GetInfo().GetFixtureLocation())
 }
 
 func mustMarshalProtostreamMessage(t *testing.T, msg proto.Message) *protostream.Message {
