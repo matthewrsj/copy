@@ -1,0 +1,13 @@
+---
+# ansible-playbook -l <host_group> find-line.yaml -K
+# example shell commands, 1. check Avro scheme has latest line change, 2. check that config is set to latest schema id
+# 1: cat /etc/towerstreamsvc.d/schemas/fixture_data_schema.json | grep signal_value_text
+# 2: cat /etc/towerstreamsvc.d/towerstreamservice.yaml | grep 402
+- hosts: all
+  tasks:
+    - name: Find line in file
+      shell: <shell command>
+      ignore_errors: yes
+      register: result
+      become: yes
+      become_method: sudo

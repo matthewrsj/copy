@@ -2,7 +2,7 @@
 # ansible-playbook -l <host_group> stop-services.yaml -K
 - hosts: all
   tasks:
-  - name: Start protostream
+  - name: Stop protostream
     service:
       name: protostream.service
       state: stopped
@@ -10,7 +10,7 @@
     become_method: sudo
     tags:
       - protostream
-  - name: Start towercontroller
+  - name: Stop towercontroller
     service:
       name: towercontroller.service
       state: stopped
@@ -18,7 +18,7 @@
     become_method: sudo
     tags:
       - towercontroller
-  - name: Start towerstreamsvc
+  - name: Stop towerstreamsvc
     service:
       name: towerstreamsvc.service
       state: stopped
@@ -26,7 +26,7 @@
     become_method: sudo
     tags:
       - towerstreamsvc
-  - name: Start canup
+  - name: Stop canup
     service:
       name: canup.service
       state: stopped

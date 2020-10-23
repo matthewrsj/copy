@@ -2,6 +2,24 @@
 # ansible-playbook -l <host_group> restart-services.yaml -K
 - hosts: all
   tasks:
+  - name: Reload Configurations
+    shell: systemctl daemon-reload
+    become: yes
+    become_method: sudo
+    tags:
+      - canup
+      - protostream
+      - towercontroller
+      - towerstreamsvc
+      - daemon-reload
+  - name: Restart canup
+    service:
+      name: canup.service
+      state: restarted
+    become: yes
+    become_method: sudo
+    tags:
+      - canup
   - name: Restart protostream
     service:
       name: protostream.service
@@ -26,11 +44,3 @@
     become_method: sudo
     tags:
       - towerstreamsvc
-  - name: Restart canup
-    service:
-      name: canup.service
-      state: restarted
-    become: yes
-    become_method: sudo
-    tags:
-      - canup
