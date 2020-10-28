@@ -1,9 +1,3 @@
-# Makefile used to create packages for copy. It doesn't assume that the code is
-# inside a GOPATH, and always copy the files into a new workspace to get the
-# work done. Go tools doesn't reliably work with symbolic links.
-#
-# For historical purposes, it also works in a development environment when the
-# repository is already inside a GOPATH.
 .NOTPARALLEL:
 
 GO_PACKAGE_PREFIX := github.com/matthewrsj/copy
