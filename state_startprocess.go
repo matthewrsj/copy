@@ -63,6 +63,7 @@ func (s *StartProcess) action() {
 			TrayBarcode:     s.tbc.Raw,
 			FixtureLocation: s.fxbc.Raw,
 			RecipeName:      s.processStepName,
+			RecipeVersion:   uint32(s.recipeVersion),
 			TransactionId:   s.transactID,
 		},
 	}
