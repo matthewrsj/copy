@@ -41,6 +41,7 @@ type EndProcess struct {
 	fxrInfo *FixtureInfo
 }
 
+// nolint:gocognit // TODO: simplify reporting logic. Need to work with cell api team to eliminate the two-step logic
 func (e *EndProcess) action() {
 	if len(e.cells) == 0 { // we short-circuited here or something went wrong, just re-get the map
 		e.childLogger.Info("empty cell map, querying API for new map")
@@ -54,43 +55,44 @@ func (e *EndProcess) action() {
 		}
 	}
 
-	if e.skipClose {
-		e.childLogger.Info("skipClose set, not closing process step or setting cell statuses")
-	}
-
-	if !e.skipClose && e.processStepName != cdcontroller.CommissionSelfTestRecipeName {
-		e.childLogger.Info("setting cell statuses")
-		e.setCellStatuses()
-	}
-
-	if !e.mockCellAPI {
-		// out of band and ignoring all errors update Cell API that we finished
-		// does not affect any process just makes it easier to find data
-		// this is different from ending it with the process name as it just leaves a marker on the fixture itself instead
-		// of closing the actual process step.
-		go func() {
-			e.childLogger.Debug("updating process status", "status", "end")
-
-			err := e.CellAPIClient.UpdateProcessStatus(e.tbc.SN, fmt.Sprintf("CM2-%s%s-%s", e.Config.Loc.Process, e.Config.Loc.Aisle, e.fxrInfo.Name), cdcontroller.StatusEnd)
-			if err != nil {
-				e.childLogger.Warnw("unable to update Cell API of recipe end", "error", err)
-			}
-		}()
+	if !e.fixtureFault {
+		if e.skipClose {
+			e.childLogger.Info("skipClose set, not closing process step or setting cell statuses")
+		}
 
 		if !e.skipClose && e.processStepName != cdcontroller.CommissionSelfTestRecipeName {
-			e.childLogger.Infow("closing process step", "recipe_name", e.processStepName, "recipe_version", e.recipeVersion)
+			e.childLogger.Info("setting cell statuses")
+			e.setCellStatuses()
+		}
 
-			if err := e.CellAPIClient.CloseProcessStep(e.tbc.SN, e.processStepName, e.recipeVersion); err != nil {
-				e.childLogger.Error("close process status", "error", err)
+		if !e.mockCellAPI {
+			// out of band and ignoring all errors update Cell API that we finished
+			// does not affect any process just makes it easier to find data
+			// this is different from ending it with the process name as it just leaves a marker on the fixture itself instead
+			// of closing the actual process step.
+			go func() {
+				e.childLogger.Debug("updating process status", "status", "end")
+
+				err := e.CellAPIClient.UpdateProcessStatus(e.tbc.SN, fmt.Sprintf("CM2-%s%s-%s", e.Config.Loc.Process, e.Config.Loc.Aisle, e.fxrInfo.Name), cdcontroller.StatusEnd)
+				if err != nil {
+					e.childLogger.Warnw("unable to update Cell API of recipe end", "error", err)
+				}
+			}()
+
+			if !e.skipClose && e.processStepName != cdcontroller.CommissionSelfTestRecipeName {
+				e.childLogger.Infow("closing process step", "recipe_name", e.processStepName, "recipe_version", e.recipeVersion)
+
+				if err := e.CellAPIClient.CloseProcessStep(e.tbc.SN, e.processStepName, e.recipeVersion); err != nil {
+					e.childLogger.Error("close process status", "error", err)
+				}
+			} else {
+				e.childLogger.Info("not closing process step for recipe", "recipe_name", e.processStepName)
 			}
 		} else {
-			e.childLogger.Info("not closing process step for recipe", "recipe_name", e.processStepName)
+			e.childLogger.Warn("Cell API mocked, not closing process step")
 		}
-	} else {
-		e.childLogger.Warn("Cell API mocked, not closing process step")
 	}
 
-	// TODO: determine how to inform cell API of fault
 	msg := "tray complete"
 
 	if e.fixtureFault {
@@ -257,7 +259,7 @@ func (e *EndProcess) setCellStatuses() {
 	}
 
 	if !e.mockCellAPI {
-		if err := e.CellAPIClient.SetCellStatuses(e.tbc.SN, cpf); err != nil {
+		if err := e.CellAPIClient.SetCellStatuses(e.tbc.SN, e.fxbc.Raw, e.processStepName, e.recipeVersion, cpf); err != nil {
 			e.childLogger.Errorw("SetCellStatuses", "error", err)
 			return
 		}

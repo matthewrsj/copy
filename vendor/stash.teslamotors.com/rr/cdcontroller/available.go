@@ -3,7 +3,7 @@ package cdcontroller
 import (
 	"fmt"
 
-	pb "stash.teslamotors.com/rr/towerproto"
+	tower "stash.teslamotors.com/rr/towerproto"
 )
 
 // CommissionSelfTestRecipeName is the recipe name TC and CDC use to special-case loading instructions
@@ -44,12 +44,12 @@ func fxrLayoutForValidator(as Availability, validator func(FXRAvailable) bool) (
 			return nil, fmt.Errorf("level from location: %v", err)
 		}
 
-		s, ok := pb.FixtureStatus_value[a.Status]
+		s, ok := tower.FixtureStatus_value[a.Status]
 		if !ok {
 			return nil, fmt.Errorf("invalid status '%s'", a.Status)
 		}
 
-		status := pb.FixtureStatus(s)
+		status := tower.FixtureStatus(s)
 
 		if err := f.Set(
 			Coordinates{Col: c, Lvl: l},
@@ -66,25 +66,25 @@ func fxrLayoutForValidator(as Availability, validator func(FXRAvailable) bool) (
 }
 
 func fxrReadyForNormalOperation(fa FXRAvailable) bool {
-	return fxrEquipmentIsMatchedAndReady(fa, pb.EquipmentStatus_EQUIPMENT_STATUS_IN_OPERATION)
+	return fxrEquipmentIsMatchedAndReady(fa, tower.EquipmentStatus_EQUIPMENT_STATUS_IN_OPERATION)
 }
 
 func fxrReadyForCommissioning(fa FXRAvailable) bool {
-	return fxrEquipmentIsMatchedAndReady(fa, pb.EquipmentStatus_EQUIPMENT_STATUS_NEEDS_COMMISSIONING)
+	return fxrEquipmentIsMatchedAndReady(fa, tower.EquipmentStatus_EQUIPMENT_STATUS_NEEDS_COMMISSIONING)
 }
 
-func fxrEquipmentIsMatchedAndReady(fa FXRAvailable, es pb.EquipmentStatus) bool {
-	s, ok := pb.FixtureStatus_value[fa.Status]
+func fxrEquipmentIsMatchedAndReady(fa FXRAvailable, es tower.EquipmentStatus) bool {
+	s, ok := tower.FixtureStatus_value[fa.Status]
 	if !ok {
 		return false
 	}
 
-	e, ok := pb.EquipmentStatus_value[fa.EquipmentStatus]
+	e, ok := tower.EquipmentStatus_value[fa.EquipmentStatus]
 	if !ok {
 		return false
 	}
 
-	return pb.FixtureStatus(s) == pb.FixtureStatus_FIXTURE_STATUS_IDLE &&
-		pb.EquipmentStatus(e) == es &&
+	return tower.FixtureStatus(s) == tower.FixtureStatus_FIXTURE_STATUS_IDLE &&
+		tower.EquipmentStatus(e) == es &&
 		!fa.Reserved && fa.Allowed
 }

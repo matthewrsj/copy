@@ -42,7 +42,7 @@ func HandleBroadcast(server *terminal.Server, lg *zap.SugaredLogger, conf Config
 		}
 
 		location := fmt.Sprintf("%s-%s%s-%s", conf.Loc.Line, conf.Loc.Station, br.Originator.Aisle, br.Originator.Location)
-		logger = logger.With("originator", location)
+		logger = logger.With("originator", location, "reason", br.Reason.String(), "scale", br.Scale.String())
 
 		var needHTTPError error
 
@@ -55,6 +55,8 @@ func HandleBroadcast(server *terminal.Server, lg *zap.SugaredLogger, conf Config
 				needHTTPError = err
 			}
 		}
+
+		logger.Info("CND informed of alarm")
 
 		// for level 0 fire response return immediately,
 		// do not tell the rest of the aisle to stop their process.
@@ -70,14 +72,18 @@ func HandleBroadcast(server *terminal.Server, lg *zap.SugaredLogger, conf Config
 
 		switch br.Scale {
 		case ScaleGlobal:
+			logger.Info("broadcasting to all aisles")
+
 			// broadcast to each tower in each aisle one time
 			var lastError error
 
 			for n, aisle := range aisles {
-				if err := broadcastToAisle(logger, aisle, b); err != nil {
-					lastError = err
-					logger.Errorw("broadcast to aisle", "error", err, "aisle", n)
-				}
+				go func(n string, aisle *Aisle) {
+					if err := broadcastToAisle(logger, aisle, b, br.Operation); err != nil {
+						lastError = err
+						logger.Errorw("broadcast to aisle", "error", err, "aisle", n)
+					}
+				}(n, aisle)
 			}
 
 			if lastError != nil {
@@ -86,6 +92,8 @@ func HandleBroadcast(server *terminal.Server, lg *zap.SugaredLogger, conf Config
 				break // from switch statement
 			}
 		case ScaleAisle:
+			logger.Info("broadcasting to aisle")
+
 			// broadcast to each tower in originator's aisle one time
 			aisle, ok := aisles[br.Originator.Aisle]
 			if !ok {
@@ -95,11 +103,15 @@ func HandleBroadcast(server *terminal.Server, lg *zap.SugaredLogger, conf Config
 				break // from switch statement
 			}
 
-			if err := broadcastToAisle(logger, aisle, b); err != nil {
-				// do not return, still need to tell CND
-				logger.Errorw("broadcast to aisle", "error", err, "aisle", br.Originator.Aisle)
-			}
+			go func() {
+				if err := broadcastToAisle(logger, aisle, b, br.Operation); err != nil {
+					// do not return, still need to tell CND
+					logger.Errorw("broadcast to aisle", "error", err, "aisle", br.Originator.Aisle)
+				}
+			}()
 		case ScaleTower:
+			logger.Info("broadcasting to tower")
+
 			err := backoff.Retry(sendToTowerCallback(lg, r.RemoteAddr, b), backoff.WithMaxRetries(backoff.NewConstantBackOff(time.Second), 10))
 			if err != nil {
 				logger.Errorw("broadcast to tower", "error", err)
@@ -108,6 +120,8 @@ func HandleBroadcast(server *terminal.Server, lg *zap.SugaredLogger, conf Config
 			}
 			// broadcast to originator's tower one time
 		case ScaleColumn:
+			logger.Info("broadcasting to column")
+
 			// broadcast to originator's column, one per FXR
 			// TODO: implement when use-case arises (not needed currently)
 			logger.Error("ScaleColumn not implemented")
@@ -172,7 +186,7 @@ func newFireAlarmMessage(server *terminal.Server, location *asrsapi.Location, st
 
 // broadcastToAisle will attempt to broadcast every second for 10 seconds. If it isn't successful for any aisle it will
 // return an error.
-func broadcastToAisle(lg *zap.SugaredLogger, aisle *Aisle, brb []byte) error {
+func broadcastToAisle(lg *zap.SugaredLogger, aisle *Aisle, brb []byte, op BroadcastOperation) error {
 	var (
 		wg      sync.WaitGroup
 		lastErr error
@@ -197,6 +211,12 @@ func broadcastToAisle(lg *zap.SugaredLogger, aisle *Aisle, brb []byte) error {
 				errC <- err
 			}
 		}(tower)
+
+		if op == OperationResumeFormation {
+			// stagger resumes by 5 seconds so not all the air is being used at the same time
+			// it may be necessary to stagger on each tower as well, or lengthen this value
+			time.Sleep(time.Second * 5)
+		}
 	}
 
 	wg.Wait()

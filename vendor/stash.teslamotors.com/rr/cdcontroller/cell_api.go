@@ -21,6 +21,14 @@ type CellData struct {
 	StatusCode int    `json:"status_code"`
 }
 
+// CellStatusRequest contains the data to post cell statuses
+type CellStatusRequest struct {
+	EquipmentName string       `json:"equipment_name"`
+	RecipeName    string       `json:"recipe_name"`
+	RecipeVersion int          `json:"recipe_version"`
+	Cells         []CellPFData `json:"cells"`
+}
+
 // CellPFData contains the pass/fail data of a given cell
 type CellPFData struct {
 	Serial string `json:"cell_serial"`
@@ -283,12 +291,15 @@ func (c *CellAPIClient) UpdateProcessStatus(sn, fixture string, s TrayStatus) er
 }
 
 // SetCellStatuses sets the pass/fail data of a list of cells
-func (c *CellAPIClient) SetCellStatuses(tray string, cpf []CellPFData) error {
-	type request struct {
-		Cells []CellPFData `json:"cells"`
+func (c *CellAPIClient) SetCellStatuses(tray string, eqName, recipe string, ver int, cpf []CellPFData) error {
+	req := CellStatusRequest{
+		EquipmentName: eqName,
+		RecipeName:    recipe,
+		RecipeVersion: ver,
+		Cells:         cpf,
 	}
 
-	b, err := json.Marshal(request{Cells: cpf})
+	b, err := json.Marshal(req)
 	if err != nil {
 		return fmt.Errorf("marshal request json: %v", err)
 	}

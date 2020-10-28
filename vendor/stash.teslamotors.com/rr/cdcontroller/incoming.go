@@ -61,7 +61,7 @@ func handleIncomingLoad(g asrsapi.Terminal_LoadOperationsServer, lg *zap.Sugared
 	return nil
 }
 
-const _nonProdPrefix = "TEST_"
+const _nonProdPrefix = "test_"
 
 func handleInitialLoad(g asrsapi.Terminal_LoadOperationsServer, logger *zap.SugaredLogger, prodAM, testAM *AisleManager, aisles map[string]*Aisle, lo *asrsapi.LoadOperation) error {
 	need := len(lo.GetTray().GetTrayId())
@@ -69,7 +69,7 @@ func handleInitialLoad(g asrsapi.Terminal_LoadOperationsServer, logger *zap.Suga
 
 	// determine which aisle manager to use
 	am := prodAM
-	if strings.HasPrefix(lo.GetRecipe().GetStep(), _nonProdPrefix) {
+	if strings.HasPrefix(strings.ToLower(lo.GetRecipe().GetStep()), strings.ToLower(_nonProdPrefix)) {
 		am = testAM
 	}
 

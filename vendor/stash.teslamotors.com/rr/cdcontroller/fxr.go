@@ -6,13 +6,13 @@ import (
 	"strings"
 	"sync"
 
-	pb "stash.teslamotors.com/rr/towerproto"
+	tower "stash.teslamotors.com/rr/towerproto"
 )
 
 // FXR is the status of an individual fixture
 type FXR struct {
-	Status          pb.FixtureStatus
-	EquipmentStatus pb.EquipmentStatus
+	Status          tower.FixtureStatus
+	EquipmentStatus tower.EquipmentStatus
 	Free            bool
 	Coord           Coordinates
 }
