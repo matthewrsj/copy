@@ -1,22 +1,24 @@
 package towercontroller
 
 import (
+	"io"
+	"io/ioutil"
+	"net/http"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
-
-	"stash.teslamotors.com/rr/cdcontroller"
 
 	"bou.ke/monkey"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 	"stash.teslamotors.com/ctet/statemachine/v2"
+	"stash.teslamotors.com/rr/cdcontroller"
 	"stash.teslamotors.com/rr/protostream"
 	tower "stash.teslamotors.com/rr/towerproto"
 )
 
 func TestEndProcess_Action(t *testing.T) {
-	sc := make(chan *protostream.Message)
 	exp := 1
 	ep := &EndProcess{
 		fxrInfo: &FixtureInfo{
@@ -103,24 +105,14 @@ func TestEndProcess_Action(t *testing.T) {
 	)
 	defer scs.Unpatch()
 
-	msg, err := marshalMessage(&tower.FixtureToTower{
-		Content: &tower.FixtureToTower_Op{
-			Op: &tower.FixtureOperational{
-				Position: tower.FixturePosition_FIXTURE_POSITION_OPEN,
-			},
-		},
+	postP := monkey.Patch(http.Post, func(_, _ string, r io.Reader) (*http.Response, error) {
+		zap.NewExample().Sugar().Info("i was called :)")
+		return &http.Response{
+			StatusCode: 200,
+			Body:       ioutil.NopCloser(r),
+		}, nil
 	})
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	go func() {
-		for i := 0; i < 5; i++ {
-			time.Sleep(time.Second)
-			sc <- msg
-		}
-	}()
+	defer postP.Unpatch()
 
 	for _, a := range as {
 		a() // if a panic occurs it will be caught by the deferred func
@@ -200,6 +192,14 @@ func TestEndProcess_ActionBadOrientation(t *testing.T) {
 		},
 	)
 	defer ups.Unpatch()
+
+	postP := monkey.Patch(http.Post, func(string, string, io.Reader) (*http.Response, error) {
+		return &http.Response{
+			StatusCode: 200,
+			Body:       ioutil.NopCloser(strings.NewReader("")),
+		}, nil
+	})
+	defer postP.Unpatch()
 
 	msg, err := marshalMessage(&tower.FixtureToTower{
 		Content: &tower.FixtureToTower_Op{
@@ -298,6 +298,14 @@ func TestEndProcess_ActionShortMap(t *testing.T) {
 		},
 	)
 	defer ups.Unpatch()
+
+	postP := monkey.Patch(http.Post, func(string, string, io.Reader) (*http.Response, error) {
+		return &http.Response{
+			StatusCode: 200,
+			Body:       ioutil.NopCloser(strings.NewReader("")),
+		}, nil
+	})
+	defer postP.Unpatch()
 
 	msg, err := marshalMessage(&tower.FixtureToTower{
 		Content: &tower.FixtureToTower_Op{
@@ -410,6 +418,14 @@ func TestEndProcess_ActionBadSetCellStatus(t *testing.T) {
 		},
 	)
 	defer scs.Unpatch()
+
+	postP := monkey.Patch(http.Post, func(string, string, io.Reader) (*http.Response, error) {
+		return &http.Response{
+			StatusCode: 200,
+			Body:       ioutil.NopCloser(strings.NewReader("")),
+		}, nil
+	})
+	defer postP.Unpatch()
 
 	msg, err := marshalMessage(&tower.FixtureToTower{
 		Content: &tower.FixtureToTower_Op{

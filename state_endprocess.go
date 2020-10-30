@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/cenkalti/backoff"
 	"go.uber.org/zap"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cdcontroller"
@@ -123,24 +124,28 @@ func (e *EndProcess) action() {
 	e.waitForOpen()
 	e.childLogger.Info("sending unload request")
 
-	resp, err := http.Post(e.Config.Remote+_unloadEndpoint, "application/json", bytes.NewReader(b))
-	if err != nil {
-		e.childLogger.Errorw("post unload request", "error", err)
-		e.smFatal = true
+	bo := backoff.NewExponentialBackOff()
+	bo.MaxInterval = time.Minute
 
-		return
-	}
+	// will never return a backoff.PermanentError (tries forever)
+	_ = backoff.Retry(func() error {
+		resp, err := http.Post(e.Config.Remote+_unloadEndpoint, "application/json", bytes.NewReader(b))
+		if err != nil {
+			e.childLogger.Errorw("post unload request", "error", err)
+			return err
+		}
 
-	defer func() {
-		_ = resp.Body.Close()
-	}()
+		defer func() {
+			_ = resp.Body.Close()
+		}()
 
-	if resp.StatusCode != 200 {
-		e.childLogger.Errorw("http post", "response", fmt.Errorf("response NOT OK: %v, %v", resp.StatusCode, resp.Status))
-		e.smFatal = true
+		if resp.StatusCode != 200 {
+			e.childLogger.Errorw("http post", "response", fmt.Errorf("response NOT OK: %v, %v", resp.StatusCode, resp.Status))
+			return fmt.Errorf("unload request response %d ('%s'), expected 200", resp.StatusCode, resp.Status)
+		}
 
-		return
-	}
+		return nil
+	}, bo)
 
 	e.childLogger.Info("done with tray")
 }
@@ -259,10 +264,18 @@ func (e *EndProcess) setCellStatuses() {
 	}
 
 	if !e.mockCellAPI {
-		if err := e.CellAPIClient.SetCellStatuses(e.tbc.SN, e.fxbc.Raw, e.processStepName, e.recipeVersion, cpf); err != nil {
-			e.childLogger.Errorw("SetCellStatuses", "error", err)
-			return
-		}
+		bo := backoff.NewExponentialBackOff()
+		bo.MaxInterval = time.Minute
+
+		// will never return a backoff.PermanentError (tries forever)
+		_ = backoff.Retry(func() error {
+			if err := e.CellAPIClient.SetCellStatuses(e.tbc.SN, e.fxbc.Raw, e.processStepName, e.recipeVersion, cpf); err != nil {
+				e.childLogger.Errorw("SetCellStatuses", "error", err)
+				return err
+			}
+
+			return nil
+		}, bo)
 	} else {
 		e.childLogger.Warn("cell API mocked, skipping SetCellStatuses")
 	}
