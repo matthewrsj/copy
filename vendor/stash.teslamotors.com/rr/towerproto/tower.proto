@@ -291,20 +291,29 @@ enum CellStatus {
   CELL_STATUS_FAILED_SAFETY_LIMIT = 5;
 }
 
+enum CellDetectStatus {
+  CELL_DETECT_STATUS_NONE_UNSPECIFIED = 0;
+  CELL_DETECT_STATUS_NOT_DETECTED     = 1;
+  CELL_DETECT_STATUS_HARDWARE_FAULTED = 2;
+  CELL_DETECT_STATUS_DETECTED         = 3;
+}
+
 message CellMeasurement {
-  float current              = 1;
-  float voltage              = 2;
-  float charge_ah            = 3;
-  float energy_wh            = 4;
-  float temperature_estimate = 5;
-  float pogo_resistance      = 6;
+  float current               = 1;
+  float voltage               = 2;
+  float charge_ah             = 3;
+  float energy_wh             = 4;
+  float temperature_estimate  = 5;
+  float pogo_resistance       = 6;
+  float sense_loop_resistance = 7;
 }
 
 message Cell {
-  CellStatus      status      = 1;
-  CellMeasurement measurement = 2;
-  string          serial      = 3;
-  string          position    = 4;
+  CellStatus       status        = 1;
+  CellMeasurement  measurement   = 2;
+  string           serial        = 3;
+  string           position      = 4;
+  CellDetectStatus detect_status = 5; // cells positions detected by cib
 }
 
 enum FixtureStatus {

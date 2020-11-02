@@ -312,35 +312,36 @@ message FibAlert {
 
 message FxrAlert {
   enum AlertId {
-    FXR_NONE                            = 0;
-    FXR_a001_SwAppBoot                  = 1;
-    FXR_a002_watchdogExpired            = 2;
-    FXR_a003_internalFault              = 3;
-    FXR_a004_STIB00_MIA                 = 4;
-    FXR_a005_STIB01_MIA                 = 5;
-    FXR_a006_STIB02_MIA                 = 6;
-    FXR_a007_STIB03_MIA                 = 7;
-    FXR_a008_FIB_MIA                    = 8;
-    FXR_a009_isoDiagCheckFail           = 9;
-    FXR_a010_isolationFault             = 10;
-    FXR_a011_isolationDegradationFault  = 11;
-    FXR_a012_enumerationWriteFail       = 12;
-    FXR_a013_appGitHashMismatch         = 13;
-    FXR_a014_state_machine_fault        = 14;
-    FXR_a015_fixture_position_fault     = 15;
-    FXR_a016_stibs_faulted              = 16;
-    FXR_a017_tray_missing               = 17;
-    FXR_a018_fixture_control_sm_timeout = 18;
-    FXR_a019_fixture_pos_sm_faulted     = 19;
-    FXR_a020_thermal_event_level_0      = 20;
-    FXR_a021_thermal_event_level_1      = 21;
-    FXR_a022_git_mismatch_timeout       = 22;
-    FXR_a023_HVBus_UV_fault             = 23;
-    FXR_a024_HVBus_OV_fault             = 24;
-    FXR_a025_EquipmentNeedsMaintenance  = 25;
-    FXR_a026_Reserved                   = 26;
-    FXR_a027_24VBus_UV_fault            = 27;
-    FXR_a028_24VBus_OV_fault            = 28;
+    FXR_NONE                               = 0;
+    FXR_a001_SwAppBoot                     = 1;
+    FXR_a002_watchdogExpired               = 2;
+    FXR_a003_internalFault                 = 3;
+    FXR_a004_STIB00_MIA                    = 4;
+    FXR_a005_STIB01_MIA                    = 5;
+    FXR_a006_STIB02_MIA                    = 6;
+    FXR_a007_STIB03_MIA                    = 7;
+    FXR_a008_FIB_MIA                       = 8;
+    FXR_a009_isoDiagCheckFail              = 9;
+    FXR_a010_isolationFault                = 10;
+    FXR_a011_isolationDegradationFault     = 11;
+    FXR_a012_enumerationWriteFail          = 12;
+    FXR_a013_appGitHashMismatch            = 13;
+    FXR_a014_state_machine_fault           = 14;
+    FXR_a015_fixture_position_fault        = 15;
+    FXR_a016_stibs_faulted                 = 16;
+    FXR_a017_tray_missing                  = 17;
+    FXR_a018_fixture_control_sm_timeout    = 18;
+    FXR_a019_fixture_pos_sm_faulted        = 19;
+    FXR_a020_thermal_event_level_0         = 20;
+    FXR_a021_thermal_event_level_1         = 21;
+    FXR_a022_git_mismatch_timeout          = 22;
+    FXR_a023_HVBus_UV_fault                = 23;
+    FXR_a024_HVBus_OV_fault                = 24;
+    FXR_a025_EquipmentNeedsMaintenance     = 25;
+    FXR_a026_Reserved                      = 26;
+    FXR_a027_24VBus_UV_fault               = 27;
+    FXR_a028_24VBus_OV_fault               = 28;
+    FXR_a029_RecipeMaskMissingCelldetected = 29;
   }
 
   message a001_SwAppBoot {}
@@ -449,35 +450,42 @@ message FxrAlert {
 
   message a028_bus24V_ov_fault { float voltage = 1; }
 
+  message a029_RecipeMaskMissingCelldetected {
+    uint32 NumMissingCellsDetected =
+        1; // Number of cells request in recipe but not detected by cib(ranges from 1 to 64)
+    repeated uint32 MissingCellPosition = 2; // cell position of missing cell 1(ranges from 0 to 63, 0xFF = NA)
+  }
+
   message AlertData {
     oneof Payload {
-      a001_SwAppBoot                  a001 = 1;
-      a002_watchdogExpired            a002 = 2;
-      a003_internalFault              a003 = 3;
-      a004_STIB00_MIA                 a004 = 4;
-      a005_STIB01_MIA                 a005 = 5;
-      a006_STIB02_MIA                 a006 = 6;
-      a007_STIB03_MIA                 a007 = 7;
-      a008_FIB_MIA                    a008 = 8;
-      a009_isoDiagCheckFail           a009 = 9;
-      a010_isolationFault             a010 = 10;
-      a011_isolationDegradationFault  a011 = 11;
-      a012_enumerationWriteFail       a012 = 12;
-      a013_appGitHashMismatch         a013 = 13;
-      a014_state_machine_fault        a014 = 14;
-      a015_fixture_position_fault     a015 = 15;
-      a016_stibs_faulted              a016 = 16;
-      a017_tray_missing               a017 = 17;
-      a018_fixture_control_sm_timeout a018 = 18;
-      a019_fixture_pos_sm_faulted     a019 = 19;
-      a020_thermal_event_level_0      a020 = 20;
-      a021_thermal_event_level_1      a021 = 21;
-      a022_git_mismatch_timeout       a022 = 22;
-      a023_busHV_uv_fault             a023 = 23;
-      a024_busHV_ov_fault             a024 = 24;
-      a025_EquipmentNeedsMaintenance  a025 = 25;
-      a027_bus24V_uv_fault            a027 = 27;
-      a028_bus24V_ov_fault            a028 = 28;
+      a001_SwAppBoot                     a001 = 1;
+      a002_watchdogExpired               a002 = 2;
+      a003_internalFault                 a003 = 3;
+      a004_STIB00_MIA                    a004 = 4;
+      a005_STIB01_MIA                    a005 = 5;
+      a006_STIB02_MIA                    a006 = 6;
+      a007_STIB03_MIA                    a007 = 7;
+      a008_FIB_MIA                       a008 = 8;
+      a009_isoDiagCheckFail              a009 = 9;
+      a010_isolationFault                a010 = 10;
+      a011_isolationDegradationFault     a011 = 11;
+      a012_enumerationWriteFail          a012 = 12;
+      a013_appGitHashMismatch            a013 = 13;
+      a014_state_machine_fault           a014 = 14;
+      a015_fixture_position_fault        a015 = 15;
+      a016_stibs_faulted                 a016 = 16;
+      a017_tray_missing                  a017 = 17;
+      a018_fixture_control_sm_timeout    a018 = 18;
+      a019_fixture_pos_sm_faulted        a019 = 19;
+      a020_thermal_event_level_0         a020 = 20;
+      a021_thermal_event_level_1         a021 = 21;
+      a022_git_mismatch_timeout          a022 = 22;
+      a023_busHV_uv_fault                a023 = 23;
+      a024_busHV_ov_fault                a024 = 24;
+      a025_EquipmentNeedsMaintenance     a025 = 25;
+      a027_bus24V_uv_fault               a027 = 27;
+      a028_bus24V_ov_fault               a028 = 28;
+      a029_RecipeMaskMissingCelldetected a029 = 29;
     }
   }
 
