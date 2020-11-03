@@ -201,9 +201,8 @@ func (e *EndProcess) setCellStatuses() {
 	cpf := []cdcontroller.CellPFData{}
 
 	type cellStats struct {
-		Serial      string `json:"cell_serial"`
-		CellPFToAPI string `json:"cell_pf_to_api"`
-		Status      string `json:"proto_status"`
+		Serial string `json:"cell_serial"`
+		Status string `json:"proto_status"`
 	}
 
 	stats := make(map[string]cellStats)
@@ -211,11 +210,6 @@ func (e *EndProcess) setCellStatuses() {
 	var failed []string
 
 	for i, cell := range e.cellResponse {
-		status := cdcontroller.StatusPassed
-		if cell.GetStatus() != tower.CellStatus_CELL_STATUS_COMPLETE {
-			status = cdcontroller.StatusFailed
-		}
-
 		m, ok := e.Config.CellMap[e.tbc.O.String()]
 		if !ok {
 			e.childLogger.Error(fmt.Errorf("invalid tray position: %s", e.tbc.O.String()))
@@ -229,10 +223,6 @@ func (e *EndProcess) setCellStatuses() {
 
 		position := m[i]
 
-		if status == cdcontroller.StatusFailed {
-			failed = append(failed, position)
-		}
-
 		cellInfo, ok := e.cells[position]
 		if !ok || cellInfo.IsEmpty {
 			// if it is empty it will be skipped here
@@ -240,15 +230,18 @@ func (e *EndProcess) setCellStatuses() {
 			continue
 		}
 
+		if cell.GetStatus() != tower.CellStatus_CELL_STATUS_COMPLETE {
+			failed = append(failed, position)
+		}
+
 		stats[position] = cellStats{
-			Serial:      cellInfo.Serial,
-			CellPFToAPI: status,
-			Status:      cell.GetStatus().String(),
+			Serial: cellInfo.Serial,
+			Status: cell.GetStatus().String(),
 		}
 
 		cpf = append(cpf, cdcontroller.CellPFData{
 			Serial: cellInfo.Serial,
-			Status: status,
+			Status: cell.GetStatus().String(),
 		})
 	}
 
