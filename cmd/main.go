@@ -165,6 +165,10 @@ func main() {
 	userRouter.HandleFunc(towercontroller.LatestOpEndpoint, towercontroller.HandleLatestOp(sugar, registry)).Methods(http.MethodGet)
 	userRouter.HandleFunc(towercontroller.LatestDiagEndpoint, towercontroller.HandleLatestDiag(sugar, registry)).Methods(http.MethodGet)
 	userRouter.HandleFunc(towercontroller.LatestAlertEndpoint, towercontroller.HandleLatestAlert(sugar, registry)).Methods(http.MethodGet)
+	// handle incoming GETs and POSTs to update the towercontroller
+	cc := make(chan struct{}, 1) // single buffer so handle processes doing something else at the time of write
+	userRouter.HandleFunc(towercontroller.UpdateEndpoint, towercontroller.HandleUpdate(sugar, cc, registry)).Methods(http.MethodPost, http.MethodGet)
+	userRouter.HandleFunc(towercontroller.UpdateCancelEndpoint, towercontroller.HandleUpdateCancel(sugar, cc)).Methods(http.MethodPost)
 
 	opsServer := http.Server{
 		Addr:    *localAddr,

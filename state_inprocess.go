@@ -36,6 +36,7 @@ type InProcess struct {
 
 func (i *InProcess) action() {
 	i.childLogger.Info("monitoring fixture to go to complete or fault")
+	i.fxrInfo.Avail.Set(StatusActive)
 
 	for { // loop until status updates to COMPLETE/FAULTED
 		// TODO: first look for it to go to IN_PROGRESS

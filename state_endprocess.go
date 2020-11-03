@@ -122,30 +122,34 @@ func (e *EndProcess) action() {
 	// wait for FXR to report open before calling for unload
 	e.childLogger.Info("waiting for fixture to report open position")
 	e.waitForOpen()
-	e.childLogger.Info("sending unload request")
 
-	bo := backoff.NewExponentialBackOff()
-	bo.MaxInterval = time.Minute
+	// use mockCellAPI as a flag to indicate we don't want to do network things
+	if !e.mockCellAPI {
+		e.childLogger.Info("sending unload request")
 
-	// will never return a backoff.PermanentError (tries forever)
-	_ = backoff.Retry(func() error {
-		resp, err := http.Post(e.Config.Remote+_unloadEndpoint, "application/json", bytes.NewReader(b))
-		if err != nil {
-			e.childLogger.Errorw("post unload request", "error", err)
-			return err
-		}
+		bo := backoff.NewExponentialBackOff()
+		bo.MaxInterval = time.Minute
 
-		defer func() {
-			_ = resp.Body.Close()
-		}()
+		// will never return a backoff.PermanentError (tries forever)
+		_ = backoff.Retry(func() error {
+			resp, err := http.Post(e.Config.Remote+_unloadEndpoint, "application/json", bytes.NewReader(b))
+			if err != nil {
+				e.childLogger.Errorw("post unload request", "error", err)
+				return err
+			}
 
-		if resp.StatusCode != 200 {
-			e.childLogger.Errorw("http post", "response", fmt.Errorf("response NOT OK: %v, %v", resp.StatusCode, resp.Status))
-			return fmt.Errorf("unload request response %d ('%s'), expected 200", resp.StatusCode, resp.Status)
-		}
+			defer func() {
+				_ = resp.Body.Close()
+			}()
 
-		return nil
-	}, bo)
+			if resp.StatusCode != 200 {
+				e.childLogger.Errorw("http post", "response", fmt.Errorf("response NOT OK: %v, %v", resp.StatusCode, resp.Status))
+				return fmt.Errorf("unload request response %d ('%s'), expected 200", resp.StatusCode, resp.Status)
+			}
+
+			return nil
+		}, bo)
+	}
 
 	e.childLogger.Info("done with tray")
 }

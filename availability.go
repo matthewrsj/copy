@@ -119,7 +119,7 @@ func HandleAvailable(configPath string, logger *zap.SugaredLogger, registry map[
 					avail: cdcontroller.FXRAvailable{
 						Status:          msg.GetOp().GetStatus().String(),
 						EquipmentStatus: msg.GetOp().GetEquipmentStatus().String(),
-						Reserved:        reserved,
+						Reserved:        reserved || _updateScheduled, // always reserved if there's an update scheduled
 						Allowed:         fixtureIsAllowed(n, conf.AllowedFixtures),
 					},
 				}
