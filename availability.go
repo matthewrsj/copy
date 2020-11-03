@@ -20,9 +20,9 @@ const _allowedQueryKey = "allowed"
 // nolint:gocognit,funlen // ignore
 func HandleAvailable(configPath string, logger *zap.SugaredLogger, registry map[string]*FixtureInfo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		logger = logger.With("endpoint", AvailabilityEndpoint, "remote", r.RemoteAddr)
+		cl := logger.With("endpoint", AvailabilityEndpoint, "remote", r.RemoteAddr)
 
-		logger.Info("got request to endpoint")
+		cl.Info("got request to endpoint")
 
 		var (
 			conf Configuration
@@ -32,7 +32,7 @@ func HandleAvailable(configPath string, logger *zap.SugaredLogger, registry map[
 		if _globalConfiguration != nil {
 			conf = *_globalConfiguration
 		} else if conf, err = LoadConfig(configPath); err != nil {
-			logger.Errorw("read configuration file", "error", err)
+			cl.Errorw("read configuration file", "error", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 
 			return
@@ -73,8 +73,8 @@ func HandleAvailable(configPath string, logger *zap.SugaredLogger, registry map[
 				defer wg.Done()
 
 				location := fmt.Sprintf("%s-%s%s-%s", conf.Loc.Line, conf.Loc.Process, conf.Loc.Aisle, n)
-				cl := logger.With("fixture", location)
-				cl.Debug("checking availability on fixture")
+				ccl := cl.With("fixture", location)
+				ccl.Debug("checking availability on fixture")
 
 				zeroAvail := namedAvail{
 					name: location,
@@ -87,7 +87,7 @@ func HandleAvailable(configPath string, logger *zap.SugaredLogger, registry map[
 
 				fxrInfo, ok := registry[n]
 				if !ok {
-					cl.Warn("fixture not in registry")
+					ccl.Warn("fixture not in registry")
 					avail <- zeroAvail
 
 					return
@@ -96,14 +96,14 @@ func HandleAvailable(configPath string, logger *zap.SugaredLogger, registry map[
 				// nolint:govet // don't care about shadowing above errors, especially when we aren't dealing with concurrency
 				msg, err := fxrInfo.FixtureState.GetOp()
 				if err != nil {
-					cl.Debugw("get fixture operational status", "error", err)
+					ccl.Debugw("get fixture operational status", "error", err)
 					// wait a second for it to update
 					avail <- zeroAvail
 
 					return
 				}
 
-				cl.Debugw("fixture status rxd, checking if available", "status", msg.GetOp().GetStatus().String())
+				ccl.Debugw("fixture status rxd, checking if available", "status", msg.GetOp().GetStatus().String())
 
 				var reserved bool
 
@@ -126,16 +126,16 @@ func HandleAvailable(configPath string, logger *zap.SugaredLogger, registry map[
 			}(n)
 		}
 
-		logger.Debug("waiting for all routines to finish getting status")
+		cl.Debug("waiting for all routines to finish getting status")
 		wg.Wait()
 		close(avail)
 
-		logger.Debug("waiting for all data to be consumed")
+		cl.Debug("waiting for all data to be consumed")
 		<-done
 
 		body, err := json.Marshal(as)
 		if err != nil {
-			logger.Errorw("marshal json body", "error", err)
+			cl.Errorw("marshal json body", "error", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 
 			return
@@ -144,10 +144,10 @@ func HandleAvailable(configPath string, logger *zap.SugaredLogger, registry map[
 		w.Header().Set("Content-Type", "application/json")
 
 		if _, err = w.Write(body); err != nil {
-			logger.Errorw("write body to responsewriter", "error", err)
+			cl.Errorw("write body to responsewriter", "error", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 
-		logger.Info("sent response to request to /avail")
+		cl.Info("sent response to request to /avail")
 	}
 }
