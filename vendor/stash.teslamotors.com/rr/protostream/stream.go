@@ -58,62 +58,35 @@ func NewStream(opts ...Option) (*Stream, error) {
 
 // ProtoMessage is the data piped over the socket
 type ProtoMessage struct {
-	Location string `json:"location"`
-	Body     []byte `json:"body"`
+	Location          string `json:"location"`
+	TimeStampUnixNano int64  `json:"ts"`
+	Body              []byte `json:"body"`
 }
 
-func createDevice(can CANConfig) (socketcan.Interface, error) {
-	dev, err := socketcan.NewIsotpInterface(can.Bus, can.RX, can.TX)
+func createDevice(bus string, rx uint32, tx uint32, timeout time.Duration) (socketcan.Interface, error) {
+	dev, err := socketcan.NewIsotpInterface(bus, rx, tx)
 	if err != nil {
-		return dev, fmt.Errorf("create new socketcan interface (bus: %s, rx: 0x%X, tx: 0x%X): %v", can.Bus, can.RX, can.TX, err)
+		return dev, fmt.Errorf("create new socketcan interface (bus: %s, rx: 0x%X, tx: 0x%X): %v", bus, rx, tx, err)
 	}
 
 	if err = dev.SetCANFD(); err != nil {
-		return dev, fmt.Errorf("set CANFD flags on socketcan interface (bus: %s, rx: 0x%X, tx: 0x%X): %v", can.Bus, can.RX, can.TX, err)
+		return dev, fmt.Errorf("set CANFD flags on socketcan interface (bus: %s, rx: 0x%X, tx: 0x%X): %v", bus, rx, tx, err)
 	}
 
-	if err = dev.SetRecvTimeout(can.RecvTimeout); err != nil {
-		return dev, fmt.Errorf("set recv timeout (%s) on socketcan interface (bus: %s, rx: 0x%X, tx: 0x%X): %v", can.RecvTimeout, can.Bus, can.RX, can.TX, err)
+	if err = dev.SetRecvTimeout(timeout); err != nil {
+		return dev, fmt.Errorf("set recv timeout (%s) on socketcan interface (bus: %s, rx: 0x%X, tx: 0x%X): %v", timeout, bus, rx, tx, err)
 	}
 
 	return dev, nil
 }
 
-func loopForMessages(sock *Socket, inject <-chan *ProtoMessage, can CANConfig, logDir string, ctx context.Context, wg *sync.WaitGroup, logger *zap.SugaredLogger) {
-	defer wg.Done()
-
-	cl := logger.With("fixture", can.NodeID, "can_bus", can.Bus, "can_rx", fmt.Sprintf("0x%X", can.RX), "can_tx", fmt.Sprintf("0x%X", can.TX))
-
-	dev, err := createDevice(can)
-	if err != nil {
-		cl.Errorw("create new ISOTP interface", "error", err)
-		return
-	}
-
-	defer func() {
-		_ = dev.Close()
-	}()
-
+// perform blocking read from isotp can interface output values via channel
+func receiveMessagesFromCan(ctx context.Context, rxFromCAN chan<- *ProtoMessage, can CANConfig, logDir string, cl *zap.SugaredLogger, dev socketcan.Interface) {
 	for {
 		select {
 		case <-ctx.Done(): // done
 			return
-		case msg := <-inject: // write the message received from the controller
-			cl.Info("proto message received for injection")
-
-			if err := dev.SendBuf(msg.Body); err != nil {
-				cl.Errorw("send buffer", "error", err)
-				continue
-			}
-
-			var protoMsg tower.TowerToFixture
-			if err := proto.Unmarshal(msg.Body, &protoMsg); err != nil {
-				cl.Debugw("unable to unmarshal injected message for logging", "error", err)
-				return
-			}
-
-			cl.Debugw("sent TowerToFixture message", "message", protoMsg.String())
-		default: // by default we read off the bus continuously
+		default:
 			buf, err := dev.RecvBuf()
 			if err != nil {
 				cl.Debugw("receive buffer", "error", err)
@@ -131,11 +104,66 @@ func loopForMessages(sock *Socket, inject <-chan *ProtoMessage, can CANConfig, l
 
 			go traceAlert(cl, logDir, can.NodeID, &msg)
 
-			event := ProtoMessage{
-				Location: can.NodeID,
-				Body:     buf,
+			rxFromCAN <- &ProtoMessage{
+				Location:          can.NodeID,
+				TimeStampUnixNano: time.Now().UnixNano(),
+				Body:              buf,
+			}
+		}
+	}
+}
+
+func loopForMessages(ctx context.Context, sock *Socket, inject <-chan *ProtoMessage, can CANConfig, logDir string, wg *sync.WaitGroup, logger *zap.SugaredLogger) {
+	defer wg.Done()
+
+	cl := logger.With("fixture", can.NodeID, "can_bus", can.Bus)
+
+	clOp := cl.With("can_rx", fmt.Sprintf("0x%X", can.RX), "can_tx", fmt.Sprintf("0x%X", can.TX))
+	clDiag := cl.With("can_rx", fmt.Sprintf("0x%X", can.RXDiag), "can_tx", fmt.Sprintf("0x%X", can.TXDiag))
+
+	devOp, err := createDevice(can.Bus, can.RX, can.TX, can.RecvTimeout)
+	if err != nil {
+		cl.Errorw("create new ISOTP interface", "error", err)
+		return
+	}
+
+	devDiag, err := createDevice(can.Bus, can.RXDiag, can.TXDiag, can.RecvTimeout)
+	if err != nil {
+		cl.Errorw("create new ISOTP interface", "error", err)
+		return
+	}
+
+	defer func() {
+		_ = devOp.Close()
+		_ = devDiag.Close()
+	}()
+
+	rxFromCAN := make(chan *ProtoMessage)
+
+	go receiveMessagesFromCan(ctx, rxFromCAN, can, logDir, clOp, devOp)
+	go receiveMessagesFromCan(ctx, rxFromCAN, can, logDir, clDiag, devDiag)
+
+	for {
+		select {
+		case <-ctx.Done(): // done
+			return
+		case msg := <-inject: // write the message received from the controller
+			cl.Info("proto message received for injection")
+
+			if err := devOp.SendBuf(msg.Body); err != nil {
+				cl.Errorw("send buffer", "error", err)
+				continue
 			}
 
+			var protoMsg tower.TowerToFixture
+			if err := proto.Unmarshal(msg.Body, &protoMsg); err != nil {
+				cl.Errorw("unable to unmarshal injected message for logging", "error", err)
+				return
+			}
+
+			cl.Debugw("sent TowerToFixture message", "message", protoMsg.String())
+
+		case event := <-rxFromCAN:
 			jb, err := json.Marshal(event)
 			if err != nil {
 				cl.Warnw("marshal event to publish", "error", err)
@@ -154,7 +182,7 @@ func loopForMessages(sock *Socket, inject <-chan *ProtoMessage, can CANConfig, l
 // rxInjectStream listens at listenerAddress for proto messages to inject onto the CAN bus. The listener here is
 // is transient and created on every iteration because it is very possible for the publisher to go away
 // (TODO: this might not be the best approach)
-func rxInjectStream(listenerAddress string, inject chan<- *ProtoMessage, location string, ctx context.Context, wg *sync.WaitGroup, cl *zap.SugaredLogger) {
+func rxInjectStream(ctx context.Context, listenerAddress string, inject chan<- *ProtoMessage, location string, wg *sync.WaitGroup, cl *zap.SugaredLogger) {
 	defer wg.Done()
 
 	var (
@@ -228,7 +256,7 @@ func (s *Stream) Start(ctx context.Context) chan struct{} {
 			defer close(inject) // defer the close here so it isn't prematurely closed by rxInjectStream
 
 			// receive messages to write over CAN to the device
-			go rxInjectStream(s.listenerAddress, inject, location, ctx, &wg, cl)
+			go rxInjectStream(ctx, s.listenerAddress, inject, location, &wg, cl)
 
 			// read messages from the CAN bus and publish
 			//
@@ -241,7 +269,7 @@ func (s *Stream) Start(ctx context.Context) chan struct{} {
 			// maximum lag time should only be encountered when there is nothing talking (and likely
 			// nothing listening) on the bus anyways. Typical maximum lag time will be around 1 second
 			// due to the TX rate (1 Hz) of the FXRs on the bus.
-			go loopForMessages(s.publisher, inject, canConf, s.logDir, ctx, &wg, cl)
+			go loopForMessages(ctx, s.publisher, inject, canConf, s.logDir, &wg, cl)
 		}
 
 		wg.Wait()

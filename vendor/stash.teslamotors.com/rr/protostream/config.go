@@ -12,6 +12,7 @@ import (
 
 // Configuration contains all the initial configuration for a Stream
 type Configuration struct {
+	ID          IDConfig     `yaml:"ids"`
 	Col1        ColumnConfig `yaml:"column1"`
 	Col2        ColumnConfig `yaml:"column2"`
 	FixtureList []string     `yaml:"fixture_locations"`
@@ -19,17 +20,26 @@ type Configuration struct {
 	Fixtures map[string]CANConfig // constructed field
 }
 
+// IDConfig contains information on CAN IDs for ISOTP
+type IDConfig struct {
+	BaseRX     uint32 `yaml:"base_rx"`
+	BaseTX     uint32 `yaml:"base_tx"`
+	BaseRXDiag uint32 `yaml:"base_rx_diag"`
+	BaseTXDiag uint32 `yaml:"base_tx_diag"`
+}
+
 // ColumnConfig contains the base information for a tower column
 // each level above level 1 increments the RX and TX values
 type ColumnConfig struct {
-	BaseRX uint32 `yaml:"base_rx"`
-	BaseTX uint32 `yaml:"base_tx"`
 	CANBus string `yaml:"bus"`
 }
 
 // CANConfig contains the RX, TX and bus information for a single FXR
 type CANConfig struct {
-	RX, TX      uint32
+	RX          uint32
+	TX          uint32
+	RXDiag      uint32
+	TXDiag      uint32
 	Bus         string
 	NodeID      string
 	RecvTimeout time.Duration
@@ -78,19 +88,15 @@ func LoadConfig(path string) (Configuration, error) {
 			return c, fmt.Errorf("invalid level '%d', must be 1-12, inclusive", lvl)
 		}
 
-		var (
-			rx, tx uint32
-			bus    string
-		)
+		rx, tx := c.ID.BaseRX+uint32(lvl), c.ID.BaseTX+uint32(lvl)
+		rxDiag, txDiag := c.ID.BaseRXDiag+uint32(lvl), c.ID.BaseTXDiag+uint32(lvl)
+
+		var bus string
 
 		switch col {
 		case 1:
-			rx = c.Col1.BaseRX + uint32(lvl)
-			tx = c.Col1.BaseTX + uint32(lvl)
 			bus = c.Col1.CANBus
 		case 2:
-			rx = c.Col2.BaseRX + uint32(lvl)
-			tx = c.Col2.BaseTX + uint32(lvl)
 			bus = c.Col2.CANBus
 		default:
 			// this should never happen
@@ -98,9 +104,11 @@ func LoadConfig(path string) (Configuration, error) {
 		}
 
 		c.Fixtures[fixture] = CANConfig{
-			RX:  rx,
-			TX:  tx,
-			Bus: bus,
+			RX:     rx,
+			TX:     tx,
+			RXDiag: rxDiag,
+			TXDiag: txDiag,
+			Bus:    bus,
 		}
 	}
 

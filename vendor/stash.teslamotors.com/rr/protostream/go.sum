@@ -135,3 +135,7 @@ stash.teslamotors.com/ctet/go-socketcan v0.0.2 h1:MqrqIikwW6QJRY8l6DpLJA842y+JWK
 stash.teslamotors.com/ctet/go-socketcan v0.0.2/go.mod h1:6IDCQ1OX3RSaS5JrLfqV8lyI1C1ZW/TuuqvD6lzNO2A=
 stash.teslamotors.com/rr/towerproto v0.0.13 h1:+0AccGDle3GovDJcnkl6NBtEw/eeDOvnteuBH/6A9rQ=
 stash.teslamotors.com/rr/towerproto v0.0.13/go.mod h1:FDbAtKBEKCStkYKJSOamESQ6NjyN7zmV9HAqydiJQs4=
+stash.teslamotors.com/rr/towerproto v0.3.0 h1:AQHARh78th6KmzS1KTzsGpCEbqqy9fg+FEFaGHfoxrw=
+stash.teslamotors.com/rr/towerproto v0.3.0/go.mod h1:FDbAtKBEKCStkYKJSOamESQ6NjyN7zmV9HAqydiJQs4=
+stash.teslamotors.com/rr/towerproto v0.3.1 h1:F6doPCL+h4GS6DrJLVqxUfwJiCQBn0Dx4khEK3hcgOk=
+stash.teslamotors.com/rr/towerproto v0.3.1/go.mod h1:FDbAtKBEKCStkYKJSOamESQ6NjyN7zmV9HAqydiJQs4=

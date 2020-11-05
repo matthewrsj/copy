@@ -11,5 +11,5 @@ require (
 	gopkg.in/yaml.v2 v2.3.0
 	nanomsg.org/go/mangos/v2 v2.0.8
 	stash.teslamotors.com/ctet/go-socketcan v0.0.2
-	stash.teslamotors.com/rr/towerproto v0.0.13
+	stash.teslamotors.com/rr/towerproto v0.3.1
 )
