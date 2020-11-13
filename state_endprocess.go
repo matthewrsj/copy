@@ -56,6 +56,21 @@ func (e *EndProcess) action() {
 		}
 	}
 
+	if !e.mockCellAPI {
+		// out of band and ignoring all errors update Cell API that we finished
+		// does not affect any process just makes it easier to find data
+		// this is different from ending it with the process name as it just leaves a marker on the fixture itself instead
+		// of closing the actual process step.
+		go func() {
+			e.childLogger.Debug("updating process status", "status", "end")
+
+			err := e.CellAPIClient.UpdateProcessStatus(e.tbc.SN, fmt.Sprintf("CM2-%s%s-%s", e.Config.Loc.Process, e.Config.Loc.Aisle, e.fxrInfo.Name), cdcontroller.StatusEnd)
+			if err != nil {
+				e.childLogger.Warnw("unable to update Cell API of recipe end", "error", err)
+			}
+		}()
+	}
+
 	if !e.fixtureFault {
 		if e.skipClose {
 			e.childLogger.Info("skipClose set, not closing process step or setting cell statuses")
@@ -67,19 +82,6 @@ func (e *EndProcess) action() {
 		}
 
 		if !e.mockCellAPI {
-			// out of band and ignoring all errors update Cell API that we finished
-			// does not affect any process just makes it easier to find data
-			// this is different from ending it with the process name as it just leaves a marker on the fixture itself instead
-			// of closing the actual process step.
-			go func() {
-				e.childLogger.Debug("updating process status", "status", "end")
-
-				err := e.CellAPIClient.UpdateProcessStatus(e.tbc.SN, fmt.Sprintf("CM2-%s%s-%s", e.Config.Loc.Process, e.Config.Loc.Aisle, e.fxrInfo.Name), cdcontroller.StatusEnd)
-				if err != nil {
-					e.childLogger.Warnw("unable to update Cell API of recipe end", "error", err)
-				}
-			}()
-
 			if !e.skipClose && e.processStepName != cdcontroller.CommissionSelfTestRecipeName {
 				e.childLogger.Infow("closing process step", "recipe_name", e.processStepName, "recipe_version", e.recipeVersion)
 
