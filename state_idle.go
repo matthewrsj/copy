@@ -24,9 +24,8 @@ type Idle struct {
 
 	MockCellAPI bool
 
-	alarmed tower.FireAlarmStatus
-	next    statemachine.State
-	err     error
+	next statemachine.State
+	err  error
 
 	FXRInfo *FixtureInfo
 }
@@ -276,29 +275,6 @@ func (i *Idle) monitorForStatus(done <-chan struct{}, active chan<- inProgressIn
 			complete <- ipInfo
 
 			return
-		case tower.FixtureStatus_FIXTURE_STATUS_FAULTED:
-			if msg.GetOp().GetFireAlarmStatus() != tower.FireAlarmStatus_FIRE_ALARM_UNKNOWN_UNSPECIFIED {
-				i.Logger.Warnw("fire alarm detected from fixture", "fixture", i.FXRInfo.Name, "alarm", msg.GetOp().GetFireAlarmStatus().String())
-
-				// fire alarm, tell CDC
-				// this is in-band because it will try _forever_ until it succeeds,
-				// but we don't want to go to unload step because it will queue another job for the crane
-				// to unload this tray, but we want the next operation on this tray to be a fire
-				// suppression activity.
-				if i.alarmed < msg.GetOp().GetFireAlarmStatus() { // don't alarm again if we already alarmed in the InProcess state
-					i.Logger.Infow("sounding the fire alarm", "fixture", i.FXRInfo.Name, "alarm", msg.GetOp().GetFireAlarmStatus().String())
-
-					if err := soundTheAlarm(i.Config, msg.GetOp().GetFireAlarmStatus(), i.FXRInfo.Name, i.Logger); err != nil {
-						i.Logger.Errorw("sound the fire alarm", "error", err)
-						continue // try to send the alarm next time
-					}
-
-					i.alarmed = msg.GetOp().GetFireAlarmStatus()
-				}
-			}
-
-			// wait a second for it to update before checking again so we don't spam the logs and CPU
-			time.Sleep(time.Second)
 		default:
 			// wait a second for it to update before checking again
 			time.Sleep(time.Second)

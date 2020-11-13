@@ -26,7 +26,6 @@ type InProcess struct {
 	fixtureFault    bool
 	mockCellAPI     bool
 	returnToIdle    bool
-	alarmed         tower.FireAlarmStatus
 	cells           map[string]cdcontroller.CellData
 	cellResponse    []*tower.Cell
 	recipeVersion   int
@@ -65,25 +64,6 @@ func (i *InProcess) action() {
 
 			if i.fixtureFault = s == tower.FixtureStatus_FIXTURE_STATUS_FAULTED; i.fixtureFault {
 				statusMsg += "; fixture faulted"
-
-				if msg.GetOp().GetFireAlarmStatus() != tower.FireAlarmStatus_FIRE_ALARM_UNKNOWN_UNSPECIFIED {
-					i.childLogger.Warnw("sounding the fire alarm", "alarm", msg.GetOp().GetFireAlarmStatus().String())
-					// fire alarm, tell CDC
-					// this is in-band because it will try _forever_ until it succeeds,
-					// but we don't want to go to unload step because it will queue another job for the crane
-					// to unload this tray, but we want the next operation on this tray to be a fire
-					// suppression activity.
-					i.returnToIdle = true // return to idle whether or not we successfully sounded alarm
-					if err := soundTheAlarm(i.Config, msg.GetOp().GetFireAlarmStatus(), i.fxrInfo.Name, i.childLogger); err != nil {
-						// basically couldn't marshal the request. Return to idle where we will keep trying for as
-						// long as the alarm exists
-						i.childLogger.Errorw("sound the fire alarm", "error", err)
-						return
-					}
-
-					// successfully alarmed, return to idle but set alarmed to true so we don't keep alarming
-					i.alarmed = msg.GetOp().GetFireAlarmStatus()
-				}
 			}
 
 			i.childLogger.Info(statusMsg)
@@ -117,7 +97,6 @@ func (i *InProcess) Next() statemachine.State {
 			Publisher:     i.Publisher,
 			MockCellAPI:   i.mockCellAPI,
 			FXRInfo:       i.fxrInfo,
-			alarmed:       i.alarmed,
 		}
 	} else {
 		next = &EndProcess{
