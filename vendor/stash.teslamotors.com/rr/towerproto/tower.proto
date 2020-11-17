@@ -299,13 +299,12 @@ enum CellDetectStatus {
 }
 
 message CellMeasurement {
-  float current               = 1;
-  float voltage               = 2;
-  float charge_ah             = 3;
-  float energy_wh             = 4;
-  float temperature_estimate  = 5;
-  float pogo_resistance       = 6;
-  float sense_loop_resistance = 7;
+  float current              = 1;
+  float voltage              = 2;
+  float charge_ah            = 3;
+  float energy_wh            = 4;
+  float temperature_estimate = 5;
+  float pogo_resistance      = 6;
 }
 
 message Cell {
@@ -368,11 +367,14 @@ message FixtureOperational {
   uint32              runtime_s             = 9; // how long current recipe has been running in seconds
 }
 
+message CellDiag { float sense_loop_resistance = 1; }
+
 message FixtureDiagnostic {
-  Fxr           fxr                            = 1;
-  Fib           fib                            = 2;
-  repeated Stib stibs                          = 3; // 4 stibs
-  uint32        isotp_rx_complete_msg_received = 5;
+  Fxr               fxr                            = 1;
+  Fib               fib                            = 2;
+  repeated Stib     stibs                          = 3; // 4 stibs
+  uint32            isotp_rx_complete_msg_received = 5;
+  repeated CellDiag cells                          = 6; // 64 cells
 }
 
 message FixtureToTower {

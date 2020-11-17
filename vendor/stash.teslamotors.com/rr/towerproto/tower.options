@@ -20,6 +20,7 @@ Recipe.cell_masks max_count:2
 Fib.fans max_count:9
 
 FixtureDiagnostic.stibs max_count:4
+FixtureDiagnostic.cells max_count:64
 FixtureOperational.cells max_count:64
 
 Cell.serial max_size:0

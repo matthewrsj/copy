@@ -47,6 +47,7 @@ func (e *EndProcess) action() {
 	if len(e.cells) == 0 { // we short-circuited here or something went wrong, just re-get the map
 		e.childLogger.Info("empty cell map, querying API for new map")
 
+		// TODO: make this retry if network goes down, nothing should kill the SM
 		var err error
 		if e.cells, err = getCellMap(e.mockCellAPI, e.childLogger, e.CellAPIClient, e.tbc.SN); err != nil {
 			e.childLogger.Errorw("get cell map", "error", err)
@@ -54,6 +55,12 @@ func (e *EndProcess) action() {
 
 			return
 		}
+	}
+
+	if e.recipeVersion == 0 { // we short-circuited here or something went wrong, just re-get the version
+		e.childLogger.Info("version is 0, querying API for new recipe version")
+
+		e.recipeVersion = getRecipeVersion(e.mockCellAPI, e.childLogger, e.CellAPIClient, e.tbc.SN)
 	}
 
 	if !e.mockCellAPI {

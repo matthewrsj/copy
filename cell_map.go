@@ -1,6 +1,12 @@
 package towercontroller
 
 import (
+	"fmt"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/cenkalti/backoff"
 	"go.uber.org/zap"
 	"stash.teslamotors.com/rr/cdcontroller"
 )
@@ -35,4 +41,41 @@ func getCellMap(mockCellAPI bool, logger *zap.SugaredLogger, ca *cdcontroller.Ce
 			IsEmpty:  false,
 		},
 	}, nil
+}
+
+func getRecipeVersion(mockCellAPI bool, logger *zap.SugaredLogger, ca *cdcontroller.CellAPIClient, tray string) int {
+	if mockCellAPI {
+		return 1
+	}
+
+	var recipeVersion int
+
+	bo := backoff.NewExponentialBackOff()
+	bo.MaxElapsedTime = time.Minute
+
+	// will never return a perm error
+	_ = backoff.Retry(func() error {
+		fs, err := ca.GetNextProcessStep(tray)
+		if err != nil {
+			logger.Errorw("get next process step", zap.Error(err))
+			return err
+		}
+
+		fields := strings.Split(fs.Step, " - ")
+		if len(fields) != 2 {
+			logger.Errorw("invalid step from cell API", "step", fs.Step)
+			return fmt.Errorf("invalid step from cell API: '%s'", fs.Step)
+		}
+
+		if recipeVersion, err = strconv.Atoi(fields[1]); err != nil {
+			logger.Errorw("invalid step from cell API, unable to convert to int", "step", fs.Step, "error", err)
+			return fmt.Errorf("invalid step from cell API, unable to convert to int: '%s'; %v", fs.Step, err)
+		}
+
+		return nil
+	}, bo)
+
+	logger.Infow("recipe version retrieved from cell API", "version", recipeVersion)
+
+	return recipeVersion
 }

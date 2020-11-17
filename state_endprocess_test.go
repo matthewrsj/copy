@@ -96,6 +96,15 @@ func TestEndProcess_Action(t *testing.T) {
 	)
 	defer ups.Unpatch()
 
+	nps := monkey.PatchInstanceMethod(
+		reflect.TypeOf(&cdcontroller.CellAPIClient{}),
+		"GetNextProcessStep",
+		func(*cdcontroller.CellAPIClient, string) (cdcontroller.NextFormationStep, error) {
+			return cdcontroller.NextFormationStep{Step: "test - 1"}, nil
+		},
+	)
+	defer nps.Unpatch()
+
 	scs := monkey.PatchInstanceMethod(
 		reflect.TypeOf(&cdcontroller.CellAPIClient{}),
 		"SetCellStatuses",
@@ -192,6 +201,15 @@ func TestEndProcess_ActionBadOrientation(t *testing.T) {
 		},
 	)
 	defer ups.Unpatch()
+
+	nps := monkey.PatchInstanceMethod(
+		reflect.TypeOf(&cdcontroller.CellAPIClient{}),
+		"GetNextProcessStep",
+		func(*cdcontroller.CellAPIClient, string) (cdcontroller.NextFormationStep, error) {
+			return cdcontroller.NextFormationStep{Step: "test - 1"}, nil
+		},
+	)
+	defer nps.Unpatch()
 
 	postP := monkey.Patch(http.Post, func(string, string, io.Reader) (*http.Response, error) {
 		return &http.Response{
@@ -298,6 +316,15 @@ func TestEndProcess_ActionShortMap(t *testing.T) {
 		},
 	)
 	defer ups.Unpatch()
+
+	nps := monkey.PatchInstanceMethod(
+		reflect.TypeOf(&cdcontroller.CellAPIClient{}),
+		"GetNextProcessStep",
+		func(*cdcontroller.CellAPIClient, string) (cdcontroller.NextFormationStep, error) {
+			return cdcontroller.NextFormationStep{Step: "test - 1"}, nil
+		},
+	)
+	defer nps.Unpatch()
 
 	postP := monkey.Patch(http.Post, func(string, string, io.Reader) (*http.Response, error) {
 		return &http.Response{
@@ -418,6 +445,15 @@ func TestEndProcess_ActionBadSetCellStatus(t *testing.T) {
 		},
 	)
 	defer scs.Unpatch()
+
+	nps := monkey.PatchInstanceMethod(
+		reflect.TypeOf(&cdcontroller.CellAPIClient{}),
+		"GetNextProcessStep",
+		func(*cdcontroller.CellAPIClient, string) (cdcontroller.NextFormationStep, error) {
+			return cdcontroller.NextFormationStep{Step: "test - 1"}, nil
+		},
+	)
+	defer nps.Unpatch()
 
 	postP := monkey.Patch(http.Post, func(string, string, io.Reader) (*http.Response, error) {
 		return &http.Response{
