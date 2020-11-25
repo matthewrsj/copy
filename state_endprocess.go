@@ -80,26 +80,12 @@ func (e *EndProcess) action() {
 
 	if !e.fixtureFault {
 		if e.skipClose {
-			e.childLogger.Info("skipClose set, not closing process step or setting cell statuses")
+			e.childLogger.Info("skipClose set, not setting cell statuses")
 		}
 
 		if !e.skipClose && e.processStepName != cdcontroller.CommissionSelfTestRecipeName {
 			e.childLogger.Info("setting cell statuses")
 			e.setCellStatuses()
-		}
-
-		if !e.mockCellAPI {
-			if !e.skipClose && e.processStepName != cdcontroller.CommissionSelfTestRecipeName {
-				e.childLogger.Infow("closing process step", "recipe_name", e.processStepName, "recipe_version", e.recipeVersion)
-
-				if err := e.CellAPIClient.CloseProcessStep(e.tbc.SN, e.processStepName, e.recipeVersion); err != nil {
-					e.childLogger.Error("close process status", "error", err)
-				}
-			} else {
-				e.childLogger.Info("not closing process step for recipe", "recipe_name", e.processStepName)
-			}
-		} else {
-			e.childLogger.Warn("Cell API mocked, not closing process step")
 		}
 	}
 
