@@ -29,6 +29,7 @@ type WaitForLoad struct {
 	recipeVersion   int
 	mockCellAPI     bool
 	resetToIdle     bool
+	unload          bool
 	alarmed         tower.FireAlarmStatus
 
 	fxrInfo *FixtureInfo
@@ -113,8 +114,8 @@ poll:
 	w.transactID = fxrLoad.TransactionID
 
 	if w.processStepName == "" || len(w.steps) == 0 {
-		w.err = fmt.Errorf("invalid fixture load message: %v", fxrLoad)
-		w.Logger.Error(w.err)
+		w.Logger.Error(fmt.Errorf("invalid fixture load message: %v", fxrLoad))
+		w.unload = true
 
 		return
 	}
@@ -132,6 +133,23 @@ func (w *WaitForLoad) Next() statemachine.State {
 	var next statemachine.State
 
 	switch {
+	case w.unload:
+		w.Logger.Warn("going to unload state")
+
+		next = &EndProcess{
+			Config:          w.Config,
+			Logger:          w.Logger,
+			CellAPIClient:   w.CellAPIClient,
+			Publisher:       w.Publisher,
+			childLogger:     w.Logger.With("fixture", w.fxrInfo.Name),
+			tbc:             w.tbc,
+			fxbc:            w.fxbc,
+			processStepName: w.processStepName,
+			mockCellAPI:     w.mockCellAPI,
+			recipeVersion:   w.recipeVersion,
+			fxrInfo:         w.fxrInfo,
+			skipClose:       true, // do not close the process step, error here
+		}
 	case w.err != nil || w.resetToIdle:
 		w.Logger.Warnw("going back to idle state", "error", w.err, "reservation_cleared", w.resetToIdle)
 
