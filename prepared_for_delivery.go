@@ -16,13 +16,13 @@ const PreparedForDeliveryEndpoint = "/preparedForDelivery"
 // HandlePreparedForDelivery handles incoming prepared for delivery messages
 func HandlePreparedForDelivery(logger *zap.SugaredLogger, registry map[string]*FixtureInfo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		logger = logger.With("endpoint", PreparedForDeliveryEndpoint, "remote", r.RemoteAddr)
+		cl := logger.With("endpoint", PreparedForDeliveryEndpoint, "remote", r.RemoteAddr)
 
-		logger.Info("got request to endpoint")
+		cl.Info("got request to endpoint")
 
 		b, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			logger.Error("read request body", "error", err)
+			cl.Error("read request body", "error", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 
 			return
@@ -30,7 +30,7 @@ func HandlePreparedForDelivery(logger *zap.SugaredLogger, registry map[string]*F
 
 		var pfd cdcontroller.PreparedForDelivery
 		if err = json.Unmarshal(b, &pfd); err != nil {
-			logger.Errorw("unmarshal request body", "error", err)
+			cl.Errorw("unmarshal request body", "error", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 
 			return
@@ -39,7 +39,7 @@ func HandlePreparedForDelivery(logger *zap.SugaredLogger, registry map[string]*F
 		id, err := IDFromFXRString(pfd.Fixture)
 		if err != nil {
 			err = fmt.Errorf("ID from FXR string: %v", err)
-			logger.Error(err)
+			cl.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 
 			return
@@ -48,7 +48,7 @@ func HandlePreparedForDelivery(logger *zap.SugaredLogger, registry map[string]*F
 		fInfo, ok := registry[id]
 		if !ok {
 			err := fmt.Errorf("registry did not contain fixture %s", id)
-			logger.Error(err)
+			cl.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 
 			return
@@ -56,7 +56,7 @@ func HandlePreparedForDelivery(logger *zap.SugaredLogger, registry map[string]*F
 
 		if fInfo.Avail.Status() == StatusUnknown || fInfo.Avail.Status() > StatusWaitingForReservation {
 			err := fmt.Errorf("received preparedForDelivery for fixture %s, which is not prepared for delivery", pfd.Fixture)
-			logger.Error(err)
+			cl.Error(err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 
 			return
