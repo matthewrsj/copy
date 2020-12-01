@@ -51,7 +51,8 @@ func getRecipeVersion(mockCellAPI bool, logger *zap.SugaredLogger, ca *cdcontrol
 	var recipeVersion int
 
 	bo := backoff.NewExponentialBackOff()
-	bo.MaxElapsedTime = time.Minute
+	bo.MaxInterval = time.Minute
+	bo.MaxElapsedTime = 0 // try forever
 
 	// will never return a perm error
 	_ = backoff.Retry(func() error {

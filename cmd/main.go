@@ -91,7 +91,7 @@ func main() {
 
 				return nil
 			},
-			backoff.NewExponentialBackOff(),
+			backoff.NewExponentialBackOff(), // defaults are fine on startup
 		); err != nil {
 			sugar.Fatalw("create new subscriber", "error", err)
 		}

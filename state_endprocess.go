@@ -47,14 +47,20 @@ func (e *EndProcess) action() {
 	if len(e.cells) == 0 { // we short-circuited here or something went wrong, just re-get the map
 		e.childLogger.Info("empty cell map, querying API for new map")
 
-		// TODO: make this retry if network goes down, nothing should kill the SM
-		var err error
-		if e.cells, err = getCellMap(e.mockCellAPI, e.childLogger, e.CellAPIClient, e.tbc.SN); err != nil {
-			e.childLogger.Errorw("get cell map", "error", err)
-			e.smFatal = true
+		bo := backoff.NewExponentialBackOff()
+		bo.MaxInterval = time.Minute
+		bo.MaxElapsedTime = 0 // try forever
 
-			return
-		}
+		_ = backoff.Retry(func() error {
+			var err error
+			if e.cells, err = getCellMap(e.mockCellAPI, e.childLogger, e.CellAPIClient, e.tbc.SN); err != nil {
+				e.childLogger.Errorw("get cell map", "error", err)
+
+				return err
+			}
+
+			return nil
+		}, bo)
 	}
 
 	if e.recipeVersion == 0 { // we short-circuited here or something went wrong, just re-get the version
@@ -124,6 +130,7 @@ func (e *EndProcess) action() {
 
 		bo := backoff.NewExponentialBackOff()
 		bo.MaxInterval = time.Minute
+		bo.MaxElapsedTime = 0 // try forever
 
 		// will never return a backoff.PermanentError (tries forever)
 		_ = backoff.Retry(func() error {
@@ -258,6 +265,7 @@ func (e *EndProcess) setCellStatuses() {
 	if !e.mockCellAPI {
 		bo := backoff.NewExponentialBackOff()
 		bo.MaxInterval = time.Minute
+		bo.MaxElapsedTime = 0 // try forever
 
 		// will never return a backoff.PermanentError (tries forever)
 		_ = backoff.Retry(func() error {
