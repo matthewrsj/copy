@@ -16,6 +16,7 @@ Versions.software_version max_size:30
 
 Recipe.steps max_count:20
 Recipe.cell_masks max_count:2
+Recipe.step_ordering max_count:200
 
 Fib.fans max_count:9
 
@@ -25,3 +26,6 @@ FixtureOperational.cells max_count:64
 
 Cell.serial max_size:0
 Cell.position max_size:0
+
+TauxDiagnostic.powertrays max_count:8
+Powertray.dcacs max_count:2

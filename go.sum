@@ -252,9 +252,13 @@ stash.teslamotors.com/rr/cdcontroller v0.2.3 h1:gvImN6NZNPcUAVgo185wF3VRtUsKaygH
 stash.teslamotors.com/rr/cdcontroller v0.2.3/go.mod h1:tUKJrhioN2c/SCTLtZfwZzH5dvOD2Oa77FMMZi+oPxo=
 stash.teslamotors.com/rr/protostream v0.3.0 h1:f3Y9JeqYyi3KLP9nUeDpWiHJt9c+cbliu1u/2PXQ97g=
 stash.teslamotors.com/rr/protostream v0.3.0/go.mod h1:J7ooaEpMPiCRs+KtaheVE9ymA3o971vnjNRz3EXRbfQ=
+stash.teslamotors.com/rr/protostream v1.0.1 h1:2vE2vBM2EZkkUCH6OoUU5HbY6CmZmYLJcVHRsn+E70s=
+stash.teslamotors.com/rr/protostream v1.0.1/go.mod h1:C1XepX1N7QHNrA9o0EVXn6jdJn5wy6b5XELklLPRf0I=
 stash.teslamotors.com/rr/towerproto v0.0.11/go.mod h1:FDbAtKBEKCStkYKJSOamESQ6NjyN7zmV9HAqydiJQs4=
 stash.teslamotors.com/rr/towerproto v0.3.1/go.mod h1:FDbAtKBEKCStkYKJSOamESQ6NjyN7zmV9HAqydiJQs4=
 stash.teslamotors.com/rr/towerproto v0.3.2 h1:eXCC9UuzVao8WVWmX8Ngowr8V4GM5HaC4J6VpZaJZag=
 stash.teslamotors.com/rr/towerproto v0.3.2/go.mod h1:FDbAtKBEKCStkYKJSOamESQ6NjyN7zmV9HAqydiJQs4=
 stash.teslamotors.com/rr/towerproto v0.4.0 h1:mGVyVcaKRxhHEcXSHkowSsBi9IKnTbnhxTta+Pol5O0=
 stash.teslamotors.com/rr/towerproto v0.4.0/go.mod h1:FDbAtKBEKCStkYKJSOamESQ6NjyN7zmV9HAqydiJQs4=
+stash.teslamotors.com/rr/towerproto v0.6.0 h1:piLKWZeRdB5gsQBLL0KRR9b5kCNCDJdHfHD+D8Xn7xU=
+stash.teslamotors.com/rr/towerproto v0.6.0/go.mod h1:FDbAtKBEKCStkYKJSOamESQ6NjyN7zmV9HAqydiJQs4=

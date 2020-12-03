@@ -277,11 +277,16 @@ message StibAlert {
 
 message FibAlert {
   enum AlertId {
-    FIB_NONE                 = 0;
-    FIB_a001_SwAppBoot       = 1;
-    FIB_a002_watchdogExpired = 2;
-    FIB_a003_internalFault   = 3;
-    FIB_a004_FanRpmFault     = 4;
+    FIB_NONE                  = 0;
+    FIB_a001_SwAppBoot        = 1;
+    FIB_a002_watchdogExpired  = 2;
+    FIB_a003_internalFault    = 3;
+    FIB_a004_FanRpmFault      = 4;
+    FIB_a005_FanTotalFault    = 5;
+    FIB_a006_FanRationalFault = 6;
+    FIB_a007_CpuOverRun       = 7;
+    FIB_a008_TaskStackOverrun = 8;
+    FIB_a009_FIBrxCommandMIA  = 9;
   }
 
   message a002_watchdogExpired {
@@ -298,11 +303,47 @@ message FibAlert {
     float  fan_current  = 4; // A
   }
 
+  message a005_FanTotalFault {
+    uint32 fan_total        = 1;
+    float  fan_current      = 2; // A
+    uint32 fan_bit_positoin = 3;
+  }
+
+  message a006_FanRationalFault {
+    uint32 fan_index        = 1;
+    uint32 fan_rpm_meanured = 2; // rpm
+    uint32 fan_rpm_request  = 3; // rpm
+    uint32 fan_pwm_duty     = 4;
+  }
+
+  message a007_CpuOverRun {
+    float ISR_time_max    = 1; // us
+    float f_1kHz_time_max = 2; // us
+    float f_10Hz_time_max = 3; // us
+  }
+
+  message a008_TaskStackOverrun {
+    bool Task_Proto_Stack_Overrun   = 1;
+    bool Task_1kHz_Stack_Overrun    = 2;
+    bool Task_1Hz_Stack_Overrun     = 3;
+    bool Task_10Hz_Stack_Overrun    = 4;
+    bool Task_CANtx_Stack_Overrun   = 5;
+    bool Task_OSIdle_Stack_Overrun  = 6;
+    bool Task_OSTimer_Stack_Overrun = 7;
+  }
+
+  message a009_FIBrxCommandMIA {}
+
   message AlertData {
     oneof Payload {
-      a002_watchdogExpired a002 = 2;
-      a003_internalFault   a003 = 3;
-      a004_FanRpmFault     a004 = 4;
+      a002_watchdogExpired  a002 = 2;
+      a003_internalFault    a003 = 3;
+      a004_FanRpmFault      a004 = 4;
+      a005_FanTotalFault    a005 = 5;
+      a006_FanRationalFault a006 = 6;
+      a007_CpuOverRun       a007 = 7;
+      a008_TaskStackOverrun a008 = 8;
+      a009_FIBrxCommandMIA  a009 = 9;
     }
   }
 
@@ -342,6 +383,9 @@ message FxrAlert {
     FXR_a027_24VBus_UV_fault               = 27;
     FXR_a028_24VBus_OV_fault               = 28;
     FXR_a029_RecipeMaskMissingCelldetected = 29;
+    FXR_a030_fib_faulted                   = 30;
+    FXR_a031_FanPwrCheckFail               = 31;
+    FXR_a032_StibPwrCheckFail              = 32;
   }
 
   message a001_SwAppBoot {}
@@ -456,6 +500,12 @@ message FxrAlert {
     repeated uint32 MissingCellPosition = 2; // cell position of missing cell 1(ranges from 0 to 63, 0xFF = NA)
   }
 
+  message a030_fib_faulted {}
+
+  message a031_FanPwrCheckFail { float current = 1; }
+
+  message a032_StibPwrCheckFail { float current = 1; }
+
   message AlertData {
     oneof Payload {
       a001_SwAppBoot                     a001 = 1;
@@ -486,6 +536,9 @@ message FxrAlert {
       a027_bus24V_uv_fault               a027 = 27;
       a028_bus24V_ov_fault               a028 = 28;
       a029_RecipeMaskMissingCelldetected a029 = 29;
+      a030_fib_faulted                   a030 = 30;
+      a031_FanPwrCheckFail               a031 = 31;
+      a032_StibPwrCheckFail              a032 = 32;
     }
   }
 

@@ -117,7 +117,7 @@ message FxrOutputs {
   bool fan_power_on         = 4;
 }
 
-message Isolation {
+message FxrIsolation {
   IsoState iso_state           = 1; // isolation statemachine
   float    iso_vchassis_sw_off = 2; // chassis voltage when top balancer off
   float    iso_vchassis_sw_on  = 3; // chassis voltage when top balancer on
@@ -144,7 +144,7 @@ message Fxr {
   FxrOutputs            outputs        = 3;
   Genealogy             genealogy      = 4;
   AlertMatrix           alert_matrices = 5;
-  Isolation             isolation      = 6;
+  FxrIsolation          isolation      = 6;
   Filesystem            filesystem     = 7;
   Position              position       = 8;
   FixtureControlSmState state          = 9;
@@ -283,12 +283,13 @@ message Stib {
 }
 
 enum CellStatus {
-  CELL_STATUS_NONE_UNSPECIFIED    = 0;
-  CELL_STATUS_IDLE                = 1;
-  CELL_STATUS_IN_PROCESS          = 2;
-  CELL_STATUS_COMPLETE            = 3;
-  CELL_STATUS_FAILED              = 4;
-  CELL_STATUS_FAILED_SAFETY_LIMIT = 5;
+  CELL_STATUS_NONE_UNSPECIFIED           = 0;
+  CELL_STATUS_IDLE                       = 1;
+  CELL_STATUS_IN_PROCESS                 = 2;
+  CELL_STATUS_COMPLETE                   = 3;
+  CELL_STATUS_FAILED                     = 4;
+  CELL_STATUS_FAILED_SAFETY_LIMIT        = 5;
+  CELL_STATUS_FAILED_POGO_PIN_IRRATIONAL = 6;
 }
 
 enum CellDetectStatus {
@@ -305,6 +306,7 @@ message CellMeasurement {
   float energy_wh            = 4;
   float temperature_estimate = 5;
   float pogo_resistance      = 6;
+  float step_time_counter_s  = 7;
 }
 
 message Cell {
@@ -427,9 +429,10 @@ enum FormRequest {
 }
 
 message Recipe {
-  repeated RecipeStep steps        = 1;
-  repeated uint32     cell_masks   = 2;
-  FormRequest         form_request = 3;
+  repeated RecipeStep steps         = 1;
+  repeated uint32     cell_masks    = 2;
+  FormRequest         form_request  = 3;
+  repeated uint32     step_ordering = 4;
 }
 
 message Info {
@@ -464,4 +467,79 @@ message TowerToFixture {
   EquipmentRequest     equipment_request      = 4;
   IsolationTestRequest isolation_test_request = 5;
   Versions             versions               = 6;
+  FixtureOperational   op                     = 7;
+}
+
+enum TauxStatus {
+  TAUX_STATUS_UNKNOWN_UNSPECIFIED = 0;
+  TAUX_STATUS_INIT                = 1; // Taux is initializing
+  TAUX_STATUS_PRECHARGE           = 2; // Taux is precharging bus to 76V
+  TAUX_STATUS_ACTIVE              = 3; // Taux is commanding bus to 85V
+  TAUX_STATUS_FAULTED             = 4; // Taux is faulted
+}
+
+enum EnumerationStatus {
+  ENUM_STATUS_UNKNOWN_UNSPECIFIED = 0;
+  ENUM_STATUS_OK                  = 1; // ENUM is OK
+  ENUM_STATUS_COLLISION           = 2; // TAUX is resolving enum collision
+  ENUM_STATUS_FAULT               = 3; // Enum is in faulted state
+}
+
+message TauxOperational {
+  TauxStatus        status             = 1;
+  EnumerationStatus enumeration_status = 2;
+  int32             power_capacity_w   = 3;
+  int32             power_in_use_w     = 4;
+  int32             power_available_w  = 5;
+}
+
+message Taux {
+  Genealogy   genealogy          = 1;
+  AlertMatrix alert_matrices     = 2;
+  uint32      powertrays_present = 3;
+}
+
+message Dcac {
+  uint32 dcac_id                       = 1;
+  bool   grid_compliant                = 2;
+  bool   form_active                   = 3;
+  float  ac_power_kw                   = 4; // PINV_Pout
+  uint64 subpackage_sn_1_7             = 5;
+  uint64 subpackage_sn_8_14            = 6;
+  uint64 app_githash                   = 7;
+  float  bus_lv                        = 8;  // POD_Vbatt
+  float  bus_hv                        = 9;  // PINV_Vdc
+  float  pinv_heatsink_temp            = 10; // PINV_HeatsinkTemp
+  bool   is_pod_persistant_fault       = 11; // POD_PersistentlyFaulted
+  bool   is_pod_permanent_fault        = 12; // POD_PersistentlyFaulted
+  float  lifetime_energy_discharged_wh = 13; // PINV_LifetimeEnergyDischarged
+  float  lifetime_energy_charged_wh    = 14; // PINV_LifetimeEnergyCharged
+  float  v_thd                         = 15; // PINV_v_thd
+  float  grid_resistance               = 16; // PINV_gridResistance
+  float  cbc_events                    = 17; // PINV_cbcEvents
+  bool   hw_enable_line                = 18; // PINV_HardwareEnableLine
+}
+
+message Powertray {
+  uint32        powertray_index = 1;
+  bool          enumeration_ok  = 2;
+  bool          precharge_ready = 3;
+  bool          form_active     = 4;
+  float         ac_power_kw     = 5;
+  float         bus_lv          = 7;
+  repeated Dcac dcacs           = 10;
+}
+
+message TauxDiagnostic {
+  Taux               taux                           = 1;
+  repeated Powertray powertrays                     = 2; // 8 PTs
+  uint32             isotp_rx_complete_msg_received = 4;
+}
+
+message TauxToTower {
+  oneof content {
+    TauxOperational op   = 1;
+    TauxDiagnostic  diag = 2;
+  }
+  Versions versions = 5;
 }

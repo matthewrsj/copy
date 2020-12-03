@@ -17,6 +17,6 @@ require (
 	stash.teslamotors.com/ctet/go-socketcan v0.0.2
 	stash.teslamotors.com/ctet/statemachine/v2 v2.0.1
 	stash.teslamotors.com/rr/cdcontroller v0.2.3
-	stash.teslamotors.com/rr/protostream v0.3.0
-	stash.teslamotors.com/rr/towerproto v0.4.0
+	stash.teslamotors.com/rr/protostream v1.0.1
+	stash.teslamotors.com/rr/towerproto v0.6.0
 )
