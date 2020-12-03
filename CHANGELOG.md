@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v1.0.2] - 2020-12-03
+### Changed
+- Update to protostream v1.0.1
+- Update to towerproto v0.6.0
+
+### Fixed
+- Prevent double-load requests by locking the endpoint with a mutex.
+- Update network retries to retry forever instead of for the default 15 minutes.
+
 ## [v1.0.1] - 2020-11-30
 ### Fixed
 - No longer double-close step by using /next endpoint. Only post cell statuses.
