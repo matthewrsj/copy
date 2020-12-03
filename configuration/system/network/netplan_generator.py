@@ -12,6 +12,9 @@ gateway = "10.179.205.1"
 nameserver1 = "10.178.8.53"
 nameserver2 = "10.33.169.12"
 net = {"network": {"version": 2, "renderer": "networkd"}}
+route_to = "192.168.1.0"
+route_via = "10.179.205"
+via_for_aisle_start = 44 # route_via starts at .45
 
 with open("macs.yaml", "r") as stream:
     macs = yaml.safe_load(stream)
@@ -20,13 +23,15 @@ for aisle in macs:
     for tower in macs[aisle]:
         mac = macs[aisle][tower]
         ip = tc_ip_offset + aisle * aisle_ip_offset + tower
+        via_for_aisle = via_for_aisle_start + aisle
         ethernets[f"a{aisle}t{tower}"] = {
             "match": {"macaddress": mac},
             "addresses": [f"{ip_prefix}.{ip}/24"],
             "gateway4": gateway,
             "nameservers": {"addresses": [nameserver1, nameserver2]},
+            "routes": [{"to": f"{route_to}/24", "via": f"{route_via}.{via_for_aisle}"}]
         }
 net["network"]["ethernets"] = ethernets
-print(yaml.dump(net,))
+print(yaml.dump(net, default_flow_style=False))
 with open(r"01-static-ethernet-from-mac.yaml", "w") as file:
-    documents = yaml.dump(net, file)
+    documents = yaml.dump(net, file, default_flow_style=False)
