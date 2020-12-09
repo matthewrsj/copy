@@ -8,3 +8,4 @@ sim/cnd/cnd
 sim/tc/multitower/multitower
 sniffer/sniffer
 sniffer/out.txt
+venv/
