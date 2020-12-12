@@ -25,6 +25,8 @@ type RequestForm struct {
 // nolint:gocognit // no reason to split this out
 func HandleSendFormRequest(publisher *protostream.Socket, logger *zap.SugaredLogger, registry map[string]*FixtureInfo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		allowCORS(w)
+
 		logger = logger.With("endpoint", SendFormRequestEndpoint, "remote", r.RemoteAddr)
 		logger.Info("got request to endpoint")
 

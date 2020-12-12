@@ -29,6 +29,8 @@ type updateResponse struct {
 // HandleUpdateCancel cancels a current update
 func HandleUpdateCancel(logger *zap.SugaredLogger, cancel chan<- struct{}) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		allowCORS(w)
+
 		cl := logger.With("endpoint", UpdateCancelEndpoint, "remote", r.RemoteAddr)
 		cl.Info("got request to endpoint")
 
@@ -48,6 +50,8 @@ func HandleUpdateCancel(logger *zap.SugaredLogger, cancel chan<- struct{}) http.
 // HandleUpdate is the handler for hte endpoint that schedules a restart/update on the tower controller
 func HandleUpdate(logger *zap.SugaredLogger, cancel chan struct{}, registry map[string]*FixtureInfo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		allowCORS(w)
+
 		cl := logger.With("endpoint", UpdateEndpoint, "remote", r.RemoteAddr)
 		cl.Info("got request to endpoint")
 

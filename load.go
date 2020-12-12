@@ -21,6 +21,8 @@ func HandleLoad(conf Configuration, logger *zap.SugaredLogger, registry map[stri
 	var mux sync.Mutex
 
 	return func(w http.ResponseWriter, r *http.Request) {
+		allowCORS(w)
+
 		cl := logger.With("endpoint", LoadEndpoint, "remote", r.RemoteAddr)
 
 		b, err := ioutil.ReadAll(r.Body)

@@ -16,6 +16,8 @@ import (
 // HandleBroadcastRequest handles incoming broadcast requests from the CD Controller
 func HandleBroadcastRequest(publisher *protostream.Socket, logger *zap.SugaredLogger, registry map[string]*FixtureInfo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		allowCORS(w)
+
 		cl := logger.With("endpoint", cdcontroller.BroadcastEndpoint)
 		cl.Infow("got request to endpoint")
 

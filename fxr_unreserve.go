@@ -15,6 +15,8 @@ const UnreserveFixtureEndpoint = "/unreserve"
 // HandleUnreserveFixture accepts POST requests to manually un-reserve a reserved fixture
 func HandleUnreserveFixture(logger *zap.SugaredLogger, registry map[string]*FixtureInfo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		allowCORS(w)
+
 		logger = logger.With("endpoint", UnreserveFixtureEndpoint, "remote", r.RemoteAddr)
 		logger.Info("got request to endpoint")
 

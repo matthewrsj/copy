@@ -16,6 +16,8 @@ const PreparedForDeliveryEndpoint = "/preparedForDelivery"
 // HandlePreparedForDelivery handles incoming prepared for delivery messages
 func HandlePreparedForDelivery(logger *zap.SugaredLogger, registry map[string]*FixtureInfo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		allowCORS(w)
+
 		cl := logger.With("endpoint", PreparedForDeliveryEndpoint, "remote", r.RemoteAddr)
 
 		cl.Info("got request to endpoint")

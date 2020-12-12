@@ -25,6 +25,8 @@ const (
 // HandleLatestOp handles incoming requests to get the latest op message for a fixture
 func HandleLatestOp(logger *zap.SugaredLogger, registry map[string]*FixtureInfo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		allowCORS(w)
+
 		logger = logger.With("endpoint", LatestOpEndpoint, "remote", r.RemoteAddr)
 		logger.Info("got request to endpoint")
 
@@ -56,6 +58,8 @@ func HandleLatestOp(logger *zap.SugaredLogger, registry map[string]*FixtureInfo)
 // HandleLatestDiag handles incoming requests to get the latest diag message for a fixture
 func HandleLatestDiag(logger *zap.SugaredLogger, registry map[string]*FixtureInfo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		allowCORS(w)
+
 		logger = logger.With("endpoint", LatestOpEndpoint, "remote", r.RemoteAddr)
 		logger.Info("got request to endpoint")
 
@@ -85,6 +89,8 @@ func HandleLatestDiag(logger *zap.SugaredLogger, registry map[string]*FixtureInf
 // HandleLatestAlert handles incoming requests to get the latest alert message for a fixture
 func HandleLatestAlert(logger *zap.SugaredLogger, registry map[string]*FixtureInfo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		allowCORS(w)
+
 		logger = logger.With("endpoint", LatestOpEndpoint, "remote", r.RemoteAddr)
 		logger.Info("got request to endpoint")
 

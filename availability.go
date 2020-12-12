@@ -20,6 +20,8 @@ const _allowedQueryKey = "allowed"
 // nolint:gocognit,funlen // ignore
 func HandleAvailable(configPath string, logger *zap.SugaredLogger, registry map[string]*FixtureInfo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		allowCORS(w)
+
 		cl := logger.With("endpoint", AvailabilityEndpoint, "remote", r.RemoteAddr)
 
 		cl.Info("got request to endpoint")

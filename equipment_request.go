@@ -24,6 +24,8 @@ type RequestEquipment struct {
 // Common use-case for this is to approve a commission self test on a fixture.
 func HandleSendEquipmentRequest(publisher *protostream.Socket, logger *zap.SugaredLogger, registry map[string]*FixtureInfo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		allowCORS(w)
+
 		logger = logger.With("endpoint", SendEquipmentRequestEndpoint, "remote", r.RemoteAddr)
 		logger.Info("got request to endpoint")
 

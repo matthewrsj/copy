@@ -19,6 +19,8 @@ type canaryResponse struct {
 // HandleCanary handles incoming requests to the canary endpoint
 func HandleCanary(logger *zap.SugaredLogger, registry map[string]*FixtureInfo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		allowCORS(w)
+
 		cl := logger.With("endpoint", CanaryEndpoint, "remote", r.RemoteAddr)
 		cl.Info("got request to endpoint")
 
