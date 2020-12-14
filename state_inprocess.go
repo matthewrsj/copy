@@ -1,6 +1,7 @@
 package towercontroller
 
 import (
+	"fmt"
 	"time"
 
 	"go.uber.org/zap"
@@ -58,17 +59,27 @@ func (i *InProcess) action() {
 
 		i.childLogger.Debugw("got FixtureToTower message", "msg", msg.String())
 
-		switch s := msg.GetOp().GetStatus(); s {
-		case tower.FixtureStatus_FIXTURE_STATUS_COMPLETE, tower.FixtureStatus_FIXTURE_STATUS_FAULTED:
-			statusMsg := "fixture done with tray"
+		var statusMsg string
 
-			if i.fixtureFault = s == tower.FixtureStatus_FIXTURE_STATUS_FAULTED; i.fixtureFault {
-				statusMsg += "; fixture faulted"
-			}
+		switch s := msg.GetOp().GetStatus(); s {
+		case tower.FixtureStatus_FIXTURE_STATUS_COMPLETE:
+			statusMsg = "fixture done with tray"
 
 			i.childLogger.Info(statusMsg)
 
 			i.cellResponse = msg.GetOp().GetCells()
+
+			return
+		case tower.FixtureStatus_FIXTURE_STATUS_FAULTED:
+			statusMsg = "fixture done with tray; fixture faulted"
+
+			if msg.GetOp().GetFireAlarmStatus() > tower.FireAlarmStatus_FIRE_ALARM_UNKNOWN_UNSPECIFIED {
+				statusMsg += fmt.Sprintf("; fire alarm %s triggered, not requesting unload", msg.GetOp().GetFireAlarmStatus().String())
+				i.returnToIdle = true
+			}
+
+			i.childLogger.Infow("cell statuses when faulted", "cells", msg.GetOp().GetCells())
+			i.childLogger.Info(statusMsg)
 
 			return
 		default:
