@@ -83,15 +83,14 @@ func (e *EndProcess) action() {
 		}()
 	}
 
-	if !e.fixtureFault {
-		if e.skipClose {
-			e.childLogger.Info("skipClose set, not setting cell statuses")
-		}
-
-		if !e.skipClose && e.processStepName != cdcontroller.CommissionSelfTestRecipeName {
-			e.childLogger.Info("setting cell statuses")
-			e.setCellStatuses()
-		}
+	if !e.skipClose {
+		e.childLogger.Info("setting cell statuses")
+		e.setCellStatuses()
+	} else {
+		// skipClose at this point is a bit of a misnomer, but essentially means we were unable to even start a recipe
+		// on these cells either due to internal error or fixture not being responsive. In this case we have no cell
+		// statuses to even post.
+		e.childLogger.Info("skipClose set, not setting cell statuses")
 	}
 
 	msg := "tray complete"
@@ -261,6 +260,11 @@ func (e *EndProcess) setCellStatuses() {
 		e.childLogger.Infow("failed cells", "positions", failed)
 	}
 
+	statusSetter := e.CellAPIClient.SetCellStatuses
+	if e.fixtureFault || e.processStepName == cdcontroller.CommissionSelfTestRecipeName {
+		statusSetter = e.CellAPIClient.SetCellStatusesNoClose
+	}
+
 	if !e.mockCellAPI {
 		bo := backoff.NewExponentialBackOff()
 		bo.MaxInterval = time.Minute
@@ -268,7 +272,7 @@ func (e *EndProcess) setCellStatuses() {
 
 		// will never return a backoff.PermanentError (tries forever)
 		_ = backoff.Retry(func() error {
-			if err := e.CellAPIClient.SetCellStatuses(e.tbc.SN, e.fxbc.Raw, e.processStepName, e.recipeVersion, cpf); err != nil {
+			if err := statusSetter(e.tbc.SN, e.fxbc.Raw, e.processStepName, e.recipeVersion, cpf); err != nil {
 				e.childLogger.Errorw("SetCellStatuses", "error", err)
 				return err
 			}
