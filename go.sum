@@ -250,6 +250,8 @@ stash.teslamotors.com/ctet/statemachine/v2 v2.0.1 h1:ridx0bqo3kRfYNowvFoo5X+KQ16
 stash.teslamotors.com/ctet/statemachine/v2 v2.0.1/go.mod h1:Q8mBnsDGYOonavrCEmJQUXavpy+4sp6jUhEc+irF+iI=
 stash.teslamotors.com/rr/cdcontroller v0.2.3 h1:gvImN6NZNPcUAVgo185wF3VRtUsKaygHGtNO5kbJP+g=
 stash.teslamotors.com/rr/cdcontroller v0.2.3/go.mod h1:tUKJrhioN2c/SCTLtZfwZzH5dvOD2Oa77FMMZi+oPxo=
+stash.teslamotors.com/rr/cdcontroller v1.1.0 h1:+iCunTTVx/J50x+wSXnnR6NURDy9oPbkJFgUq2R3f8U=
+stash.teslamotors.com/rr/cdcontroller v1.1.0/go.mod h1:tUKJrhioN2c/SCTLtZfwZzH5dvOD2Oa77FMMZi+oPxo=
 stash.teslamotors.com/rr/protostream v0.3.0 h1:f3Y9JeqYyi3KLP9nUeDpWiHJt9c+cbliu1u/2PXQ97g=
 stash.teslamotors.com/rr/protostream v0.3.0/go.mod h1:J7ooaEpMPiCRs+KtaheVE9ymA3o971vnjNRz3EXRbfQ=
 stash.teslamotors.com/rr/protostream v1.0.1 h1:2vE2vBM2EZkkUCH6OoUU5HbY6CmZmYLJcVHRsn+E70s=

@@ -12,11 +12,11 @@ import (
 	"go.uber.org/zap"
 )
 
-// AisleManager manages a round robin of aisles
+// AisleManager manages a group of aisles
 type AisleManager struct {
 	aisleRequestCount int
 	allowedAisles     []string
-	roundRobin        []string
+	openAisles        []string
 	nextAisleName     string
 	mx                *sync.Mutex
 }
@@ -25,7 +25,7 @@ type AisleManager struct {
 func NewAisleManager() *AisleManager {
 	return &AisleManager{
 		allowedAisles: []string{},
-		roundRobin:    []string{},
+		openAisles:    []string{},
 		mx:            &sync.Mutex{},
 	}
 }
@@ -44,13 +44,13 @@ func (am *AisleManager) GetNextAisleName() string {
 		return next
 	}
 
-	if len(am.roundRobin) == 0 {
+	if len(am.openAisles) == 0 {
 		return ""
 	}
 
 	defer func() { am.aisleRequestCount++ }()
 
-	return am.roundRobin[am.aisleRequestCount%len(am.roundRobin)]
+	return am.openAisles[am.aisleRequestCount%len(am.openAisles)]
 }
 
 // PeekNextAisleName returns the aisle that will be next returned from GetNextAisleName
@@ -60,16 +60,16 @@ func (am *AisleManager) PeekNextAisleName() string {
 		return am.nextAisleName
 	}
 
-	if len(am.roundRobin) == 0 {
+	if len(am.openAisles) == 0 {
 		return ""
 	}
 
-	return am.roundRobin[am.aisleRequestCount%len(am.roundRobin)]
+	return am.openAisles[am.aisleRequestCount%len(am.openAisles)]
 }
 
-// AisleInRoundRobin returns a boolean representing whether the aisle is in the roundRobin list
-func (am *AisleManager) AisleInRoundRobin(aisle string) bool {
-	return stringInSlice(aisle, am.roundRobin) >= 0
+// AisleOpen returns a boolean representing whether the aisle is in the openAisles list
+func (am *AisleManager) AisleOpen(aisle string) bool {
+	return stringInSlice(aisle, am.openAisles) >= 0
 }
 
 // AisleAllowed returns a boolean representing whether the aisle is in the allowedAisles list
@@ -87,24 +87,9 @@ func stringInSlice(s string, ss []string) int {
 	return -1
 }
 
-// SetNextAisle sets the next aisle that will be returned from GetNextAisleName.
-// This just interrupts the round robin, which will continue where it left off.
-func (am *AisleManager) SetNextAisle(aisle string) error {
-	am.mx.Lock()
-	defer am.mx.Unlock()
-
-	if !am.AisleInRoundRobin(aisle) {
-		return fmt.Errorf("aisle '%s' is not a valid aisle name", aisle)
-	}
-
-	am.nextAisleName = aisle
-
-	return nil
-}
-
-// AddAisleToRoundRobin adds the aisle to the round robin if the aisle is
+// AddAisleToOpenAisles adds the aisle to the open aisles list if the aisle is
 // allowed and it is not currently in the round robin.
-func (am *AisleManager) AddAisleToRoundRobin(aisles ...string) error {
+func (am *AisleManager) AddAisleToOpenAisles(aisles ...string) error {
 	am.mx.Lock()
 	defer am.mx.Unlock()
 
@@ -122,32 +107,32 @@ func (am *AisleManager) AddAisleToRoundRobin(aisles ...string) error {
 			return fmt.Errorf("aisle '%s' is not a valid aisle name", aisle)
 		}
 
-		if am.AisleInRoundRobin(aisle) {
+		if am.AisleOpen(aisle) {
 			return fmt.Errorf("aisle '%s' already in round robin", aisle)
 		}
 	}
 
-	am.roundRobin = append(am.roundRobin, aisles...)
+	am.openAisles = append(am.openAisles, aisles...)
 
 	return nil
 }
 
-// RemoveAisleFromRoundRobin removes the aisle from the round robin list.
+// RemoveAisleFromOpenAisles removes the aisle from the round robin list.
 // An error is returned if the aisle does not exist in the list.
 // This function may partially pass and remove all aisles passed until an error
 // occurred.
-func (am *AisleManager) RemoveAisleFromRoundRobin(aisles ...string) error {
+func (am *AisleManager) RemoveAisleFromOpenAisles(aisles ...string) error {
 	// lock when we retrieve index so it doesn't get changed before we delete
 	am.mx.Lock()
 	defer am.mx.Unlock()
 
 	for _, aisle := range aisles {
-		i := stringInSlice(aisle, am.roundRobin)
+		i := stringInSlice(aisle, am.openAisles)
 		if i < 0 {
 			return fmt.Errorf("aisle '%s' not in round robin", aisle)
 		}
 
-		am.roundRobin = am.roundRobin[:i+copy(am.roundRobin[i:], am.roundRobin[i+1:])]
+		am.openAisles = am.openAisles[:i+copy(am.openAisles[i:], am.openAisles[i+1:])]
 	}
 
 	return nil
@@ -160,9 +145,9 @@ func (am *AisleManager) SetAllowedAisles(aisles []string) {
 	am.mx.Unlock()
 }
 
-// RoundRobin returns the round robin list
-func (am *AisleManager) RoundRobin() []string {
-	return am.roundRobin
+// OpenAisles returns the round robin list
+func (am *AisleManager) OpenAisles() []string {
+	return am.openAisles
 }
 
 // AllowedAisles returns the allowed aisles list
@@ -173,9 +158,9 @@ func (am *AisleManager) AllowedAisles() []string {
 // AisleResponse returns the AisleResponse for the AisleManager
 func (am *AisleManager) AisleResponse() AisleResponse {
 	return AisleResponse{
-		RoundRobin: am.RoundRobin(),
-		AllAisles:  am.AllowedAisles(),
-		NextAisle:  am.PeekNextAisleName(),
+		OpenAisles:    am.OpenAisles(),
+		AllAisles:     am.AllowedAisles(),
+		NextAisleIfRR: am.PeekNextAisleName(),
 	}
 }
 
@@ -205,15 +190,17 @@ type AisleRequest struct {
 
 // AisleResponse is returned to requests to the aisle request endpoint
 type AisleResponse struct {
-	RoundRobin []string `json:"round_robin"`
-	AllAisles  []string `json:"all_aisles"`
-	NextAisle  string   `json:"next_aisle"`
+	OpenAisles    []string `json:"open_aisles"`
+	AllAisles     []string `json:"all_aisles"`
+	NextAisleIfRR string   `json:"next_aisle_if_rr"`
 }
 
 // HandleAisleRequest handles incoming requests to the aisle request endpoint.
 // This endpoint returns the current state of the aisle manager.
 func HandleAisleRequest(logger *zap.SugaredLogger, am *AisleManager, endpoint string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		allowCORS(w)
+
 		cl := logger.With("endpoint", endpoint)
 		cl.Info("got request to endpoint")
 
@@ -244,9 +231,9 @@ func HandleAisleRequest(logger *zap.SugaredLogger, am *AisleManager, endpoint st
 
 			switch req.RequestType {
 			case _arAddToRoundRobin:
-				operation = am.AddAisleToRoundRobin
+				operation = am.AddAisleToOpenAisles
 			case _arRemoveFromRoundRobin:
-				operation = am.RemoveAisleFromRoundRobin
+				operation = am.RemoveAisleFromOpenAisles
 			default:
 				logger.Error("invalid aisle request type", "type", req.RequestType)
 				http.Error(w, "invalid aisle request type", http.StatusBadRequest)

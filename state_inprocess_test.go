@@ -2,8 +2,14 @@ package towercontroller
 
 import (
 	"encoding/json"
+	"io"
+	"io/ioutil"
+	"net/http"
+	"reflect"
+	"strings"
 	"testing"
 
+	"bou.ke/monkey"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -42,6 +48,11 @@ func TestInProcess_Action(t *testing.T) {
 	if l := len(as); l != exp {
 		t.Errorf("expected %d actions, got %d", exp, l)
 	}
+
+	hp := monkey.PatchInstanceMethod(reflect.TypeOf(&http.Client{}), "Post", func(*http.Client, string, string, io.Reader) (*http.Response, error) {
+		return &http.Response{StatusCode: http.StatusOK, Body: ioutil.NopCloser(strings.NewReader(""))}, nil
+	})
+	defer hp.Unpatch()
 
 	updateInternalFixtureState(
 		ipState.fxrInfo.FixtureState.operational,
@@ -122,6 +133,11 @@ func TestInProcess_ActionNoFixture(t *testing.T) {
 			},
 		},
 	)
+
+	hp := monkey.PatchInstanceMethod(reflect.TypeOf(&http.Client{}), "Post", func(*http.Client, string, string, io.Reader) (*http.Response, error) {
+		return &http.Response{StatusCode: http.StatusOK, Body: ioutil.NopCloser(strings.NewReader(""))}, nil
+	})
+	defer hp.Unpatch()
 
 	msg, err := marshalMessage(&tower.FixtureToTower{})
 	if err != nil {

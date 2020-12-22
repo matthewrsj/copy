@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 
 	"go.uber.org/zap"
 	asrsapi "stash.teslamotors.com/cas/asrs/idl/src"
@@ -32,7 +33,11 @@ func HandleUnloads(server *terminal.Server, lg *zap.SugaredLogger, conf Configur
 		WithCloseProcessFmtEndpoint(conf.CellAPICloseProcessFmt),
 	)
 
+	var mx sync.Mutex
+
 	return func(w http.ResponseWriter, r *http.Request) {
+		allowCORS(w)
+
 		logger := lg.With("remote", r.RemoteAddr)
 
 		b, err := ioutil.ReadAll(r.Body)
@@ -98,11 +103,16 @@ func HandleUnloads(server *terminal.Server, lg *zap.SugaredLogger, conf Configur
 			},
 		}
 
-		step := strings.TrimSpace(strings.Split(proc.Step, " - ")[0])
-		logger.Debugw("step name", "step", step)
+		// remove spaces and _nonProdPrefix then check if it's a commissioning tray
+		stepName := strings.TrimPrefix(strings.TrimSpace(strings.Split(proc.Step, " - ")[0]), _nonProdPrefix)
+		isCommissionRecipe := strings.HasPrefix(stepName, CommissionSelfTestRecipeName)
+		logger.Debugw("step name", "step", stepName)
 
-		switch step {
-		case CommissionSelfTestRecipeName:
+		switch {
+		case isCommissionRecipe:
+			mx.Lock() // only handle one reload at a time as this is not serialized and can come in at the exact same time
+			defer mx.Unlock()
+
 			logger.Debug("handling reload")
 
 			aisle, ok := aisles[tc.Aisle]

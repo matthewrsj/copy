@@ -6,20 +6,19 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/cenkalti/backoff"
 	"go.uber.org/zap"
-	asrsapi "stash.teslamotors.com/cas/asrs/idl/src"
-	terminal "stash.teslamotors.com/cas/asrs/terminal/server"
 )
 
 // HandleBroadcast handles broadcast requests coming from tower controller
 // nolint:gocognit // just past threshold. TODO: simplify/break out
-func HandleBroadcast(server *terminal.Server, lg *zap.SugaredLogger, conf Configuration, aisles map[string]*Aisle, ina chan *asrsapi.TerminalAlarm) http.HandlerFunc {
+func HandleBroadcast(lg *zap.SugaredLogger, conf Configuration, aisles map[string]*Aisle) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		allowCORS(w)
+
 		logger := lg.With("endpoint", BroadcastEndpoint, "remote", r.RemoteAddr)
 		logger.Info("endpoint called")
 
@@ -44,28 +43,10 @@ func HandleBroadcast(server *terminal.Server, lg *zap.SugaredLogger, conf Config
 		location := fmt.Sprintf("%s-%s%s-%s", conf.Loc.Line, conf.Loc.Station, br.Originator.Aisle, br.Originator.Location)
 		logger = logger.With("originator", location, "reason", br.Reason.String(), "scale", br.Scale.String())
 
-		var needHTTPError error
-
-		// first tell CND since this is very fast
-		switch br.Reason {
-		case ReasonFireLevel0, ReasonFireLevel1:
-			if err := fireAlarm(br.Reason, server, conf.Loc, br.Originator.Aisle, br.Originator.Location, ina); err != nil {
-				logger.Error(err)
-				// don't http.Error this yet, still need to try to broadcast
-				needHTTPError = err
-			}
-		}
-
-		logger.Info("CND informed of alarm")
-
 		// for level 0 fire response return immediately,
 		// do not tell the rest of the aisle to stop their process.
 		if br.Reason == ReasonFireLevel0 {
-			if needHTTPError != nil {
-				http.Error(w, needHTTPError.Error(), http.StatusInternalServerError)
-			} else {
-				w.WriteHeader(http.StatusOK)
-			}
+			w.WriteHeader(http.StatusOK)
 
 			return
 		}
@@ -135,52 +116,7 @@ func HandleBroadcast(server *terminal.Server, lg *zap.SugaredLogger, conf Config
 			return
 		}
 
-		if needHTTPError != nil {
-			http.Error(w, needHTTPError.Error(), http.StatusInternalServerError)
-		} else {
-			w.WriteHeader(http.StatusOK)
-		}
-	}
-}
-
-func fireAlarm(level BroadcastReason, server *terminal.Server, loc Location, aisle, id string, ina chan *asrsapi.TerminalAlarm) error {
-	split := strings.Split(id, "-")
-	if len(split) != 2 { // expect NN-NN
-		return fmt.Errorf("invalid location %s", id)
-	}
-
-	location := &asrsapi.Location{
-		LocationByType: &asrsapi.Location_CmFormat{
-			CmFormat: &asrsapi.CMLocation{
-				EquipmentId:         fmt.Sprintf("%s-%s%s-%s", loc.Line, loc.Station, aisle, id),
-				ManufacturingSystem: loc.Line,
-				Workcenter:          loc.Station,
-				Equipment:           aisle,
-				Workstation:         split[0],
-				SubIdentifier:       split[1],
-			},
-		},
-	}
-
-	switch level {
-	case ReasonFireLevel0:
-		ina <- newFireAlarmMessage(server, location, asrsapi.AlarmStatus_Set, asrsapi.AlarmLevel_Warning)
-	case ReasonFireLevel1:
-		ina <- newFireAlarmMessage(server, location, asrsapi.AlarmStatus_Set, asrsapi.AlarmLevel_Serious)
-	default:
-		return fmt.Errorf("unhandled broadcast reason (invalid fire level '%v')", level)
-	}
-
-	return nil
-}
-
-func newFireAlarmMessage(server *terminal.Server, location *asrsapi.Location, status asrsapi.AlarmStatus, level asrsapi.AlarmLevel) *asrsapi.TerminalAlarm {
-	return &asrsapi.TerminalAlarm{
-		Conversation: server.BuildConversationHeader(asrsapi.MessageIDNone),
-		Location:     location,
-		Status:       status,
-		Id:           "TempThreshold",
-		Level:        level,
+		w.WriteHeader(http.StatusOK)
 	}
 }
 

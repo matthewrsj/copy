@@ -8,7 +8,9 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
+	"github.com/cenkalti/backoff"
 	asrsapi "stash.teslamotors.com/cas/asrs/idl/src"
 )
 
@@ -42,8 +44,12 @@ func (t *Tower) getAvailabilityForCommissioning() (*FXRLayout, error) {
 }
 
 func (t *Tower) fetchAvailability() (Availability, error) {
+	cl := http.Client{
+		Timeout: time.Second * 10,
+	}
+
 	// only query for allowed fixtures for quicker response time
-	resp, err := http.Get(t.Remote + _availabilityEndpoint + fmt.Sprintf("?%s=true", _allowedQueryKey))
+	resp, err := cl.Get(t.Remote + _availabilityEndpoint + fmt.Sprintf("?%s=true", _allowedQueryKey))
 	if err != nil {
 		return nil, fmt.Errorf("http.Get %s: %v", t.Remote+_availabilityEndpoint, err)
 	}
@@ -99,18 +105,27 @@ func (t *Tower) sendLoad(fxr *FXR, tray string, recipe *asrsapi.Recipe, tID stri
 		return fmt.Errorf("json.Marshal FXRLoad: %v", err)
 	}
 
-	resp, err := http.Post(t.Remote+_loadEndpoint, "application/json", bytes.NewReader(b))
-	if err != nil {
-		return fmt.Errorf("http.Post: %v", err)
+	c := http.Client{
+		Timeout: time.Second * 5,
 	}
 
-	defer func() {
-		_ = resp.Body.Close()
-	}()
+	bo := backoff.NewExponentialBackOff()
+	bo.MaxElapsedTime = time.Minute * 5
 
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("load failed, received status NOT OK: %v: %v", resp.StatusCode, resp.Status)
-	}
+	return backoff.Retry(func() error {
+		resp, err := c.Post(t.Remote+_loadEndpoint, "application/json", bytes.NewReader(b))
+		if err != nil {
+			return fmt.Errorf("http.Post: %v", err)
+		}
 
-	return nil
+		defer func() {
+			_ = resp.Body.Close()
+		}()
+
+		if resp.StatusCode != http.StatusOK {
+			return fmt.Errorf("load failed, received status NOT OK: %v: %v", resp.StatusCode, resp.Status)
+		}
+
+		return nil
+	}, bo)
 }

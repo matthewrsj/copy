@@ -2,7 +2,10 @@
 package towercontroller
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"time"
 
 	"go.uber.org/zap"
@@ -113,6 +116,7 @@ func (s *StartProcess) action() {
 	}
 
 	twr2Fxr.Recipe.CellMasks = newCellMask(present)
+	twr2Fxr.Op = getOpSnapshot(s.childLogger, s.Config, s.tbc.Raw)
 
 	// performHandshake blocks until the FXR acknowledges receipt of recipe
 	s.performHandshake(&twr2Fxr)
@@ -269,4 +273,45 @@ func (s *StartProcess) performHandshake(msg proto.Message) {
 	} else {
 		s.childLogger.Info("sent recipe and other information to FXR")
 	}
+}
+
+func getOpSnapshot(logger *zap.SugaredLogger, conf Configuration, tid string) *tower.FixtureOperational {
+	c := http.Client{Timeout: time.Second * 5}
+
+	resp, err := c.Get(fmt.Sprintf("%s%s?%s=%s", conf.Remote, cdcontroller.TrayFaultEndpoint, cdcontroller.TrayIDQueryParameter, tid))
+	if err != nil {
+		logger.Errorw("unable to query latest fault record for tray", "error", err)
+		return nil
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		logger.Warnw("latest fault record query response NOT OK", "status", resp.Status, "status_code", resp.StatusCode)
+		return nil
+	}
+
+	rb, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		logger.Errorw("unable to read fault record query response", "error", err)
+		return nil
+	}
+
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	var fr cdcontroller.FaultRecord
+	if err = json.Unmarshal(rb, &fr); err != nil {
+		logger.Errorw("unable to unmarshal fault record query response", "error", err)
+		return nil
+	}
+
+	var ops tower.FixtureOperational
+	if err = proto.Unmarshal(fr.OpSnapshot, &ops); err != nil {
+		logger.Errorw("unable to unmarshal operational snapshot in fault record query response", "error", err)
+		return nil
+	}
+
+	logger.Info("ops snapshot received from C/D Controller", "snapshot", ops.String())
+
+	return &ops
 }

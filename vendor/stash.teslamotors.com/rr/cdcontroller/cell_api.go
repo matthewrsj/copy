@@ -148,7 +148,10 @@ func (c *CellAPIClient) CloseProcessStep(sn, rcpeName string, version int) error
 		RecipeVersion int    `json:"current_recipe_version"`
 	}
 
-	b, err := json.Marshal(request{RecipeName: rcpeName, RecipeVersion: version})
+	// split the recipe name on the sep for version and only take the first part
+	// since split always returns at least a 1-elem list this will not panic, even if the
+	// name does not contain the version
+	b, err := json.Marshal(request{RecipeName: strings.Split(rcpeName, " - ")[0], RecipeVersion: version})
 	if err != nil {
 		return fmt.Errorf("marshal request json: %v", err)
 	}
@@ -290,8 +293,17 @@ func (c *CellAPIClient) UpdateProcessStatus(sn, fixture string, s TrayStatus) er
 	return nil
 }
 
+// SetCellStatusesNoClose sets the pass/fail data of a list of cells but does not close the step
+func (c *CellAPIClient) SetCellStatusesNoClose(tray, eqName, recipe string, ver int, cpf []CellPFData) error {
+	return c.setCellStatusesWithCloseOption(tray, eqName, recipe, ver, cpf, false)
+}
+
 // SetCellStatuses sets the pass/fail data of a list of cells
 func (c *CellAPIClient) SetCellStatuses(tray string, eqName, recipe string, ver int, cpf []CellPFData) error {
+	return c.setCellStatusesWithCloseOption(tray, eqName, recipe, ver, cpf, true)
+}
+
+func (c *CellAPIClient) setCellStatusesWithCloseOption(tray, eqName, recipe string, ver int, cpf []CellPFData, closeStep bool) error {
 	req := CellStatusRequest{
 		EquipmentName: eqName,
 		RecipeName:    recipe,
@@ -305,6 +317,11 @@ func (c *CellAPIClient) SetCellStatuses(tray string, eqName, recipe string, ver 
 	}
 
 	url := urlJoin(c.baseURL, fmt.Sprintf(c.eps.cellStatusFmt, tray))
+
+	if !closeStep {
+		// default is to close the step unless complete query parameter is set to 0
+		url += "?complete=0"
+	}
 
 	// nolint:gosec // easier to construct the URL
 	resp, err := http.Post(url, "application/json", bytes.NewReader(b))

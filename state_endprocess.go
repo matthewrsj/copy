@@ -42,7 +42,6 @@ type EndProcess struct {
 	fxrInfo *FixtureInfo
 }
 
-// nolint:gocognit // TODO: simplify reporting logic. Need to work with cell api team to eliminate the two-step logic
 func (e *EndProcess) action() {
 	if len(e.cells) == 0 { // we short-circuited here or something went wrong, just re-get the map
 		e.childLogger.Info("empty cell map, querying API for new map")

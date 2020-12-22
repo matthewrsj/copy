@@ -14,7 +14,14 @@ import (
 	asrsapi "stash.teslamotors.com/cas/asrs/idl/src"
 )
 
-func handleIncomingLoad(g asrsapi.Terminal_LoadOperationsServer, lg *zap.SugaredLogger, prodAM, testAM *AisleManager, aisles map[string]*Aisle, lo *asrsapi.LoadOperation) error {
+func handleIncomingLoad(
+	g asrsapi.Terminal_LoadOperationsServer,
+	lg *zap.SugaredLogger,
+	prodAM, testAM *AisleManager,
+	aisles map[string]*Aisle,
+	lo *asrsapi.LoadOperation,
+	demoMode bool,
+) error {
 	logger := lg.With(
 		"location", lo.GetLocation().GetCmFormat().GetEquipmentId(),
 		"trays", lo.GetTray().GetTrayId(),
@@ -36,7 +43,7 @@ func handleIncomingLoad(g asrsapi.Terminal_LoadOperationsServer, lg *zap.Sugared
 		// if aisleLocation is empty perform the initial load
 		if strings.Trim(aisleLocation, "0") == "" {
 			logger.Info("no aisle location, routing to aisle")
-			return handleInitialLoad(g, logger, prodAM, testAM, aisles, lo)
+			return handleInitialLoad(g, logger, prodAM, testAM, aisles, lo, demoMode)
 		}
 
 		// if aisleLocation is populated perform the tower load
@@ -63,7 +70,7 @@ func handleIncomingLoad(g asrsapi.Terminal_LoadOperationsServer, lg *zap.Sugared
 
 const _nonProdPrefix = "test_"
 
-func handleInitialLoad(g asrsapi.Terminal_LoadOperationsServer, logger *zap.SugaredLogger, prodAM, testAM *AisleManager, aisles map[string]*Aisle, lo *asrsapi.LoadOperation) error {
+func selectWithRoundRobin(logger *zap.SugaredLogger, prodAM, testAM *AisleManager, aisles map[string]*Aisle, lo *asrsapi.LoadOperation) (string, error) {
 	need := len(lo.GetTray().GetTrayId())
 	logger.Debugw("need space for trays", "need", need)
 
@@ -75,10 +82,10 @@ func handleInitialLoad(g asrsapi.Terminal_LoadOperationsServer, logger *zap.Suga
 
 	var aislePicked string
 
-	for i := 0; i < len(am.RoundRobin()); i++ {
+	for i := 0; i < len(am.OpenAisles()); i++ {
 		aisleName := am.GetNextAisleName()
 		if aisleName == "" {
-			return errors.New("unable to find next aisle name")
+			return "", errors.New("unable to find next aisle name")
 		}
 
 		logger.Infow("checking availability for aisle for initial place", "aisle", aisleName)
@@ -89,6 +96,10 @@ func handleInitialLoad(g asrsapi.Terminal_LoadOperationsServer, logger *zap.Suga
 			continue
 		}
 
+		// remove spaces and _nonProdPrefix then check if it's a commissioning tray
+		// we've already routed to a non-production aisle at this point if it has _nonProdPrefix
+		stepName := strings.TrimPrefix(strings.TrimSpace(strings.Split(lo.GetRecipe().GetStep(), " - ")[0]), _nonProdPrefix)
+		isCommissionRecipe := strings.HasPrefix(stepName, CommissionSelfTestRecipeName)
 		aisle.avail = 0
 
 		var (
@@ -102,16 +113,21 @@ func handleInitialLoad(g asrsapi.Terminal_LoadOperationsServer, logger *zap.Suga
 			go func(tower *Tower) {
 				defer twg.Done()
 
-				available, err := tower.getAvailability()
+				availFunc := tower.getAvailability
+				if isCommissionRecipe {
+					// has CommissionSelfTestRecipeName, so check for availability for commissioning
+					// instead of regular operation.
+					availFunc = tower.getAvailabilityForCommissioning
+				}
 
+				available, err := availFunc()
 				if err != nil {
 					logger.Errorw("get tower availability", "error", err)
 					return
 				}
 
 				mx.Lock()
-				// TODO: revert back to GetAvail() when hack removed
-				aisle.avail += available.GetAvailForTwoTrayPlace() // not atomic
+				aisle.avail += available.GetAvail() // not atomic
 				mx.Unlock()
 			}(tower)
 		}
@@ -128,11 +144,114 @@ func handleInitialLoad(g asrsapi.Terminal_LoadOperationsServer, logger *zap.Suga
 		logger.Infow("not enough fixtures available, checking next aisle", "aisle", aisleName)
 	}
 
+	if aislePicked == "" {
+		return "", errors.New("not enough fixtures available")
+	}
+
+	return aislePicked, nil
+}
+
+func selectMaxAvailable(logger *zap.SugaredLogger, prodAM, testAM *AisleManager, aisles map[string]*Aisle, lo *asrsapi.LoadOperation) (string, error) {
+	need := len(lo.GetTray().GetTrayId())
+	logger.Debugw("need space for trays", "need", need)
+
+	// determine which aisle manager to use
+	am := prodAM
+	if strings.HasPrefix(strings.ToLower(lo.GetRecipe().GetStep()), strings.ToLower(_nonProdPrefix)) {
+		am = testAM
+	}
+
+	var (
+		maxAvailAisleName string
+		maxAvailAisleNum  int
+	)
+
+	for i := 0; i < len(am.OpenAisles()); i++ {
+		aisleName := am.GetNextAisleName()
+		if aisleName == "" {
+			return "", errors.New("unable to find next aisle name")
+		}
+
+		logger.Infow("checking availability for aisle for initial place", "aisle", aisleName)
+
+		aisle, ok := aisles[aisleName]
+		if !ok {
+			logger.Errorw("invalid aisle name", "name", aisleName)
+			continue
+		}
+
+		// remove spaces and _nonProdPrefix then check if it's a commissioning tray
+		// we've already routed to a non-production aisle at this point if it has _nonProdPrefix
+		stepName := strings.TrimPrefix(strings.TrimSpace(strings.Split(lo.GetRecipe().GetStep(), " - ")[0]), _nonProdPrefix)
+		isCommissionRecipe := strings.HasPrefix(stepName, CommissionSelfTestRecipeName)
+		aisle.avail = 0
+
+		var (
+			twg sync.WaitGroup
+			mx  sync.Mutex
+		)
+
+		twg.Add(len(aisle.Towers))
+
+		for _, tower := range aisle.Towers {
+			go func(tower *Tower) {
+				defer twg.Done()
+
+				availFunc := tower.getAvailability
+				if isCommissionRecipe {
+					// has CommissionSelfTestRecipeName, so check for availability for commissioning
+					// instead of regular operation.
+					availFunc = tower.getAvailabilityForCommissioning
+				}
+
+				available, err := availFunc()
+				if err != nil {
+					logger.Errorw("get tower availability", "error", err)
+					return
+				}
+
+				mx.Lock()
+				aisle.avail += available.GetAvail() // not atomic
+				mx.Unlock()
+			}(tower)
+		}
+
+		twg.Wait()
+
+		logger.Infow("aisle has available fixtures", "aisle", aisleName, "available", aisle.avail)
+
+		if aisle.avail >= maxAvailAisleNum {
+			maxAvailAisleName = aisleName
+			maxAvailAisleNum = aisle.avail
+		}
+	}
+
+	if maxAvailAisleName == "" || maxAvailAisleNum < need {
+		return "", errors.New("not enough fixtures available")
+	}
+
+	return maxAvailAisleName, nil
+}
+
+func handleInitialLoad(
+	g asrsapi.Terminal_LoadOperationsServer,
+	logger *zap.SugaredLogger,
+	prodAM, testAM *AisleManager,
+	aisles map[string]*Aisle,
+	lo *asrsapi.LoadOperation,
+	demoMode bool,
+) error {
 	// whether or not we place into aisle, we need to set this to Current
 	lo.GetState().StateType = asrsapi.StateType_Current
 
-	if aislePicked == "" {
-		// no aisle found with any availability, route back to current location
+	selector := selectMaxAvailable
+	if demoMode {
+		selector = selectWithRoundRobin
+	}
+
+	aislePicked, err := selector(logger, prodAM, testAM, aisles, lo)
+	if err != nil {
+		// no aisle found with enough availability, route back to current location
 		// keep the location the same
 		return backoff.Retry(func() error {
 			return g.Send(lo)
@@ -141,8 +260,6 @@ func handleInitialLoad(g asrsapi.Terminal_LoadOperationsServer, logger *zap.Suga
 
 	logger.Infow("routing to aisle", "aisle", aislePicked)
 	lo.GetLocation().GetCmFormat().Equipment = aislePicked
-
-	var err error
 
 	lo.GetLocation().GetCmFormat().EquipmentId, err = replaceAisle(lo.GetLocation().GetCmFormat().GetEquipmentId(), aislePicked)
 	if err != nil {
@@ -167,6 +284,8 @@ func rejectLoad(g asrsapi.Terminal_LoadOperationsServer, lo *asrsapi.LoadOperati
 		Description: err.Error(),
 	}
 
+	lo.GetState().StateType = asrsapi.StateType_Current
+
 	sErr := g.Send(lo)
 	if sErr != nil {
 		err = fmt.Errorf("reject tray due to error '%v': %v", err, sErr)
@@ -176,14 +295,21 @@ func rejectLoad(g asrsapi.Terminal_LoadOperationsServer, lo *asrsapi.LoadOperati
 }
 
 func handleTowerLoad(g asrsapi.Terminal_LoadOperationsServer, lg *zap.SugaredLogger, aisles map[string]*Aisle, lo *asrsapi.LoadOperation) error {
-	name := strings.TrimSpace(strings.Split(lo.GetRecipe().GetName(), " - ")[0])
-	switch name {
-	case CommissionSelfTestRecipeName:
+	stepName := strings.TrimPrefix(strings.TrimSpace(strings.Split(lo.GetRecipe().GetStep(), " - ")[0]), _nonProdPrefix)
+	isCommissionRecipe := strings.HasPrefix(stepName, CommissionSelfTestRecipeName)
+
+	lg.Infow("handling tower load for recipe", "step", stepName)
+
+	if isCommissionRecipe {
+		lg.Debug("commissioning tray, routing to fixture that needs commissioning")
+
 		if err := handleTowerLoadCommissioning(g, lg, aisles, lo); err != nil {
 			lg.Errorw("handle tower load for commissioning tray", "error", err)
 			return err
 		}
-	default:
+	} else {
+		lg.Debug("non-commissioning tray, routing to fixture for normal operation")
+
 		if err := handleTowerLoadNormalOperation(g, lg, aisles, lo); err != nil {
 			lg.Errorw("handle tower load for normal operation", "error", err)
 			return err
@@ -409,6 +535,8 @@ type availabilityHandler struct {
 	first, second availabilityReport
 }
 
+const _rearForkLimitedColumn = 16
+
 func (ah *availabilityHandler) getAvailability() error {
 	defer func() { ah.timesTried++ }()
 
@@ -444,12 +572,7 @@ func (ah *availabilityHandler) getAvailability() error {
 				return
 			}
 
-			var numFree int
-			if len(ah.trays) == 2 {
-				numFree = available.GetAvailForTwoTrayPlace()
-			} else {
-				numFree = available.GetAvail()
-			}
+			numFree := available.GetAvail()
 
 			ah.lg.Debugw("availability for tower", "tower", tower.Remote, "available", numFree)
 
@@ -482,13 +605,38 @@ func (ah *availabilityHandler) getAvailability() error {
 
 	ah.first = reports[0]
 
-	if ah.first.numFree < 2 && len(ah.trays) == 2 {
-		if len(reports) < 2 || reports[1].numFree == 0 {
-			ah.lg.Info("not enough fixtures in aisle for two trays")
-			return permErrorIfViolated(ah.timesTried, ah.timesToTry, errors.New("not enough fixtures in aisle for two trays"))
+	ah.lg.Infow("checking if we need another tower", "ah.first.numFree", ah.first.numFree, "len(ah.trays)", len(ah.trays))
+
+	needAnotherTower := ah.first.numFree < 2 && len(ah.trays) == 2
+
+	if !needAnotherTower {
+		// we have enough fixtures in this tower for the two trays
+		ah.lg.Info("enough fixtures in tower for two trays")
+		return nil
+	}
+
+	// we need a second tower because there wasn't enough room in the first one
+	for i := 1; i < len(reports); i++ {
+		if reports[i].numFree == 0 {
+			// sorted into highest availability first
+			break
 		}
 
-		ah.second = reports[1]
+		if reports[i].fixture.Coord.Col == _rearForkLimitedColumn {
+			continue
+		}
+
+		ah.second = reports[i]
+
+		// we got all we need
+		break
+	}
+
+	// verify we found a second tower with availability
+	if ah.second.fixture == nil {
+		// we need a second tower, but none was found with any availability
+		ah.lg.Info("not enough fixtures in aisle for two trays")
+		return permErrorIfViolated(ah.timesTried, ah.timesToTry, errors.New("not enough fixtures in aisle for two trays"))
 	}
 
 	return nil

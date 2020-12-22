@@ -1,10 +1,14 @@
 package towercontroller
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"time"
 
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/proto"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cdcontroller"
 	"stash.teslamotors.com/rr/protostream"
@@ -69,6 +73,8 @@ func (i *InProcess) action() {
 
 			i.cellResponse = msg.GetOp().GetCells()
 
+			postClearFaultToRemote(i.childLogger, i.Config, i.tbc.Raw, i.fxbc.Raw)
+
 			return
 		case tower.FixtureStatus_FIXTURE_STATUS_FAULTED:
 			statusMsg = "fixture done with tray; fixture faulted"
@@ -80,6 +86,8 @@ func (i *InProcess) action() {
 
 			i.childLogger.Infow("cell statuses when faulted", "cells", msg.GetOp().GetCells())
 			i.childLogger.Info(statusMsg)
+
+			postOpSnapshotToRemote(i.childLogger, i.Config, i.tbc.Raw, i.fxbc.Raw, msg.GetOp())
 
 			return
 		default:
@@ -131,4 +139,70 @@ func (i *InProcess) Next() statemachine.State {
 	i.childLogger.Debugw("transitioning to next state", "next", statemachine.NameOf(next))
 
 	return next
+}
+
+func postOpSnapshotToRemote(logger *zap.SugaredLogger, conf Configuration, tray, location string, op *tower.FixtureOperational) {
+	opData, err := proto.Marshal(op)
+	if err != nil {
+		logger.Errorw("unable to marshal operational message for snapshot", "error", err)
+		return
+	}
+
+	tr := cdcontroller.TrayFaultRequest{
+		OpSnapshot: opData,
+		Tray:       tray,
+		Location:   location,
+	}
+
+	jb, err := json.Marshal(tr)
+	if err != nil {
+		logger.Errorw("unable to marshal tray fault request", "error", err)
+		return
+	}
+
+	c := http.Client{Timeout: time.Second * 5}
+
+	resp, err := c.Post(fmt.Sprintf("%s%s", conf.Remote, cdcontroller.TrayFaultEndpoint), "application/json", bytes.NewReader(jb))
+	if err != nil {
+		logger.Errorw("unable to write tray fault request", "error", err)
+		return
+	}
+
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode != http.StatusOK {
+		logger.Errorw("status NOT OK when writing tray fault request", "status", resp.Status, "status_code", resp.StatusCode)
+	}
+}
+
+func postClearFaultToRemote(logger *zap.SugaredLogger, conf Configuration, tray, location string) {
+	tr := cdcontroller.TrayFaultRequest{
+		Clear:    true,
+		Tray:     tray,
+		Location: location,
+	}
+
+	jb, err := json.Marshal(tr)
+	if err != nil {
+		logger.Errorw("unable to marshal tray fault request", "error", err)
+		return
+	}
+
+	c := http.Client{Timeout: time.Second * 5}
+
+	resp, err := c.Post(fmt.Sprintf("%s%s", conf.Remote, cdcontroller.TrayFaultEndpoint), "application/json", bytes.NewReader(jb))
+	if err != nil {
+		logger.Errorw("unable to write tray fault request", "error", err)
+		return
+	}
+
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode != http.StatusOK {
+		logger.Errorw("status NOT OK when writing tray fault request", "status", resp.Status, "status_code", resp.StatusCode)
+	}
 }

@@ -25,15 +25,18 @@ type TerminalServer struct {
 
 	prodAM, testAM *AisleManager
 	aisles         map[string]*Aisle
-	Feeds          InputFeeds
+	demoMode       bool
+
+	Feeds InputFeeds
 }
 
 // NewTerminalServer returns a new TerminalServer with allocated feeds and pool
-func NewTerminalServer(prodAM, testAM *AisleManager, aisles map[string]*Aisle) *TerminalServer {
+func NewTerminalServer(prodAM, testAM *AisleManager, aisles map[string]*Aisle, demoMode bool) *TerminalServer {
 	return &TerminalServer{
-		prodAM: prodAM,
-		testAM: testAM,
-		aisles: aisles,
+		prodAM:   prodAM,
+		testAM:   testAM,
+		aisles:   aisles,
+		demoMode: demoMode,
 		Feeds: InputFeeds{
 			LoadOp:   make(chan *asrsapi.LoadOperation),
 			UnloadOp: make(chan *asrsapi.UnloadOperation),
@@ -125,7 +128,7 @@ func (s *TerminalServer) LoadOperations(g asrsapi.Terminal_LoadOperationsServer)
 			}
 
 			go func() {
-				if err := handleIncomingLoad(g, s.SugaredLogger, s.prodAM, s.testAM, s.aisles, in); err != nil {
+				if err := handleIncomingLoad(g, s.SugaredLogger, s.prodAM, s.testAM, s.aisles, in, s.demoMode); err != nil {
 					s.Error(err)
 				}
 			}()

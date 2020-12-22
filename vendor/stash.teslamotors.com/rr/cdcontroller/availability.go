@@ -30,6 +30,8 @@ const (
 // nolint:gocognit // no reason to split this up
 func HandleAvailable(configPath string, logger *zap.SugaredLogger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		allowCORS(w)
+
 		logger.Infow("got request to /available", "remote", r.RemoteAddr)
 
 		config, err := LoadConfig(configPath)
