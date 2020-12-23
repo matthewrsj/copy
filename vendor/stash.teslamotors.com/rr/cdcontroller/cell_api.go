@@ -60,6 +60,8 @@ type endpoints struct {
 	nextProcessStepFmt string
 	cellStatusFmt      string
 	closeProcessFmt    string
+	trayHoldFmt        string
+	trayReleaseFmt     string
 }
 
 const (
@@ -75,6 +77,10 @@ const (
 	DefaultCellStatusFmt = "/trays/%s/formation/cd/status"
 	// DefaultCloseProcessFmt is the default endpoint for closing a process step
 	DefaultCloseProcessFmt = "/trays/%s/formation/next"
+	// DefaultTrayHoldFmt is default endpoint for flushing a tray to inspection station
+	DefaultTrayHoldFmt = "/trays/%s/hold"
+	// DefaultTrayReleaseFmt is the default endpoint for releasing a held tray
+	DefaultTrayReleaseFmt = "/trays/%s/release"
 )
 
 // CellAPIOption function to set internal fields on the client
@@ -119,6 +125,22 @@ func WithCloseProcessFmtEndpoint(epf string) CellAPIOption {
 	}
 }
 
+// WithTrayHoldFmtEndpoint returns an option to set the client tray hold endpoint.
+// The epf argument is a format string that accepts the tray serial number.
+func WithTrayHoldFmtEndpoint(epf string) CellAPIOption {
+	return func(c *CellAPIClient) {
+		c.eps.trayHoldFmt = epf
+	}
+}
+
+// WithTrayReleaseFmtEndpoint returns an option to set the client tray release endpoint.
+// The epf argument is a format string that accepts the tray serial number.
+func WithTrayReleaseFmtEndpoint(epf string) CellAPIOption {
+	return func(c *CellAPIClient) {
+		c.eps.trayReleaseFmt = epf
+	}
+}
+
 // NewCellAPIClient returns a pointer to a new CellAPIClient object configured with opts.
 func NewCellAPIClient(baseURL string, opts ...CellAPIOption) *CellAPIClient {
 	c := CellAPIClient{
@@ -129,6 +151,8 @@ func NewCellAPIClient(baseURL string, opts ...CellAPIOption) *CellAPIClient {
 			nextProcessStepFmt: DefaultNextProcessStepFmt,
 			cellStatusFmt:      DefaultCellStatusFmt,
 			closeProcessFmt:    DefaultCloseProcessFmt,
+			trayHoldFmt:        DefaultTrayHoldFmt,
+			trayReleaseFmt:     DefaultTrayReleaseFmt,
 		},
 	}
 
@@ -374,6 +398,66 @@ func (c *CellAPIClient) GetNextProcessStep(sn string) (NextFormationStep, error)
 	}
 
 	return r, nil
+}
+
+type holdRequest struct {
+	EquipmentName string `json:"equipment_name"`
+	Reason        string `json:"reason"`
+}
+
+// HoldTray puts a hold on the tray and sends it to the inspection station
+func (c *CellAPIClient) HoldTray(sn string) error {
+	const (
+		holdEquip  = "test-hold"
+		holdReason = "flush"
+	)
+
+	hr := holdRequest{
+		EquipmentName: holdEquip,
+		Reason:        holdReason,
+	}
+
+	hrb, err := json.Marshal(hr)
+	if err != nil {
+		return fmt.Errorf("marshal request: %v", err)
+	}
+
+	url := urlJoin(c.baseURL, fmt.Sprintf(c.eps.trayHoldFmt, sn))
+
+	resp, err := http.Post(url, "application/json", bytes.NewReader(hrb))
+	if err != nil {
+		return fmt.Errorf("post request: %v", err)
+	}
+
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("post request status code NOT OK: status_code %d, status %s", resp.StatusCode, resp.Status)
+	}
+
+	return nil
+}
+
+// ReleaseTray releases a held tray to return to regular step
+func (c *CellAPIClient) ReleaseTray(sn string) error {
+	url := urlJoin(c.baseURL, fmt.Sprintf(c.eps.trayReleaseFmt, sn))
+
+	resp, err := http.Post(url, "", bytes.NewReader([]byte{}))
+	if err != nil {
+		return fmt.Errorf("post request: %v", err)
+	}
+
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("post request status code NOT OK: status_code %d, status %s", resp.StatusCode, resp.Status)
+	}
+
+	return nil
 }
 
 func urlJoin(base, endpoint string) string {

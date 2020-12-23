@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -116,7 +117,10 @@ func (s *StartProcess) action() {
 	}
 
 	twr2Fxr.Recipe.CellMasks = newCellMask(present)
-	twr2Fxr.Op = getOpSnapshot(s.childLogger, s.Config, s.tbc.Raw)
+
+	if !strings.HasSuffix(s.processStepName, cdcontroller.CommissionSelfTestRecipeName) {
+		twr2Fxr.Op = getOpSnapshot(s.childLogger, s.Config, s.tbc.Raw)
+	}
 
 	// performHandshake blocks until the FXR acknowledges receipt of recipe
 	s.performHandshake(&twr2Fxr)
@@ -275,24 +279,24 @@ func (s *StartProcess) performHandshake(msg proto.Message) {
 	}
 }
 
-func getOpSnapshot(logger *zap.SugaredLogger, conf Configuration, tid string) *tower.FixtureOperational {
+func getFaultRecord(logger *zap.SugaredLogger, conf Configuration, tid string) (cdcontroller.FaultRecord, error) {
 	c := http.Client{Timeout: time.Second * 5}
 
 	resp, err := c.Get(fmt.Sprintf("%s%s?%s=%s", conf.Remote, cdcontroller.TrayFaultEndpoint, cdcontroller.TrayIDQueryParameter, tid))
 	if err != nil {
 		logger.Errorw("unable to query latest fault record for tray", "error", err)
-		return nil
+		return cdcontroller.FaultRecord{}, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		logger.Warnw("latest fault record query response NOT OK", "status", resp.Status, "status_code", resp.StatusCode)
-		return nil
+		return cdcontroller.FaultRecord{}, err
 	}
 
 	rb, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		logger.Errorw("unable to read fault record query response", "error", err)
-		return nil
+		return cdcontroller.FaultRecord{}, err
 	}
 
 	defer func() {
@@ -302,6 +306,15 @@ func getOpSnapshot(logger *zap.SugaredLogger, conf Configuration, tid string) *t
 	var fr cdcontroller.FaultRecord
 	if err = json.Unmarshal(rb, &fr); err != nil {
 		logger.Errorw("unable to unmarshal fault record query response", "error", err)
+		return cdcontroller.FaultRecord{}, err
+	}
+
+	return fr, nil
+}
+
+func getOpSnapshot(logger *zap.SugaredLogger, conf Configuration, tid string) *tower.FixtureOperational {
+	fr, err := getFaultRecord(logger, conf, tid)
+	if err != nil {
 		return nil
 	}
 
