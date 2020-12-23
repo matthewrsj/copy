@@ -6,6 +6,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v1.1.0] - 2020-12-22
+### Added
+- Allow CORS requests
+- Add recipe fault recovery when a tray has faulted on another fixture.
+
+### Changed
+- POST cell statuses to Cell API even when there's a fault, but do not close step.
+
+### Removed
+- No longer request unload when a fixture faults due to fire alarm, as this is handled by
+  watchtower.
+- [configuration] Turn off log duplication by docker to prevent disk running out of space.
+
 ## [v1.0.3] - 2020-12-08
 ### Removed
 - No longer command fire suppression response from TC, it is now handled by watchtower service.
