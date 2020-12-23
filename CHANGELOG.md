@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v1.1.1] - 2020-12-22
+### Fixed
+- Internally record fixture fault so cell status post does not close step
+
 ## [v1.1.0] - 2020-12-22
 ### Added
 - Allow CORS requests
