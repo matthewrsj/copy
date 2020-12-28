@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -91,7 +90,7 @@ func (s *StartProcess) action() {
 
 	var err error
 
-	s.cells, err = getCellMap(s.mockCellAPI, s.childLogger, s.CellAPIClient, s.tbc.SN)
+	s.cells, err = getCellMap(s.mockCellAPI, s.childLogger, s.CellAPIClient, s.tbc.SN, s.processStepName)
 	if err != nil {
 		s.childLogger.Errorw("get cell map", "error", err)
 		s.smFatal = true
@@ -118,7 +117,7 @@ func (s *StartProcess) action() {
 
 	twr2Fxr.Recipe.CellMasks = newCellMask(present)
 
-	if !strings.HasSuffix(s.processStepName, cdcontroller.CommissionSelfTestRecipeName) {
+	if !isCommissionRecipe(s.processStepName) {
 		twr2Fxr.Op = getOpSnapshot(s.childLogger, s.Config, s.tbc.Raw)
 	}
 

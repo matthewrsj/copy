@@ -8,7 +8,7 @@ import (
 )
 
 func Test_getCellMapMocked(t *testing.T) {
-	cm, err := getCellMap(true, zap.NewExample().Sugar(), nil, "")
+	cm, err := getCellMap(true, zap.NewExample().Sugar(), nil, "", "")
 	assert.Nil(t, err)
 	assert.Equal(t, 4, len(cm))
 }

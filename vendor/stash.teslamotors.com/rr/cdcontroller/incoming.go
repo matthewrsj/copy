@@ -535,8 +535,6 @@ type availabilityHandler struct {
 	first, second availabilityReport
 }
 
-const _rearForkLimitedColumn = 16
-
 func (ah *availabilityHandler) getAvailability() error {
 	defer func() { ah.timesTried++ }()
 
@@ -615,29 +613,18 @@ func (ah *availabilityHandler) getAvailability() error {
 		return nil
 	}
 
+	ah.lg.Infow("need another tower", "len_reports", len(reports), "reports", reports)
+
 	// we need a second tower because there wasn't enough room in the first one
-	for i := 1; i < len(reports); i++ {
-		if reports[i].numFree == 0 {
-			// sorted into highest availability first
-			break
-		}
-
-		if reports[i].fixture.Coord.Col == _rearForkLimitedColumn {
-			continue
-		}
-
-		ah.second = reports[i]
-
-		// we got all we need
-		break
-	}
-
-	// verify we found a second tower with availability
-	if ah.second.fixture == nil {
+	if len(reports) < 2 || reports[1].numFree == 0 {
 		// we need a second tower, but none was found with any availability
 		ah.lg.Info("not enough fixtures in aisle for two trays")
+
 		return permErrorIfViolated(ah.timesTried, ah.timesToTry, errors.New("not enough fixtures in aisle for two trays"))
 	}
+
+	ah.second = reports[1]
+	ah.lg.Info("fixtures in aisle found for two trays")
 
 	return nil
 }
@@ -656,10 +643,11 @@ func getLocation(aisle *Aisle, lg *zap.SugaredLogger, trays []string, timesToTry
 	bo.MaxInterval = time.Second * 30
 
 	if err := backoff.Retry(ah.getAvailability, bo); err != nil {
+		lg.Errorw("unable to get enough availability for tray(s)", "error", err)
 		return operation{}, fmt.Errorf("get aisle availability: %v", err)
 	}
 
-	lg.Info("aisle has available fixtures")
+	lg.Info("aisle has enough fixtures for tray(s)")
 
 	var (
 		front, back availabilityReport
@@ -686,11 +674,15 @@ func getLocation(aisle *Aisle, lg *zap.SugaredLogger, trays []string, timesToTry
 		return operation{}, fmt.Errorf("unexpected number of trays received: %d", len(trays))
 	}
 
-	return operation{
+	op := operation{
 		front:   front,
 		back:    back,
 		sendTwo: sendTwo,
-	}, nil
+	}
+
+	lg.Infow("handling operation for tray", "front", op.front.fixture, "back", op.back.fixture, "send_two", op.sendTwo)
+
+	return op, nil
 }
 
 func handleIncomingUnload(g asrsapi.Terminal_UnloadOperationsServer, uo *asrsapi.UnloadOperation) error {

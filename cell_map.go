@@ -11,9 +11,14 @@ import (
 	"stash.teslamotors.com/rr/cdcontroller"
 )
 
-func getCellMap(mockCellAPI bool, logger *zap.SugaredLogger, ca *cdcontroller.CellAPIClient, tray string) (map[string]cdcontroller.CellData, error) {
+func getCellMap(mockCellAPI bool, logger *zap.SugaredLogger, ca *cdcontroller.CellAPIClient, tray, recipe string) (map[string]cdcontroller.CellData, error) {
 	if !mockCellAPI {
 		logger.Info("GetCellMap")
+
+		if isCommissionRecipe(recipe) {
+			return ca.GetCellMapForCommissioning(tray)
+		}
+
 		return ca.GetCellMap(tray)
 	}
 

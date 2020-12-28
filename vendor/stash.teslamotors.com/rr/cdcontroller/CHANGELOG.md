@@ -6,6 +6,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v1.1.2]
+### Added
+- Ability to generate cell map without considering status codes for commission recipe
+  purposes.
+
+## [v1.1.1]
+### Fixes
+- Remove guard to placing in last column, as this caused a nil-pointer dereference.
+- Better logging in tower selection.
+
+### Added
+- OPTIONS to CORS allowances
+- HoldTray and ReleaseTray helpers for egressing trays that are faulting everything
+
 ## [v1.1.0]
 ### Added
 - Fault management system to track Operational snapshots for trays that ended on a fixture fault.

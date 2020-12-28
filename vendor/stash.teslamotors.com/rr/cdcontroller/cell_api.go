@@ -223,8 +223,18 @@ func (c *CellAPIClient) CloseProcessStep(sn, rcpeName string, version int) error
 	return nil
 }
 
+// GetCellMapForCommissioning ignores previously failed locations when generating the returned map
+// to allow commissioning trays to continue testing locations
+func (c *CellAPIClient) GetCellMapForCommissioning(sn string) (map[string]CellData, error) {
+	return c.getCellMapWithStatusOption(sn, false)
+}
+
 // GetCellMap fetches the cell map for the given tray sn
 func (c *CellAPIClient) GetCellMap(sn string) (map[string]CellData, error) {
+	return c.getCellMapWithStatusOption(sn, true)
+}
+
+func (c *CellAPIClient) getCellMapWithStatusOption(sn string, useStatus bool) (map[string]CellData, error) {
 	url := urlJoin(c.baseURL, fmt.Sprintf(c.eps.cellMapFmt, sn))
 
 	// nolint:gosec // easier to construct the URL
@@ -255,7 +265,7 @@ func (c *CellAPIClient) GetCellMap(sn string) (map[string]CellData, error) {
 	cm := make(map[string]CellData, maxCells)
 
 	for _, cell := range cmr.Cells {
-		if cell.IsEmpty || cell.StatusCode != 0 {
+		if cell.IsEmpty || (useStatus && cell.StatusCode != 0) {
 			// no cell present or cell previously failed
 			continue
 		}

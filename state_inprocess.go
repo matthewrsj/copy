@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -94,7 +93,7 @@ func (i *InProcess) action() {
 			i.childLogger.Infow("cell statuses when faulted", "cells", msg.GetOp().GetCells())
 			i.childLogger.Info(statusMsg)
 
-			if !strings.HasSuffix(i.processStepName, cdcontroller.CommissionSelfTestRecipeName) {
+			if !isCommissionRecipe(i.processStepName) {
 				postOpSnapshotToRemote(i.childLogger, i.Config, i.tbc.Raw, i.fxbc.Raw, msg.GetOp())
 				holdTrayIfFaultsExceedLimit(i.childLogger, i.CellAPIClient, i.Config, i.mockCellAPI, i.tbc.Raw)
 			}

@@ -52,7 +52,7 @@ func (e *EndProcess) action() {
 
 		_ = backoff.Retry(func() error {
 			var err error
-			if e.cells, err = getCellMap(e.mockCellAPI, e.childLogger, e.CellAPIClient, e.tbc.SN); err != nil {
+			if e.cells, err = getCellMap(e.mockCellAPI, e.childLogger, e.CellAPIClient, e.tbc.SN, e.processStepName); err != nil {
 				e.childLogger.Errorw("get cell map", "error", err)
 
 				return err
@@ -90,7 +90,7 @@ func (e *EndProcess) action() {
 		// skipClose at this point is a bit of a misnomer, but essentially means we were unable to even start a recipe
 		// on these cells either due to internal error or fixture not being responsive. In this case we have no cell
 		// statuses to even post.
-		e.childLogger.Info("skipClose set, not setting cell statuses")
+		e.childLogger.Info("skipClose set or commissioning tray, not setting cell statuses")
 	}
 
 	msg := "tray complete"
@@ -261,7 +261,7 @@ func (e *EndProcess) setCellStatuses() {
 	}
 
 	statusSetter := e.CellAPIClient.SetCellStatuses
-	if e.fixtureFault || e.processStepName == cdcontroller.CommissionSelfTestRecipeName {
+	if e.fixtureFault || isCommissionRecipe(e.processStepName) {
 		statusSetter = e.CellAPIClient.SetCellStatusesNoClose
 	}
 
