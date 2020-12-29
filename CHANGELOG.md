@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v1.2.0] - 2020-12-29
+### Added
+- New feature: egress trays to manual inspection station when fixture fault limit reached
+- Add OPTIONS to CORS methods
+
+### Fixed
+- Do not exclude cells from cell map for commissioning trays. This way all locations will
+  continue to be tested.
+
 ## [v1.1.1] - 2020-12-22
 ### Fixed
 - Internally record fixture fault so cell status post does not close step
