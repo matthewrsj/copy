@@ -1,6 +1,8 @@
 syntax            = "proto3";
 option go_package = ".;tower";
 
+import "enums.proto";
+
 message aXXX_Reserved { float dummy = 1; }
 
 message StibAlert {
@@ -52,6 +54,7 @@ message StibAlert {
     STIB_a044_CIBCellSwitchWriteFail        = 44;
     STIB_a045_CIB_NegVoltageProtection      = 45;
     STIB_a046_CIB_STIB_VStringDiffCheckFail = 46;
+    STIB_a047_CIBCalibrationFail            = 47;
   }
 
   message a004_CpuOverRun {
@@ -188,6 +191,32 @@ message StibAlert {
     float  thermistor_T     = 2; // degC
   }
 
+  message a037_FormationTimeout {
+    StibFormState stib_form_state = 1;
+    uint32        step_time_s     = 2; // s
+  }
+
+  message a038_FormationCheckFailed {
+    enum AlertReason {
+      none            = 0;
+      no_hw_enable    = 1;
+      dcdc_not_ready  = 2;
+      vmatch_fail     = 3;
+      dcdc_fault      = 4;
+      cib_fault       = 5;
+      cell_ov         = 6;
+      cell_ot         = 7;
+      request_invalid = 8;
+      quality_lim     = 9;
+      safety_lim      = 10;
+      step_timeout    = 11;
+      state_timeout   = 12;
+      command_msg_mia = 13;
+    }
+    StibFormState stib_form_state = 1;
+    AlertReason   alert_reason    = 2;
+  }
+
   message a041_CIBDataInvalid {
     bool  REFONoff                = 1;
     bool  celldata_adc_delayed    = 2;
@@ -212,14 +241,11 @@ message StibAlert {
 
   message a046_CIB_STIB_VStringDiffCheckFail { float cib_stib_vstring_diff = 1; }
 
-  message a037_FormationTimeout {
-    uint32 form_state  = 1;
-    uint32 step_time_s = 2; // s
-  }
-
-  message a038_FormationCheckFailed {
-    uint32 form_state   = 1;
-    uint32 alert_reason = 2;
+  message a047_CIBCalibrationFail {
+    CibCalStatus cib_cal_status  = 1;
+    float        cib_i_cal_a     = 2;
+    float        cib_i_cal_b     = 3;
+    uint32       cib_cal_sid_lsb = 4;
   }
 
   message AlertData {
@@ -267,6 +293,7 @@ message StibAlert {
       a044_CIBCellSwitchWriteFail        a044 = 44;
       a045_CIB_NegVoltageProtection      a045 = 45;
       a046_CIB_STIB_VStringDiffCheckFail a046 = 46;
+      a047_CIBCalibrationFail            a047 = 47;
     }
   }
 
@@ -435,24 +462,24 @@ message FxrAlert {
   }
 
   message a014_state_machine_fault {
-    uint32 state_machine_state = 1;
-    uint32 faulting_alert_id   = 2;
+    FixtureControlSmState fixture_control_state = 1;
+    uint32                faulting_alert_id     = 2;
   }
 
   message a015_fixture_position_fault {
-    float  fixture_position    = 1;
-    float  state_machine_state = 2;
-    uint32 fixture_state       = 3;
+    FixturePosition        fixture_position       = 1;
+    FixtureControlSmState  fixture_control_state  = 2;
+    FixturePositionSmState fixture_position_state = 3;
   }
 
   message a016_stibs_faulted {}
 
-  message a017_tray_missing { float state_machine_state = 1; }
+  message a017_tray_missing { FixtureControlSmState fixture_control_state = 1; }
 
   message a018_fixture_control_sm_timeout {
-    uint32          fixture_control_state = 1;
-    repeated uint32 stib_form_state       = 2;
-    repeated uint32 stib_dcdc_state       = 3;
+    FixtureControlSmState  fixture_control_state = 1;
+    repeated StibFormState stib_form_state       = 2;
+    repeated StibDCDCState stib_dcdc_state       = 3;
   }
 
   message a019_fixture_pos_sm_faulted {
@@ -463,9 +490,9 @@ message FxrAlert {
       timeout_while_closing   = 3;
       position_invalid        = 4;
     }
-    float        sm_state             = 1;
-    float        fixture_position     = 2;
-    fault_reason fixture_fault_reason = 3;
+    FixturePositionSmState fixture_position_state = 1;
+    FixturePosition        fixture_position       = 2;
+    fault_reason           fixture_fault_reason   = 3;
   }
 
   message a020_thermal_event_level_0 {

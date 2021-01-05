@@ -68,6 +68,7 @@ func (s *StartProcess) action() {
 			RecipeName:      s.processStepName,
 			RecipeVersion:   uint32(s.recipeVersion),
 			TransactionId:   s.transactID,
+			Orientation:     tower.TrayOrientation(s.tbc.O),
 		},
 	}
 

@@ -25,6 +25,7 @@ option go_package = ".;tower";
 // -- tied to controllers in each fixture
 
 import "alerts.proto";
+import "enums.proto";
 
 message Genealogy {
   string board_pn      = 1;
@@ -37,49 +38,6 @@ message Genealogy {
   uint64 usage_id      = 8;
   uint64 assembly_id   = 9;
   uint64 app_githash   = 10;
-}
-
-enum IsoState {
-  ISO_STATE_UNKNOWN_UNSPECIFIED = 0;
-  ISO_STATE_INIT                = 1;
-  ISO_STATE_CLOSE_SW            = 2;
-  ISO_STATE_OPEN_SW             = 3;
-  ISO_STATE_COMPUTE             = 4;
-}
-
-enum IsoError {
-  ISO_ERROR_UNKNOWN_UNSPECIFIED            = 0;
-  ISO_ERROR_BUS_OUT_OF_SPEC                = 1;
-  ISO_ERROR_CHASSIS_TO_BUS_SHORTED         = 2;
-  ISO_ERROR_CHASSIS_TO_GND_SHORTED         = 3;
-  ISO_ERROR_CHASSIS_NOT_CONNECTED          = 4;
-  ISO_ERROR_RESISTANCE_DEGRADATION_WARNING = 5;
-  ISO_ERROR_RESISTANCE_TOO_LOW_FAULT       = 6;
-  ISO_ERROR_RESISTANCE_NOT_AVAILABLE       = 7;
-}
-
-enum FixturePositionSmState {
-  FIXTURE_POSITION_ST_INIT_UNSPECIFIED = 0;
-  FIXTURE_POSITION_ST_OPEN             = 1;
-  FIXTURE_POSITION_ST_CLOSING          = 2;
-  FIXTURE_POSITION_ST_CLOSED           = 3;
-  FIXTURE_POSITION_ST_OPENING          = 4;
-  FIXTURE_POSITION_ST_FAULTED          = 5;
-}
-
-enum FixtureControlSmState {
-  FXR_ST_INIT_UNSPECIFIED = 0;
-  FXR_ST_WAIT_READY       = 1;
-  FXR_ST_WAIT_TRAY        = 2;
-  FXR_ST_WAIT_RECIPE      = 3;
-  FXR_ST_CLOSE            = 4;
-  FXR_ST_TX_STEP          = 5;
-  FXR_ST_START_STEP       = 6;
-  FXR_ST_EXECUTING        = 7;
-  FXR_ST_STEP_COMPLETE    = 8;
-  FXR_ST_SEQ_COMPLETE     = 9;
-  FXR_ST_SEQ_INTERRUPTED  = 10;
-  FXR_ST_FAULTED          = 11;
 }
 
 message FxrSensors {
@@ -176,13 +134,6 @@ message FibInternal {
   int32 uptime_s           = 12; // uptime in seconds
 }
 
-enum FanStatus {
-  FAN_STATUS_UNKNOWN_UNSPECIFIED = 0;
-  FAN_STATUS_ON                  = 1;
-  FAN_STATUS_OFF                 = 2;
-  FAN_STATUS_FAULTED             = 3;
-}
-
 message FanMeasurements {
   float speed               = 1;
   float speed_request       = 2;
@@ -201,34 +152,6 @@ message Fib {
   Genealogy    genealogy      = 3;
   repeated Fan fans           = 4; // always 9 fans
   AlertMatrix  alert_matrices = 5;
-}
-
-enum StibDCDCState {
-  STIB_DCDC_STATE_INIT_UNKNOWN_UNSPECIFIED = 0;
-  STIB_DCDC_STATE_WAIT                     = 1;
-  STIB_DCDC_STATE_STANDBY                  = 2;
-  STIB_DCDC_STATE_OPEN_LOOP                = 3;
-  STIB_DCDC_STATE_VOLTAGE_MATCHING         = 4;
-  STIB_DCDC_STATE_CLOSED_LOOP              = 5;
-  STIB_DCDC_STATE_PRECHARGE                = 6;
-  STIB_DCDC_STATE_AUTO_ZERO                = 7;
-  STIB_DCDC_STATE_FAULT                    = 8;
-  STIB_DCDC_INTERNAL_SLOSH                 = 9;
-}
-
-enum StibFormState {
-  STIB_FORM_STATE_INIT_UNKNOWN_UNSPECIFIED = 0;
-  STIB_FORM_STATE_IDLE                     = 1;
-  STIB_FORM_STATE_VMATCH                   = 2;
-  STIB_FORM_STATE_CC                       = 3;
-  STIB_FORM_STATE_CV                       = 4;
-  STIB_FORM_STATE_CP                       = 5;
-  STIB_FORM_STATE_DCR_PULSE                = 6;
-  STIB_FORM_STATE_FINISHED                 = 7;
-  STIB_FORM_STATE_DIRECT_CONTROL           = 8;
-  STIB_FORM_STATE_DELAY                    = 9;
-  STIB_FORM_STATE_CELL_SW                  = 10;
-  STIB_FORM_STATE_FAULT                    = 11;
 }
 
 message StibSensors {
@@ -266,10 +189,11 @@ message StibStatistics {
 }
 
 message StibInternal {
-  StibDCDCState dcdc_state     = 1;
-  StibFormState form_state     = 2;
-  StibDCDCState dcdc_state_req = 3;
-  int32         uptime_s       = 4; // uptime in seconds
+  StibDCDCState dcdc_state         = 1;
+  StibFormState form_state         = 2;
+  StibDCDCState dcdc_state_req     = 3;
+  int32         uptime_s           = 4; // uptime in seconds
+  CibCalStatus  calibration_status = 5; // calibration status of each cib
 }
 
 message Stib {
@@ -280,23 +204,6 @@ message Stib {
   AlertMatrix    alert_matrices = 5;
   CibSensors     cib_sensors    = 6;
   StibOutputs    outputs        = 7;
-}
-
-enum CellStatus {
-  CELL_STATUS_NONE_UNSPECIFIED           = 0;
-  CELL_STATUS_IDLE                       = 1;
-  CELL_STATUS_IN_PROCESS                 = 2;
-  CELL_STATUS_COMPLETE                   = 3;
-  CELL_STATUS_FAILED                     = 4;
-  CELL_STATUS_FAILED_SAFETY_LIMIT        = 5;
-  CELL_STATUS_FAILED_POGO_PIN_IRRATIONAL = 6;
-}
-
-enum CellDetectStatus {
-  CELL_DETECT_STATUS_NONE_UNSPECIFIED = 0;
-  CELL_DETECT_STATUS_NOT_DETECTED     = 1;
-  CELL_DETECT_STATUS_HARDWARE_FAULTED = 2;
-  CELL_DETECT_STATUS_DETECTED         = 3;
 }
 
 message CellMeasurement {
@@ -317,46 +224,6 @@ message Cell {
   CellDetectStatus detect_status = 5; // cells positions detected by cib
 }
 
-enum FixtureStatus {
-  FIXTURE_STATUS_UNKNOWN_UNSPECIFIED = 0;
-  FIXTURE_STATUS_INIT                = 1; // Fixture is not ready for a tray yet
-  FIXTURE_STATUS_IDLE                = 2; // Fixture is ready for a tray
-  FIXTURE_STATUS_READY               = 3; // Fixture has a tray and is ready to receive a recipe
-  FIXTURE_STATUS_ACTIVE              = 4; // Fixture is running a formation cycle on the tray
-  FIXTURE_STATUS_FAULTED             = 5; // Fixture is faulted
-  FIXTURE_STATUS_COMPLETE            = 6; // Fixture is done with the formation cycle, tray is still present
-  FIXTURE_STATUS_UPDATING            = 7; // Fixture is updating firmware - not used
-}
-
-enum FixturePosition {
-  FIXTURE_POSITION_UNKNOWN_UNSPECIFIED = 0;
-  FIXTURE_POSITION_CLOSED              = 1;
-  FIXTURE_POSITION_OPEN                = 2;
-  FIXTURE_POSITION_INTERMEDIATE        = 3;
-  FIXTURE_POSITION_INVALID             = 4;
-}
-
-enum EquipmentStatus {
-  EQUIPMENT_STATUS_UNKNOWN_UNSPECIFIED = 0;
-  EQUIPMENT_STATUS_NEEDS_COMMISSIONING = 1; // initial value or when commanded to recommission
-  EQUIPMENT_STATUS_NEEDS_MAINTENANCE   = 2; // When self test fails or when set by TC
-  EQUIPMENT_STATUS_NEEDS_APPROVAL      = 3; // When self test cycle has run , waiting for approval from operator
-  EQUIPMENT_STATUS_IN_OPERATION        = 4; // When operator approves self test cycle, ready for production
-}
-
-enum FireAlarmStatus {
-  FIRE_ALARM_UNKNOWN_UNSPECIFIED = 0; // No heat spots detected by the fixture
-  FIRE_ALARM_LEVEL_0             = 1; // Two or more sensors detecting higher temperatures
-  FIRE_ALARM_LEVEL_1             = 2; // Two or more sensors detecting very high temperatures
-}
-
-enum IsolationTestStatus {
-  ISOLATION_TEST_STATUS_UNKNOWN_UNSPECIFIED = 0;
-  ISOLATION_TEST_STATUS_ACTIVE              = 1; // isolation resistance measurement active in  fixture
-  ISOLATION_TEST_STATUS_INACTIVE            = 2; // isolation resistance measurement inactive in  fixture
-  ISOLATION_TEST_STATUS_FAULTED = 3; // isolation resistance measurement faulted - maintenance to be triggered
-}
-
 message FixtureOperational {
   FixtureStatus       status                = 1;
   FixturePosition     position              = 2;
@@ -366,7 +233,9 @@ message FixtureOperational {
   bool                tray_present          = 6; // tray is present (independent of fixture status)
   FireAlarmStatus     fire_alarm_status     = 7;
   IsolationTestStatus isolation_test_status = 8;
-  uint32              runtime_s             = 9; // how long current recipe has been running in seconds
+  uint32              runtime_s             = 9;  // how long current recipe has been running in seconds
+  bool                calibration_ok        = 10; // CIB calibrations are correctly loaded
+  TrayOrientation     orientation           = 11;
 }
 
 message CellDiag { float sense_loop_resistance = 1; }
@@ -418,16 +287,6 @@ message RecipeStep {
   float       v_cell_max_quality = 12;
 }
 
-enum FormRequest {
-  FORM_REQUEST_UNKNOWN_UNSPECIFIED = 0;
-  FORM_REQUEST_STOP                = 1;
-  FORM_REQUEST_START               = 2;
-  FORM_REQUEST_UPDATE_CELLS        = 3;
-  FORM_REQUEST_FAULT_RESET         = 4;
-  FORM_REQUEST_PAUSE               = 5;
-  FORM_REQUEST_RESUME              = 6;
-}
-
 message Recipe {
   repeated RecipeStep steps         = 1;
   repeated uint32     cell_masks    = 2;
@@ -436,11 +295,12 @@ message Recipe {
 }
 
 message Info {
-  string tray_barcode     = 1;
-  string fixture_location = 2;
-  string recipe_name      = 3;
-  uint32 recipe_version   = 4;
-  string transaction_id   = 5; // KSUID, K-Sortable Unique IDentifier
+  string tray_barcode         = 1;
+  string fixture_location     = 2;
+  string recipe_name          = 3;
+  uint32 recipe_version       = 4;
+  string transaction_id       = 5; // KSUID, K-Sortable Unique IDentifier
+  TrayOrientation orientation = 6;
 }
 
 message Versions {
@@ -448,17 +308,9 @@ message Versions {
   uint32 protocol_version = 2;
 }
 
-enum EquipmentRequest {
-  EQUIPMENT_REQUEST_UNKNOWN_UNSPECIFIED = 0;
-  EQUIPMENT_REQUEST_SELF_TEST_APPROVED  = 1; // operator has reviewed self test data, put fixture into production
-  EQUIPMENT_REQUEST_MAINTENANCE         = 2; // put fixture in maintenance mode
-  EQUIPMENT_REQUEST_RECOMMISSIONING     = 3; // reset fixture hardware status to require commissioning
-}
-
-enum IsolationTestRequest {
-  ISOLATION_TEST_REQUEST_UNKNOWN_UNSPECIFIED = 0;
-  ISOLATION_TEST_REQUEST_ENABLE              = 1; // trigger to enable isolation resistance measurement in a fixture
-  ISOLATION_TEST_REQUEST_DISABLE             = 2; // disable active isolation resistance measurement in fixture
+message DRLogTriggers
+{ 
+  uint32 stib_mask  = 1;
 }
 
 message TowerToFixture {
@@ -468,21 +320,7 @@ message TowerToFixture {
   IsolationTestRequest isolation_test_request = 5;
   Versions             versions               = 6;
   FixtureOperational   op                     = 7;
-}
-
-enum TauxStatus {
-  TAUX_STATUS_UNKNOWN_UNSPECIFIED = 0;
-  TAUX_STATUS_INIT                = 1; // Taux is initializing
-  TAUX_STATUS_PRECHARGE           = 2; // Taux is precharging bus to 76V
-  TAUX_STATUS_ACTIVE              = 3; // Taux is commanding bus to 85V
-  TAUX_STATUS_FAULTED             = 4; // Taux is faulted
-}
-
-enum EnumerationStatus {
-  ENUM_STATUS_UNKNOWN_UNSPECIFIED = 0;
-  ENUM_STATUS_OK                  = 1; // ENUM is OK
-  ENUM_STATUS_COLLISION           = 2; // TAUX is resolving enum collision
-  ENUM_STATUS_FAULT               = 3; // Enum is in faulted state
+  DRLogTriggers        drlog_triggers         = 8;
 }
 
 message TauxOperational {
@@ -543,3 +381,5 @@ message TauxToTower {
   }
   Versions versions = 5;
 }
+
+message FxrToStib { repeated Cell cells = 1; }
