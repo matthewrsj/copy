@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/cenkalti/backoff"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 	"stash.teslamotors.com/ctet/statemachine/v2"
@@ -91,13 +92,20 @@ func (s *StartProcess) action() {
 
 	var err error
 
-	s.cells, err = getCellMap(s.mockCellAPI, s.childLogger, s.CellAPIClient, s.tbc.SN, s.processStepName)
-	if err != nil {
-		s.childLogger.Errorw("get cell map", "error", err)
-		s.smFatal = true
+	bo := backoff.NewExponentialBackOff()
+	bo.MaxElapsedTime = 0 // infinite retry
+	bo.MaxInterval = time.Minute
 
-		return
-	}
+	// no error from Retry as this is infinite
+	_ = backoff.Retry(func() error {
+		s.cells, err = getCellMap(s.mockCellAPI, s.childLogger, s.CellAPIClient, s.tbc.SN, s.processStepName)
+		if err != nil {
+			s.childLogger.Errorw("get cell map", "error", err)
+			return err
+		}
+
+		return nil
+	}, bo)
 
 	s.childLogger.Infow("GetCellMap complete", "cells", s.cells)
 
