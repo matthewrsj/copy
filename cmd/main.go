@@ -101,7 +101,7 @@ func main() {
 			PFD:  make(chan cdcontroller.PreparedForDelivery),
 			LDC:  make(chan cdcontroller.FXRLoad),
 			FixtureState: towercontroller.RunNewFixtureState(
-				towercontroller.WithAllDataExpiry(time.Second*5),
+				towercontroller.WithAllDataExpiry(time.Second*7), // min data rate (5s) + 40% (2s)
 				towercontroller.WithContext(ctx),
 				towercontroller.WithListener(sub),
 				towercontroller.WithLogger(sugar),
