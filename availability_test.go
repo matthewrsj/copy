@@ -57,7 +57,7 @@ func TestHandleAvailable(t *testing.T) {
 		"01-01": {
 			Name:         "01-01",
 			FixtureState: fs01,
-			Avail: ReadyStatus{
+			Avail: &ReadyStatus{
 				ready: StatusActive,
 				mx:    sync.Mutex{},
 			},
@@ -65,7 +65,7 @@ func TestHandleAvailable(t *testing.T) {
 		"02-01": {
 			Name:         "02-01",
 			FixtureState: fs02,
-			Avail: ReadyStatus{
+			Avail: &ReadyStatus{
 				ready: StatusWaitingForReservation,
 				mx:    sync.Mutex{},
 			},

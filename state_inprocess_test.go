@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"reflect"
 	"strings"
+	"sync"
 	"testing"
 
 	"bou.ke/monkey"
@@ -25,6 +26,9 @@ func TestInProcess_Action(t *testing.T) {
 	ipState := &InProcess{
 		fxrInfo: &FixtureInfo{
 			FixtureState: NewFixtureState(),
+			Avail: &ReadyStatus{
+				mx: sync.Mutex{},
+			},
 		},
 		Config: Configuration{
 			AllowedFixtures: []string{"01-01"},
@@ -119,6 +123,9 @@ func TestInProcess_ActionNoFixture(t *testing.T) {
 		childLogger: zap.NewExample().Sugar(),
 		fxrInfo: &FixtureInfo{
 			FixtureState: NewFixtureState(),
+			Avail: &ReadyStatus{
+				mx: sync.Mutex{},
+			},
 		},
 	}
 	as := ipState.Actions()

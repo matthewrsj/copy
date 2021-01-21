@@ -106,6 +106,7 @@ func main() {
 				towercontroller.WithListener(sub),
 				towercontroller.WithLogger(sugar),
 			),
+			Avail: &towercontroller.ReadyStatus{},
 		}
 	}
 

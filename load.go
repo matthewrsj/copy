@@ -41,6 +41,8 @@ func HandleLoad(conf Configuration, logger *zap.SugaredLogger, registry map[stri
 			return
 		}
 
+		cl = cl.With("load_request", loadRequest)
+
 		if loadRequest.TransactionID == "" {
 			err = errors.New("invalid empty transaction ID")
 			cl.Error(err)
@@ -81,7 +83,13 @@ func HandleLoad(conf Configuration, logger *zap.SugaredLogger, registry map[stri
 			return
 		}
 
-		fInfo.LDC <- loadRequest
+		select {
+		case fInfo.LDC <- loadRequest:
+			cl.Info("sent load request to fixture state machine")
+		default:
+			// do not fail back to the CDC however as this is probably a duplicate
+			cl.Error("received load complete for fixture which is unable to process a tray")
+		}
 
 		w.WriteHeader(http.StatusOK)
 

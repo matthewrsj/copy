@@ -22,7 +22,7 @@ func HandleCanary(logger *zap.SugaredLogger, registry map[string]*FixtureInfo) h
 		allowCORS(w)
 
 		cl := logger.With("endpoint", CanaryEndpoint, "remote", r.RemoteAddr)
-		cl.Info("got request to endpoint")
+		cl.Debug("got request to endpoint")
 
 		cr := canaryResponse{
 			FixturesUp:   []string{},
@@ -64,6 +64,6 @@ func HandleCanary(logger *zap.SugaredLogger, registry map[string]*FixtureInfo) h
 			return
 		}
 
-		cl.Info("responded to request to endpoint")
+		cl.Debug("responded to request to endpoint")
 	}
 }

@@ -13,7 +13,7 @@ type FixtureInfo struct {
 	PFD          chan cdcontroller.PreparedForDelivery
 	LDC          chan cdcontroller.FXRLoad
 	Unreserve    chan struct{}
-	Avail        ReadyStatus
+	Avail        *ReadyStatus
 }
 
 // ReadyStatus indicates the status of the fixture

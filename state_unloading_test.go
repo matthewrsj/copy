@@ -1,6 +1,7 @@
 package towercontroller
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -29,6 +30,9 @@ func TestUnloading_Actions(t *testing.T) {
 		},
 		fxrInfo: &FixtureInfo{
 			FixtureState: NewFixtureState(),
+			Avail: &ReadyStatus{
+				mx: sync.Mutex{},
+			},
 		},
 	}
 

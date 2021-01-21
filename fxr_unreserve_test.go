@@ -23,7 +23,7 @@ func TestHandleUnreserveFixture(t *testing.T) {
 		"01-01": {
 			Name:      "01-01",
 			Unreserve: urc,
-			Avail: ReadyStatus{
+			Avail: &ReadyStatus{
 				ready: StatusWaitingForLoad,
 				mx:    sync.Mutex{},
 			},

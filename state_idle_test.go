@@ -1,6 +1,7 @@
 package towercontroller
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -44,6 +45,9 @@ func TestIdle_Actions(t *testing.T) {
 			FixtureState: NewFixtureState(),
 			Name:         "01-01",
 			PFD:          pfdC,
+			Avail: &ReadyStatus{
+				mx: sync.Mutex{},
+			},
 		},
 	}
 
@@ -80,6 +84,9 @@ func TestIdle_ActionsBadTray(t *testing.T) {
 		Logger: zap.NewExample().Sugar(),
 		FXRInfo: &FixtureInfo{
 			PFD: pfdC,
+			Avail: &ReadyStatus{
+				mx: sync.Mutex{},
+			},
 		},
 	}
 

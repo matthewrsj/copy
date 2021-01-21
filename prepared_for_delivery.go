@@ -38,6 +38,8 @@ func HandlePreparedForDelivery(logger *zap.SugaredLogger, registry map[string]*F
 			return
 		}
 
+		cl = cl.With("prepared_for_delivery_request", pfd)
+
 		id, err := IDFromFXRString(pfd.Fixture)
 		if err != nil {
 			err = fmt.Errorf("ID from FXR string: %v", err)
@@ -64,7 +66,12 @@ func HandlePreparedForDelivery(logger *zap.SugaredLogger, registry map[string]*F
 			return
 		}
 
-		fInfo.PFD <- pfd
+		select {
+		case fInfo.PFD <- pfd:
+			cl.Info("sent prepared for delivery message to fixture state machine")
+		default:
+			cl.Error("fixture is not prepared for delivery")
+		}
 
 		w.WriteHeader(http.StatusOK)
 	}

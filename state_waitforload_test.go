@@ -1,6 +1,7 @@
 package towercontroller
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -28,6 +29,9 @@ func TestWaitForLoad_Actions(t *testing.T) {
 		fxrInfo: &FixtureInfo{
 			LDC:          lc,
 			FixtureState: newTestFixtureStateForFixture("01-01"),
+			Avail: &ReadyStatus{
+				mx: sync.Mutex{},
+			},
 		},
 	}
 
