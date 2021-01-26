@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v1.3.1] - 2021-01-26
+### Changed
+- Update to latest towerproto
+
 ## [v1.3.0] - 2021-01-26
 ### Changed
 - Now query cell API directly for recipe using cdcontroller library. No longer rely on message
