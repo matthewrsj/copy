@@ -20,7 +20,6 @@ func handleIncomingLoad(
 	prodAM, testAM *AisleManager,
 	aisles map[string]*Aisle,
 	lo *asrsapi.LoadOperation,
-	demoMode bool,
 ) error {
 	logger := lg.With(
 		"location", lo.GetLocation().GetCmFormat().GetEquipmentId(),
@@ -43,7 +42,7 @@ func handleIncomingLoad(
 		// if aisleLocation is empty perform the initial load
 		if strings.Trim(aisleLocation, "0") == "" {
 			logger.Info("no aisle location, routing to aisle")
-			return handleInitialLoad(g, logger, prodAM, testAM, aisles, lo, demoMode)
+			return handleInitialLoad(g, logger, prodAM, testAM, aisles, lo)
 		}
 
 		// if aisleLocation is populated perform the tower load
@@ -239,13 +238,22 @@ func handleInitialLoad(
 	prodAM, testAM *AisleManager,
 	aisles map[string]*Aisle,
 	lo *asrsapi.LoadOperation,
-	demoMode bool,
 ) error {
 	// whether or not we place into aisle, we need to set this to Current
 	lo.GetState().StateType = asrsapi.StateType_Current
 
+	// select algorithm based on if this is a cycling/demo tray and whether or not it is a commissioning tray
+	// If this is just a non-production tray route based on the round robin only
+	// If this is a commissioning tray route by selecting the maximum available as normal
+	// If this is a production tray route based on availability as normal
+	stepName := strings.TrimSpace(strings.Split(lo.GetRecipe().GetStep(), " - ")[0])
+	// remove test_ prefix to check for commission tray status
+	isCommissionRecipe := strings.HasPrefix(strings.TrimPrefix(stepName, _nonProdPrefix), CommissionSelfTestRecipeName)
+	isNonProdTray := strings.HasPrefix(stepName, _nonProdPrefix)
+
 	selector := selectMaxAvailable
-	if demoMode {
+	if !isCommissionRecipe && isNonProdTray {
+		// this is a normal non-production tray, route via round-robin
 		selector = selectWithRoundRobin
 	}
 

@@ -13,7 +13,7 @@ type cellMapResp struct {
 	Cells []CellData `json:"cells"`
 }
 
-// CellData contains the serial number, location in tray, and a flag indicating whether or not the locaiton is empty
+// CellData contains the serial number, location in tray, and a flag indicating whether or not the location is empty
 type CellData struct {
 	Position   string `json:"position"`
 	Serial     string `json:"cell_serial"`
@@ -398,7 +398,7 @@ func (c *CellAPIClient) GetStepConfiguration(sn string) (StepConfiguration, erro
 	}
 
 	respData := struct {
-		StepConfig []byte `json:"step_configuration"`
+		StepConfig map[string]Step `json:"step_configuration"`
 	}{}
 
 	if err := json.Unmarshal(rBody, &respData); err != nil {

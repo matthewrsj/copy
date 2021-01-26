@@ -1,7 +1,6 @@
 package cdcontroller
 
 import (
-	"encoding/json"
 	"sort"
 )
 
@@ -74,12 +73,7 @@ TC/FXRs need a slice of steps in step order, so drop the keys and just make a sl
 type StepConfiguration []Step
 
 // NewStepConfiguration parses a new StepConfiguration out of a byte slice
-func NewStepConfiguration(steps []byte) (StepConfiguration, error) {
-	scm := make(map[string]Step)
-	if err := json.Unmarshal(steps, &scm); err != nil {
-		return nil, err
-	}
-
+func NewStepConfiguration(scm map[string]Step) (StepConfiguration, error) {
 	keys := make([]string, len(scm))
 
 	var i int

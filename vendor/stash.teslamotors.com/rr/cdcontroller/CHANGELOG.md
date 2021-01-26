@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v1.1.3] - 2021-01-26
+### Changed
+- All non-production trays now use round-robin routing algorithm since non-production trays
+  are used to stress equipment. RR routing utilizes crane and conveyor equipment equally.
+
+### Removed
+- Do not use Conductor recipe to send to tower controller, let tower controller query for a recipe
+  itself. This bypasses a bug in Conductor that has been difficult to track down.
+
 ## [v1.1.2]
 ### Added
 - Ability to generate cell map without considering status codes for commission recipe
