@@ -20,7 +20,6 @@ type WaitForLoad struct {
 
 	tbc             cdcontroller.TrayBarcode
 	fxbc            cdcontroller.FixtureBarcode
-	steps           cdcontroller.StepConfiguration
 	stepType        string
 	processStepName string
 	transactID      string
@@ -77,11 +76,10 @@ func (w *WaitForLoad) action() {
 
 	w.processStepName = fxrLoad.RecipeName
 	w.recipeVersion = fxrLoad.RecipeVersion
-	w.steps = fxrLoad.Steps
 	w.stepType = fxrLoad.StepType
 	w.transactID = fxrLoad.TransactionID
 
-	if w.processStepName == "" || len(w.steps) == 0 {
+	if w.processStepName == "" {
 		w.Logger.Error(fmt.Errorf("invalid fixture load message: %v", fxrLoad))
 		w.unload = true
 
@@ -140,7 +138,6 @@ func (w *WaitForLoad) Next() statemachine.State {
 			fxbc:            w.fxbc,
 			tbc:             w.tbc,
 			mockCellAPI:     w.mockCellAPI,
-			steps:           w.steps,
 			stepType:        w.stepType,
 			recipeVersion:   w.recipeVersion,
 			fxrInfo:         w.fxrInfo,

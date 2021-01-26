@@ -254,6 +254,8 @@ stash.teslamotors.com/rr/cdcontroller v1.1.0 h1:+iCunTTVx/J50x+wSXnnR6NURDy9oPbk
 stash.teslamotors.com/rr/cdcontroller v1.1.0/go.mod h1:tUKJrhioN2c/SCTLtZfwZzH5dvOD2Oa77FMMZi+oPxo=
 stash.teslamotors.com/rr/cdcontroller v1.1.2 h1:TV1rlmzAAh2oWO7I2cErV5esqenwF43jMH6CqMwXwug=
 stash.teslamotors.com/rr/cdcontroller v1.1.2/go.mod h1:tUKJrhioN2c/SCTLtZfwZzH5dvOD2Oa77FMMZi+oPxo=
+stash.teslamotors.com/rr/cdcontroller v1.1.3-rc.1 h1:BZdvfO1XWMcULedgJo1+9gDy3BEK6MpRggDAvUGyhjE=
+stash.teslamotors.com/rr/cdcontroller v1.1.3-rc.1/go.mod h1:tUKJrhioN2c/SCTLtZfwZzH5dvOD2Oa77FMMZi+oPxo=
 stash.teslamotors.com/rr/protostream v0.3.0 h1:f3Y9JeqYyi3KLP9nUeDpWiHJt9c+cbliu1u/2PXQ97g=
 stash.teslamotors.com/rr/protostream v0.3.0/go.mod h1:J7ooaEpMPiCRs+KtaheVE9ymA3o971vnjNRz3EXRbfQ=
 stash.teslamotors.com/rr/protostream v1.0.1 h1:2vE2vBM2EZkkUCH6OoUU5HbY6CmZmYLJcVHRsn+E70s=

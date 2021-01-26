@@ -378,6 +378,36 @@ func (c *CellAPIClient) setCellStatusesWithCloseOption(tray, eqName, recipe stri
 	return nil
 }
 
+// GetStepConfiguration returns the step configuration for the tray
+func (c *CellAPIClient) GetStepConfiguration(sn string) (StepConfiguration, error) {
+	url := urlJoin(c.baseURL, fmt.Sprintf(c.eps.nextProcessStepFmt, sn))
+
+	// nolint:gosec // easier to construct the URL
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("GET %s: %v", url, err)
+	}
+
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	rBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("read response body from %s: %v", url, err)
+	}
+
+	respData := struct {
+		StepConfig []byte `json:"step_configuration"`
+	}{}
+
+	if err := json.Unmarshal(rBody, &respData); err != nil {
+		return nil, fmt.Errorf("unmarshal response body from %s: %v", url, err)
+	}
+
+	return NewStepConfiguration(respData.StepConfig)
+}
+
 // GetNextProcessStep returns the NextFormationStep for the tray SN
 func (c *CellAPIClient) GetNextProcessStep(sn string) (NextFormationStep, error) {
 	url := urlJoin(c.baseURL, fmt.Sprintf(c.eps.nextProcessStepFmt, sn))

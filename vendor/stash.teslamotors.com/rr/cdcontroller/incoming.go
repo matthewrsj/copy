@@ -60,7 +60,7 @@ func handleIncomingLoad(
 
 		logger.Info("Loaded Current")
 
-		return handleTowerLoaded(g, aisles, lo)
+		return handleTowerLoaded(logger, g, aisles, lo)
 	default:
 		logger.Warnw("unhandled GetState().GetState()", "state", lo.GetState().GetState())
 	}
@@ -72,7 +72,7 @@ const _nonProdPrefix = "test_"
 
 func selectWithRoundRobin(logger *zap.SugaredLogger, prodAM, testAM *AisleManager, aisles map[string]*Aisle, lo *asrsapi.LoadOperation) (string, error) {
 	need := len(lo.GetTray().GetTrayId())
-	logger.Debugw("need space for trays", "need", need)
+	logger.Debugw("need space for trays for round robin", "need", need)
 
 	// determine which aisle manager to use
 	am := prodAM
@@ -447,7 +447,7 @@ func handleTowerLoadForGetter(g asrsapi.Terminal_LoadOperationsServer, lg *zap.S
 	return nil
 }
 
-func handleTowerLoaded(g asrsapi.Terminal_LoadOperationsServer, aisles map[string]*Aisle, lo *asrsapi.LoadOperation) error {
+func handleTowerLoaded(logger *zap.SugaredLogger, g asrsapi.Terminal_LoadOperationsServer, aisles map[string]*Aisle, lo *asrsapi.LoadOperation) error {
 	aisleName := lo.GetLocation().GetCmFormat().GetEquipment()
 
 	aisle, ok := aisles[aisleName]
@@ -479,23 +479,21 @@ func handleTowerLoaded(g asrsapi.Terminal_LoadOperationsServer, aisles map[strin
 			continue
 		}
 
+		logger.Infow("found fixture to send load to", "fixture", fxr.Coord)
+
 		trays := lo.GetTray().GetTrayId()
 		if len(trays) == 0 {
 			return rejectLoad(g, lo, errors.New("no trays in request"))
 		}
 
-		// use the seconds of the timestamp as the transaction ID
 		tID := lo.GetConversation().GetMsgId()
 
-		if err := tower.sendLoad(fxr, trays[0], lo.GetRecipe(), tID); err != nil {
+		if err = tower.sendLoad(logger, fxr, trays[0], lo.GetRecipe(), tID); err != nil {
 			return rejectLoad(g, lo, fmt.Errorf("send load to tower: %v", err))
 		}
 
 		if len(trays) > 1 {
-			fxr2 := tower.FXRs.GetNeighbor(fxr.Coord)
-			if err := tower.sendLoad(fxr2, trays[1], lo.GetRecipe(), tID); err != nil {
-				return rejectLoad(g, lo, fmt.Errorf("send second load: %v", err))
-			}
+			return rejectLoad(g, lo, fmt.Errorf("two trays in message: %v", err))
 		}
 
 		return nil

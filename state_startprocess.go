@@ -3,6 +3,7 @@ package towercontroller
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -59,6 +60,28 @@ func (s *StartProcess) action() {
 		return
 	}
 
+	bo := backoff.NewExponentialBackOff()
+	bo.MaxElapsedTime = 0 // infinite
+
+	if !s.mockCellAPI {
+		_ = backoff.Retry(func() error {
+			var err error
+			if s.steps, err = s.CellAPIClient.GetStepConfiguration(s.tbc.Raw); err != nil {
+				s.Logger.Errorw("get step configuration", "error", err)
+				return err
+			}
+
+			s.Logger.Infow("retrieved steps from cell API", "num_steps", len(s.steps))
+
+			if len(s.steps) == 0 {
+				s.Logger.Error("invalid empty step configuration retrieved from Cell API")
+				return errors.New("empty step configuration retrieved from Cell API")
+			}
+
+			return nil
+		}, bo)
+	}
+
 	s.childLogger.Info("sending recipe and other information to FXR")
 
 	twr2Fxr := tower.TowerToFixture{
@@ -92,7 +115,7 @@ func (s *StartProcess) action() {
 
 	var err error
 
-	bo := backoff.NewExponentialBackOff()
+	bo = backoff.NewExponentialBackOff()
 	bo.MaxElapsedTime = 0 // infinite retry
 	bo.MaxInterval = time.Minute
 

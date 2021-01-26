@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cenkalti/backoff"
+	"go.uber.org/zap"
 	asrsapi "stash.teslamotors.com/cas/asrs/idl/src"
 )
 
@@ -75,19 +75,16 @@ func (t *Tower) fetchAvailability() (Availability, error) {
 	return as, nil
 }
 
-func (t *Tower) sendLoad(fxr *FXR, tray string, recipe *asrsapi.Recipe, tID string) error {
-	stepConf, err := NewStepConfiguration(recipe.GetStepConfiguration())
-	if err != nil {
-		return fmt.Errorf("parse step configuation: %v", err)
-	}
-
+func (t *Tower) sendLoad(logger *zap.SugaredLogger, fxr *FXR, tray string, recipe *asrsapi.Recipe, tID string) error {
 	fields := strings.Split(recipe.GetStep(), " - ")
 	if len(fields) != 2 {
+		logger.Errorw("recipe step is not correct format (name - version)", "step", recipe.GetStep())
 		return fmt.Errorf("recipe step '%s' is not correct format (name - version)", recipe.GetStep())
 	}
 
 	version, err := strconv.Atoi(strings.TrimSpace(fields[1]))
 	if err != nil {
+		logger.Errorw("recipe version is not an integer", "ver", fields[1])
 		return fmt.Errorf("recipe version '%s' is not an integer", fields[1])
 	}
 
@@ -99,9 +96,9 @@ func (t *Tower) sendLoad(fxr *FXR, tray string, recipe *asrsapi.Recipe, tID stri
 		RecipeName:    strings.TrimSpace(fields[0]),
 		RecipeVersion: version,
 		StepType:      recipe.GetStepType(),
-		Steps:         stepConf,
 	})
 	if err != nil {
+		logger.Errorw("unable to marshal FXRLoad", "error", err)
 		return fmt.Errorf("json.Marshal FXRLoad: %v", err)
 	}
 
@@ -109,23 +106,22 @@ func (t *Tower) sendLoad(fxr *FXR, tray string, recipe *asrsapi.Recipe, tID stri
 		Timeout: time.Second * 5,
 	}
 
-	bo := backoff.NewExponentialBackOff()
-	bo.MaxElapsedTime = time.Minute * 5
+	resp, err := c.Post(t.Remote+_loadEndpoint, "application/json", bytes.NewReader(b))
+	if err != nil {
+		logger.Errorw("post load request", "error", err)
+		return fmt.Errorf("http.Post: %v", err)
+	}
 
-	return backoff.Retry(func() error {
-		resp, err := c.Post(t.Remote+_loadEndpoint, "application/json", bytes.NewReader(b))
-		if err != nil {
-			return fmt.Errorf("http.Post: %v", err)
-		}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
-		defer func() {
-			_ = resp.Body.Close()
-		}()
+	if resp.StatusCode != http.StatusOK {
+		logger.Errorw("request response NOT OK", "status_code", resp.StatusCode, "status", resp.Status)
+		return fmt.Errorf("load failed, received status NOT OK: %v: %v", resp.StatusCode, resp.Status)
+	}
 
-		if resp.StatusCode != http.StatusOK {
-			return fmt.Errorf("load failed, received status NOT OK: %v: %v", resp.StatusCode, resp.Status)
-		}
+	logger.Info("successfully sent load request")
 
-		return nil
-	}, bo)
+	return nil
 }
