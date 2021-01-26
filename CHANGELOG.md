@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v1.3.0] - 2021-01-26
+### Changed
+- Now query cell API directly for recipe using cdcontroller library. No longer rely on message
+  coming from Conductor via C/D Controller. Improves robustness.
+
+### Fixed
+- Only accept one preparedForDelivery or loadRequest per fixture at a time. Do not queue
+  them up, as this will only result in double-handling of a tray that is no longer there.
+
 ## [v1.2.2] - 2021-01-12
 ### Changed
 - Increase data expiry to 7 seconds for new variable data rate.
