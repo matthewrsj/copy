@@ -333,12 +333,12 @@ message FibAlert {
   message a005_FanTotalFault {
     uint32 fan_total        = 1;
     float  fan_current      = 2; // A
-    uint32 fan_bit_positoin = 3;
+    uint32 fan_bit_position = 3;
   }
 
   message a006_FanRationalFault {
     uint32 fan_index        = 1;
-    uint32 fan_rpm_meanured = 2; // rpm
+    uint32 fan_rpm_measured = 2; // rpm
     uint32 fan_rpm_request  = 3; // rpm
     uint32 fan_pwm_duty     = 4;
   }
@@ -413,6 +413,7 @@ message FxrAlert {
     FXR_a030_fib_faulted                   = 30;
     FXR_a031_FanPwrCheckFail               = 31;
     FXR_a032_StibPwrCheckFail              = 32;
+    FXR_a033_FanHwPwrSupplyFail            = 33;
   }
 
   message a001_SwAppBoot {}
@@ -517,9 +518,9 @@ message FxrAlert {
     bool  cells_incomplete          = 5; // fail due to cell(s) not complete during commissioning recipe
   }
 
-  message a027_bus24V_uv_fault { float voltage = 1; }
+  message a027_24VBus_UV_fault { float voltage = 1; }
 
-  message a028_bus24V_ov_fault { float voltage = 1; }
+  message a028_24VBus_OV_fault { float voltage = 1; }
 
   message a029_RecipeMaskMissingCelldetected {
     uint32 NumMissingCellsDetected =
@@ -532,6 +533,8 @@ message FxrAlert {
   message a031_FanPwrCheckFail { float current = 1; }
 
   message a032_StibPwrCheckFail { float current = 1; }
+
+  message a033_FanHwPwrSupplyFail { bool fan_power_bad = 1; }
 
   message AlertData {
     oneof Payload {
@@ -560,12 +563,13 @@ message FxrAlert {
       a023_busHV_uv_fault                a023 = 23;
       a024_busHV_ov_fault                a024 = 24;
       a025_EquipmentNeedsMaintenance     a025 = 25;
-      a027_bus24V_uv_fault               a027 = 27;
-      a028_bus24V_ov_fault               a028 = 28;
+      a027_24VBus_UV_fault               a027 = 27;
+      a028_24VBus_OV_fault               a028 = 28;
       a029_RecipeMaskMissingCelldetected a029 = 29;
       a030_fib_faulted                   a030 = 30;
       a031_FanPwrCheckFail               a031 = 31;
       a032_StibPwrCheckFail              a032 = 32;
+      a033_FanHwPwrSupplyFail            a033 = 33;
     }
   }
 

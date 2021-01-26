@@ -295,12 +295,12 @@ message Recipe {
 }
 
 message Info {
-  string tray_barcode         = 1;
-  string fixture_location     = 2;
-  string recipe_name          = 3;
-  uint32 recipe_version       = 4;
-  string transaction_id       = 5; // KSUID, K-Sortable Unique IDentifier
-  TrayOrientation orientation = 6;
+  string          tray_barcode     = 1;
+  string          fixture_location = 2;
+  string          recipe_name      = 3;
+  uint32          recipe_version   = 4;
+  string          transaction_id   = 5; // KSUID, K-Sortable Unique IDentifier
+  TrayOrientation orientation      = 6;
 }
 
 message Versions {
@@ -308,10 +308,7 @@ message Versions {
   uint32 protocol_version = 2;
 }
 
-message DRLogTriggers
-{ 
-  uint32 stib_mask  = 1;
-}
+message DRLogTriggers { uint32 stib_mask = 1; }
 
 message TowerToFixture {
   Recipe               recipe                 = 1;

@@ -51,6 +51,7 @@ enum EquipmentRequest {
   EQUIPMENT_REQUEST_SELF_TEST_APPROVED  = 1; // operator has reviewed self test data, put fixture into production
   EQUIPMENT_REQUEST_MAINTENANCE         = 2; // put fixture in maintenance mode
   EQUIPMENT_REQUEST_RECOMMISSIONING     = 3; // reset fixture hardware status to require commissioning
+  EQUIPMENT_REQUEST_PERFORM_MAINTENANCE = 4; // reset fixture hardware status to IN_MAINTENANCE
 }
 
 enum EquipmentStatus {
@@ -59,6 +60,7 @@ enum EquipmentStatus {
   EQUIPMENT_STATUS_NEEDS_MAINTENANCE   = 2; // When self test fails or when set by TC
   EQUIPMENT_STATUS_NEEDS_APPROVAL      = 3; // When self test cycle has run , waiting for approval from operator
   EQUIPMENT_STATUS_IN_OPERATION        = 4; // When operator approves self test cycle, ready for production
+  EQUIPMENT_STATUS_IN_MAINTENANCE      = 5; // Operator is performing maintenance on this fixture
 }
 
 enum FireAlarmStatus {
@@ -121,7 +123,7 @@ enum TrayOrientation {
   ORIENTATION_A                   = 1;
   ORIENTATION_B                   = 2;
   ORIENTATION_C                   = 3;
-  ORIENTATION_D                   = 4; 
+  ORIENTATION_D                   = 4;
 }
 
 // STIB
@@ -151,6 +153,7 @@ enum StibFormState {
   STIB_FORM_STATE_DELAY                    = 9;
   STIB_FORM_STATE_CELL_SW                  = 10;
   STIB_FORM_STATE_FAULT                    = 11;
+  STIB_FORM_STATE_FAULT_COOL               = 12;
 }
 
 enum CellStatus {
@@ -171,9 +174,10 @@ enum CellDetectStatus {
 }
 
 enum CibCalStatus {
-  CIB_CAL_STATUS_CALIBRATED                = 0;
-  CIB_CAL_STATUS_UNCALIBRATED_SID_MISMATCH = 1;
-  CIB_CAL_STATUS_UNCALIBRATED_RANGE_ERROR  = 2;
+  CIB_CAL_STATUS_UNKNOWN_UNSPECIFIED       = 0;
+  CIB_CAL_STATUS_CALIBRATED                = 1;
+  CIB_CAL_STATUS_UNCALIBRATED_SID_MISMATCH = 2;
+  CIB_CAL_STATUS_UNCALIBRATED_RANGE_ERROR  = 3;
 }
 
 // FIB
