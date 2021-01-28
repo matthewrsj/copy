@@ -1,9 +1,11 @@
 package towercontroller
 
 import (
+	"reflect"
 	"sync"
 	"testing"
 
+	"bou.ke/monkey"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 	"stash.teslamotors.com/ctet/statemachine/v2"
@@ -25,7 +27,8 @@ func TestWaitForLoad_Actions(t *testing.T) {
 			},
 			AllowedFixtures: []string{"01-01"},
 		},
-		Logger: zap.NewExample().Sugar(),
+		CellAPIClient: cdcontroller.NewCellAPIClient("test"),
+		Logger:        zap.NewExample().Sugar(),
 		fxrInfo: &FixtureInfo{
 			LDC:          lc,
 			FixtureState: newTestFixtureStateForFixture("01-01"),
@@ -34,6 +37,11 @@ func TestWaitForLoad_Actions(t *testing.T) {
 			},
 		},
 	}
+
+	cp := monkey.PatchInstanceMethod(reflect.TypeOf(&cdcontroller.CellAPIClient{}), "GetNextProcessStep", func(*cdcontroller.CellAPIClient, string) (cdcontroller.NextFormationStep, error) {
+		return cdcontroller.NextFormationStep{Step: "final_charge - 1", StepType: cdcontroller.AllowedStepType}, nil
+	})
+	defer cp.Unpatch()
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -57,5 +65,5 @@ func TestWaitForLoad_Actions(t *testing.T) {
 		a()
 	}
 
-	assert.Equal(t, "test", wfl.processStepName)
+	assert.Equal(t, "final_charge", wfl.processStepName) // properly ignored FXRLoad message
 }

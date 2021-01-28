@@ -74,6 +74,7 @@ waitForUpdate:
 		}
 
 		name, version := getRecipeAndVersion(i.MockCellAPI, i.Logger, i.CellAPIClient, tbc.Raw)
+		step := getFormationStepType(i.MockCellAPI, i.Logger, i.CellAPIClient, tbc.Raw)
 
 		i.next = &StartProcess{
 			Config:          i.Config,
@@ -86,7 +87,7 @@ waitForUpdate:
 			tbc:             tbc,
 			processStepName: name,
 			recipeVersion:   version,
-			stepType:        fxrLoad.StepType,
+			stepType:        step,
 			transactID:      fxrLoad.TransactionID,
 		}
 	case ip := <-active:

@@ -48,6 +48,34 @@ func getCellMap(mockCellAPI bool, logger *zap.SugaredLogger, ca *cdcontroller.Ce
 	}, nil
 }
 
+func getFormationStepType(mockCellAPI bool, logger *zap.SugaredLogger, ca *cdcontroller.CellAPIClient, tray string) string {
+	if mockCellAPI {
+		return cdcontroller.AllowedStepType
+	}
+
+	var (
+		fs  cdcontroller.NextFormationStep
+		err error
+	)
+
+	bo := backoff.NewExponentialBackOff()
+	bo.MaxInterval = time.Minute
+	bo.MaxElapsedTime = 0 // try forever
+
+	// will never return a perm error
+	_ = backoff.Retry(func() error {
+		fs, err = ca.GetNextProcessStep(tray)
+		if err != nil {
+			logger.Errorw("get next process step", zap.Error(err))
+			return err
+		}
+
+		return nil
+	}, bo)
+
+	return fs.StepType
+}
+
 func getRecipeAndVersion(mockCellAPI bool, logger *zap.SugaredLogger, ca *cdcontroller.CellAPIClient, tray string) (string, int) {
 	if mockCellAPI {
 		return "test", 1
