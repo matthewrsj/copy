@@ -74,8 +74,7 @@ func (w *WaitForLoad) action() {
 		w.fxbc = fxbc
 	}
 
-	w.processStepName = fxrLoad.RecipeName
-	w.recipeVersion = fxrLoad.RecipeVersion
+	w.processStepName, w.recipeVersion = getRecipeAndVersion(w.mockCellAPI, w.Logger, w.CellAPIClient, w.tbc.Raw)
 	w.stepType = fxrLoad.StepType
 	w.transactID = fxrLoad.TransactionID
 

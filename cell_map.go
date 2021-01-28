@@ -48,12 +48,15 @@ func getCellMap(mockCellAPI bool, logger *zap.SugaredLogger, ca *cdcontroller.Ce
 	}, nil
 }
 
-func getRecipeVersion(mockCellAPI bool, logger *zap.SugaredLogger, ca *cdcontroller.CellAPIClient, tray string) int {
+func getRecipeAndVersion(mockCellAPI bool, logger *zap.SugaredLogger, ca *cdcontroller.CellAPIClient, tray string) (string, int) {
 	if mockCellAPI {
-		return 1
+		return "test", 1
 	}
 
-	var recipeVersion int
+	var (
+		recipeName    string
+		recipeVersion int
+	)
 
 	bo := backoff.NewExponentialBackOff()
 	bo.MaxInterval = time.Minute
@@ -73,6 +76,8 @@ func getRecipeVersion(mockCellAPI bool, logger *zap.SugaredLogger, ca *cdcontrol
 			return fmt.Errorf("invalid step from cell API: '%s'", fs.Step)
 		}
 
+		recipeName = fields[0]
+
 		if recipeVersion, err = strconv.Atoi(fields[1]); err != nil {
 			logger.Errorw("invalid step from cell API, unable to convert to int", "step", fs.Step, "error", err)
 			return fmt.Errorf("invalid step from cell API, unable to convert to int: '%s'; %v", fs.Step, err)
@@ -83,5 +88,5 @@ func getRecipeVersion(mockCellAPI bool, logger *zap.SugaredLogger, ca *cdcontrol
 
 	logger.Infow("recipe version retrieved from cell API", "version", recipeVersion)
 
-	return recipeVersion
+	return recipeName, recipeVersion
 }

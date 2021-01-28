@@ -43,6 +43,12 @@ type EndProcess struct {
 }
 
 func (e *EndProcess) action() {
+	if e.recipeVersion == 0 { // we short-circuited here or something went wrong, just re-get the version
+		e.childLogger.Info("version is 0, querying API for new recipe version")
+
+		e.processStepName, e.recipeVersion = getRecipeAndVersion(e.mockCellAPI, e.childLogger, e.CellAPIClient, e.tbc.SN)
+	}
+
 	if len(e.cells) == 0 { // we short-circuited here or something went wrong, just re-get the map
 		e.childLogger.Info("empty cell map, querying API for new map")
 
@@ -60,12 +66,6 @@ func (e *EndProcess) action() {
 
 			return nil
 		}, bo)
-	}
-
-	if e.recipeVersion == 0 { // we short-circuited here or something went wrong, just re-get the version
-		e.childLogger.Info("version is 0, querying API for new recipe version")
-
-		e.recipeVersion = getRecipeVersion(e.mockCellAPI, e.childLogger, e.CellAPIClient, e.tbc.SN)
 	}
 
 	if !e.mockCellAPI {

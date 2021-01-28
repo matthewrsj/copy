@@ -73,6 +73,8 @@ waitForUpdate:
 			return
 		}
 
+		name, version := getRecipeAndVersion(i.MockCellAPI, i.Logger, i.CellAPIClient, tbc.Raw)
+
 		i.next = &StartProcess{
 			Config:          i.Config,
 			Logger:          i.Logger,
@@ -82,8 +84,8 @@ waitForUpdate:
 			fxrInfo:         i.FXRInfo,
 			fxbc:            fxbc,
 			tbc:             tbc,
-			processStepName: fxrLoad.RecipeName,
-			recipeVersion:   fxrLoad.RecipeVersion,
+			processStepName: name,
+			recipeVersion:   version,
 			stepType:        fxrLoad.StepType,
 			transactID:      fxrLoad.TransactionID,
 		}
