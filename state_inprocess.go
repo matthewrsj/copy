@@ -42,6 +42,8 @@ func (i *InProcess) action() {
 	i.childLogger.Info("monitoring fixture to go to complete or fault")
 	i.fxrInfo.Avail.Set(StatusActive)
 
+	var lastValidOp *tower.FixtureOperational
+
 	for { // loop until status updates to COMPLETE/FAULTED
 		// TODO: first look for it to go to IN_PROGRESS
 		//       then COMPLETE/FAULTED
@@ -66,6 +68,12 @@ func (i *InProcess) action() {
 		var statusMsg string
 
 		switch s := msg.GetOp().GetStatus(); s {
+		case tower.FixtureStatus_FIXTURE_STATUS_ACTIVE:
+			i.childLogger.Debugw("received fixture_status active, saving last active operational message", "status", s.String())
+
+			lastValidOp = msg.GetOp()
+
+			time.Sleep(time.Second)
 		case tower.FixtureStatus_FIXTURE_STATUS_COMPLETE:
 			statusMsg = "fixture done with tray"
 
@@ -94,7 +102,14 @@ func (i *InProcess) action() {
 			i.childLogger.Info(statusMsg)
 
 			if !isCommissionRecipe(i.processStepName) {
-				postOpSnapshotToRemote(i.childLogger, i.Config, i.tbc.Raw, i.fxbc.Raw, msg.GetOp())
+				if lastValidOp == nil {
+					// our best effort to record last active ops message failed, perhaps because the fixture faulted
+					// right after TC restarted and we didn't have a chance to record an active message. In this case
+					// just use the current op.
+					lastValidOp = msg.GetOp()
+				}
+
+				postOpSnapshotToRemote(i.childLogger, i.Config, i.tbc.Raw, i.fxbc.Raw, lastValidOp)
 				holdTrayIfFaultsExceedLimit(i.childLogger, i.CellAPIClient, i.Config, i.mockCellAPI, i.tbc.Raw)
 			}
 
