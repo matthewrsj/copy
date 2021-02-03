@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v1.4.0] - 2021-02-03
+### Changed
+- Ignore all recipe information from C/D Controller, as this information originated from Conductor.
+  Conductor has shown a bug that results in incorrect tray information being associated with a tray ID.
+  Fallout is that TC will run the wrong recipe on the tray due to the wrong recipe coming from CND. Now
+  TC reaches out directly to cell API to get all this information to bypass the bug.
+
+  Update MIN version as this is a robustness feature.
+
 ## [v1.3.1] - 2021-01-26
 ### Changed
 - Update to latest towerproto
