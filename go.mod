@@ -20,3 +20,5 @@ require (
 	stash.teslamotors.com/rr/protostream v1.0.1
 	stash.teslamotors.com/rr/towerproto v0.7.3
 )
+
+replace stash.teslamotors.com/rr/cdcontroller v1.1.3 => /home/parallels/projects/cdcontroller

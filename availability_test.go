@@ -53,6 +53,21 @@ func TestHandleAvailable(t *testing.T) {
 	fs02 := NewFixtureState()
 	fs02.operational = fm
 
+	ts := NewTCAUXState()
+	ts.operational = &tcauxMessage{
+		message: &tower.TauxToTower{
+			Content: &tower.TauxToTower_Op{
+				Op: &tower.TauxOperational{
+					PowerCapacityW:  10,
+					PowerInUseW:     2,
+					PowerAvailableW: 8,
+				},
+			},
+		},
+		lastSeen:   time.Time{},
+		dataExpiry: 0,
+	}
+
 	registry := map[string]*FixtureInfo{
 		"01-01": {
 			Name:         "01-01",
@@ -73,7 +88,7 @@ func TestHandleAvailable(t *testing.T) {
 	}
 
 	router := mux.NewRouter()
-	router.HandleFunc(AvailabilityEndpoint, HandleAvailable("" /* configPath not used due to global config set */, zap.NewExample().Sugar(), registry))
+	router.HandleFunc(AvailabilityEndpoint, HandleAvailable("" /* configPath not used due to global config set */, zap.NewExample().Sugar(), registry, ts))
 
 	port, err := freeport.GetFreePort()
 	if err != nil {
@@ -111,7 +126,7 @@ func TestHandleAvailable(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var as cdcontroller.Availability
+	var as cdcontroller.TowerAvailability
 	if err = json.Unmarshal(jb, &as); err != nil {
 		t.Fatal(err)
 	}

@@ -76,26 +76,6 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	for _, name := range conf.AllFixtures {
-		u := url.URL{Scheme: "ws", Host: *wsAddr, Path: protostream.WSEndpoint}
-		n := name
-
-		var sub *protostream.Socket
-
-		if err = backoff.Retry(
-			func() error {
-				sub, err = protostream.NewSubscriberWithSub(u.String(), n)
-				if err != nil {
-					sugar.Errorw("create new subscriber", "error", err)
-					return err
-				}
-
-				return nil
-			},
-			backoff.NewExponentialBackOff(), // defaults are fine on startup
-		); err != nil {
-			sugar.Fatalw("create new subscriber", "error", err)
-		}
-
 		registry[name] = &towercontroller.FixtureInfo{
 			Name: name,
 			PFD:  make(chan cdcontroller.PreparedForDelivery),
@@ -103,12 +83,19 @@ func main() {
 			FixtureState: towercontroller.RunNewFixtureState(
 				towercontroller.WithAllDataExpiry(time.Second*7), // min data rate (5s) + 40% (2s)
 				towercontroller.WithContext(ctx),
-				towercontroller.WithListener(sub),
+				towercontroller.WithListener(connectToProtostreamSocket(sugar, *wsAddr, name)),
 				towercontroller.WithLogger(sugar),
 			),
 			Avail: &towercontroller.ReadyStatus{},
 		}
 	}
+
+	ts := towercontroller.RunNewTCAUXState(
+		towercontroller.WithTCAUXDataExpiry(time.Second*7),
+		towercontroller.WithTCAUXContext(ctx),
+		towercontroller.WithTCAUXListener(connectToProtostreamSocket(sugar, *wsAddr, "TCAUX")),
+		towercontroller.WithTCAUXLogger(sugar),
+	)
 
 	// create publisher socket over which to communicate with FXRs via protostream
 	var publisher *protostream.Socket
@@ -138,7 +125,7 @@ func main() {
 	// operational API is handled by the opsRouter
 	opsRouter := mux.NewRouter()
 	// handle incoming requests on availability
-	opsRouter.HandleFunc(towercontroller.AvailabilityEndpoint, towercontroller.HandleAvailable(*configFile, sugar, registry)).Methods(http.MethodGet)
+	opsRouter.HandleFunc(towercontroller.AvailabilityEndpoint, towercontroller.HandleAvailable(*configFile, sugar, registry, ts)).Methods(http.MethodGet)
 	// handle incoming posts to load
 	opsRouter.HandleFunc(towercontroller.LoadEndpoint, towercontroller.HandleLoad(conf, sugar, registry)).Methods(http.MethodPost)
 	// handle incoming posts to preparedForDelivery

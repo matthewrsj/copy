@@ -112,7 +112,7 @@ func HandleAvailable(configPath string, logger *zap.SugaredLogger) http.HandlerF
 
 		wg.Wait()
 
-		resp := make(map[string]Availability)
+		resp := make(map[string]TowerAvailability)
 
 		sResp.Range(func(key, value interface{}) bool {
 			name, ok := key.(string)
@@ -121,7 +121,7 @@ func HandleAvailable(configPath string, logger *zap.SugaredLogger) http.HandlerF
 				return true // will never happen
 			}
 
-			avail, ok := value.(Availability)
+			avail, ok := value.(TowerAvailability)
 			if !ok {
 				logger.Errorf("invalid type '%T' for availability '%v'", value, value)
 				return true // will never happen
@@ -160,10 +160,10 @@ func getOneAvailability(name, address, allowedQuery string, logger *zap.SugaredL
 	sResp.Store(name, avail)
 }
 
-func getOneAvailabilitySync(address, allowedQuery string) (Availability, error) {
+func getOneAvailabilitySync(address, allowedQuery string) (TowerAvailability, error) {
 	const getAvailabilityTimeout = time.Second
 
-	var avail Availability
+	var avail TowerAvailability
 
 	c := http.Client{
 		Timeout: getAvailabilityTimeout,
@@ -187,7 +187,7 @@ func getOneAvailabilitySync(address, allowedQuery string) (Availability, error) 
 	}
 
 	if err = json.Unmarshal(jb, &avail); err != nil {
-		return avail, fmt.Errorf("unmarshal response body from %s: %v", url, err)
+		return avail, fmt.Errorf("unmarshal response body from %s: %v; body: %s", url, err, string(jb))
 	}
 
 	return avail, nil
@@ -196,7 +196,7 @@ func getOneAvailabilitySync(address, allowedQuery string) (Availability, error) 
 func responseForSingleFixture(requested string, availableTowers map[string]string, station string) ([]byte, error) {
 	var (
 		fxrLoc FixtureBarcode
-		avail  Availability
+		avail  TowerAvailability
 		colNum int
 		jb     []byte
 	)
@@ -223,13 +223,18 @@ func responseForSingleFixture(requested string, availableTowers map[string]strin
 		return nil, fmt.Errorf("get availability for tower %s: %v", address, err)
 	}
 
-	single, ok := avail[requested]
+	single, ok := avail.FXRs[requested]
 	if !ok {
 		return nil, fmt.Errorf("fixture %s not found in tower availability %v", requested, avail)
 	}
 
-	singleAvail := map[string]Availability{
-		reqAddr: {requested: single},
+	singleAvail := map[string]TowerAvailability{
+		reqAddr: {
+			FXRs: map[string]FXRAvailable{
+				requested: single,
+			},
+			Power: avail.Power,
+		},
 	}
 
 	if jb, err = json.Marshal(singleAvail); err != nil {

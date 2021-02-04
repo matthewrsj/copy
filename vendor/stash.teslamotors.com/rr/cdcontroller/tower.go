@@ -43,7 +43,7 @@ func (t *Tower) getAvailabilityForCommissioning() (*FXRLayout, error) {
 	return as.ToFXRLayoutForCommissioning()
 }
 
-func (t *Tower) fetchAvailability() (Availability, error) {
+func (t *Tower) fetchAvailability() (TowerAvailability, error) {
 	cl := http.Client{
 		Timeout: time.Second * 10,
 	}
@@ -51,7 +51,7 @@ func (t *Tower) fetchAvailability() (Availability, error) {
 	// only query for allowed fixtures for quicker response time
 	resp, err := cl.Get(t.Remote + _availabilityEndpoint + fmt.Sprintf("?%s=true", _allowedQueryKey))
 	if err != nil {
-		return nil, fmt.Errorf("http.Get %s: %v", t.Remote+_availabilityEndpoint, err)
+		return TowerAvailability{}, fmt.Errorf("http.Get %s: %v", t.Remote+_availabilityEndpoint, err)
 	}
 
 	defer func() {
@@ -59,17 +59,17 @@ func (t *Tower) fetchAvailability() (Availability, error) {
 	}()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("response NOT OK: %v, %v", resp.StatusCode, resp.Status)
+		return TowerAvailability{}, fmt.Errorf("response NOT OK: %v, %v", resp.StatusCode, resp.Status)
 	}
 
 	b, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("ioutil.ReadAll response body: %v", err)
+		return TowerAvailability{}, fmt.Errorf("ioutil.ReadAll response body: %v", err)
 	}
 
-	var as Availability
+	var as TowerAvailability
 	if err := json.Unmarshal(b, &as); err != nil {
-		return nil, fmt.Errorf("json.Unmarshal response body %s: %v", string(b), err)
+		return TowerAvailability{}, fmt.Errorf("json.Unmarshal response body %s: %v", string(b), err)
 	}
 
 	return as, nil

@@ -18,7 +18,7 @@ const _allowedQueryKey = "allowed"
 
 // HandleAvailable is the handler for the endpoint reporting availability of fixtures
 // nolint:gocognit,funlen // ignore
-func HandleAvailable(configPath string, logger *zap.SugaredLogger, registry map[string]*FixtureInfo) http.HandlerFunc {
+func HandleAvailable(configPath string, logger *zap.SugaredLogger, registry map[string]*FixtureInfo, ts *TCAUXState) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		allowCORS(w)
 
@@ -56,11 +56,25 @@ func HandleAvailable(configPath string, logger *zap.SugaredLogger, registry map[
 
 		avail := make(chan namedAvail)
 		done := make(chan struct{})
-		as := make(cdcontroller.Availability)
+		as := cdcontroller.TowerAvailability{
+			FXRs: make(map[string]cdcontroller.FXRAvailable),
+		}
+
+		// gather power information
+		tsOp, err := ts.GetOp()
+		if err != nil {
+			cl.Warnw("unable to get TCAUX power information, returning zeroes", zap.Error(err))
+		} else {
+			as.Power = cdcontroller.PowerAvailable{
+				CapacityW:  tsOp.GetOp().GetPowerCapacityW(),
+				InUseW:     tsOp.GetOp().GetPowerInUseW(),
+				AvailableW: tsOp.GetOp().GetPowerAvailableW(),
+			}
+		}
 
 		go func() {
 			for a := range avail {
-				as[a.name] = a.avail
+				as.FXRs[a.name] = a.avail
 			}
 
 			close(done)

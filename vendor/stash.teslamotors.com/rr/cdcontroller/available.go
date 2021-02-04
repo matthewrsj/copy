@@ -9,8 +9,18 @@ import (
 // CommissionSelfTestRecipeName is the recipe name TC and CDC use to special-case loading instructions
 const CommissionSelfTestRecipeName = "commission-self-test"
 
-// Availability is a map of fixtures to their corresponding statuses
-type Availability map[string]FXRAvailable
+// TowerAvailability is a map of fixtures to their corresponding statuses and power availability for a tower
+type TowerAvailability struct {
+	FXRs  map[string]FXRAvailable `json:"fixtures"`
+	Power PowerAvailable          `json:"power"`
+}
+
+// PowerAvailable contains power information on the tower
+type PowerAvailable struct {
+	CapacityW  int32 `json:"power_capacity_w"`
+	InUseW     int32 `json:"power_in_use_w"`
+	AvailableW int32 `json:"power_available_w"`
+}
 
 // FXRAvailable contains availability information for one FXR
 type FXRAvailable struct {
@@ -21,19 +31,19 @@ type FXRAvailable struct {
 }
 
 // ToFXRLayout converts the availability info to a FXRLayout
-func (as Availability) ToFXRLayout() (*FXRLayout, error) {
-	return fxrLayoutForValidator(as, fxrReadyForNormalOperation)
+func (ta TowerAvailability) ToFXRLayout() (*FXRLayout, error) {
+	return fxrLayoutForValidator(ta, fxrReadyForNormalOperation)
 }
 
 // ToFXRLayoutForCommissioning converts the availability info to a FXRLayout
-func (as Availability) ToFXRLayoutForCommissioning() (*FXRLayout, error) {
-	return fxrLayoutForValidator(as, fxrReadyForCommissioning)
+func (ta TowerAvailability) ToFXRLayoutForCommissioning() (*FXRLayout, error) {
+	return fxrLayoutForValidator(ta, fxrReadyForCommissioning)
 }
 
-func fxrLayoutForValidator(as Availability, validator func(FXRAvailable) bool) (*FXRLayout, error) {
+func fxrLayoutForValidator(ta TowerAvailability, validator func(FXRAvailable) bool) (*FXRLayout, error) {
 	f := NewFXRLayout()
 
-	for loc, a := range as {
+	for loc, a := range ta.FXRs {
 		c, err := ColFromLoc(loc)
 		if err != nil {
 			return nil, fmt.Errorf("column from location (%s): %v", loc, err)

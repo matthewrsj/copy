@@ -61,3 +61,19 @@ func unmarshalProtoMessage(lMsg *protostream.Message) (*tower.FixtureToTower, er
 
 	return &msg, nil
 }
+
+func unmarshalTCAUXProtoMessage(lMsg *protostream.Message) (*tower.TauxToTower, error) {
+	var msg tower.TauxToTower
+
+	var event protostream.ProtoMessage
+
+	if err := json.Unmarshal(lMsg.Msg.Body, &event); err != nil {
+		return nil, fmt.Errorf("unmarshal json frame: %v, bytes: %s", err, string(lMsg.Msg.Body))
+	}
+
+	if err := proto.Unmarshal(event.Body, &msg); err != nil {
+		return nil, fmt.Errorf("unable to unmarshal data from FXR: %v", err)
+	}
+
+	return &msg, nil
+}
