@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v1.4.1] - 2021-02-09
+### Changed
+- Gather operational snapshot from last ACTIVE message, if one exists, instead of first faulted. This is
+  because the first faulted message could be corrupted or incomplete if the fault was because the CIBs or
+  STIBs went offline.
+
 ## [v1.4.0] - 2021-02-03
 ### Changed
 - Ignore all recipe information from C/D Controller, as this information originated from Conductor.
