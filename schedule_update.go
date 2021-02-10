@@ -20,7 +20,10 @@ const (
 	UpdateCancelEndpoint = UpdateEndpoint + "/cancel"
 )
 
-const _exitDueToUpdateRequest = 2
+const (
+	_exitDueToUpdateRequest = 2
+	_forceQueryKey          = "force"
+)
 
 type updateResponse struct {
 	WaitingToUpdate bool `json:"waiting_to_update"`
@@ -74,11 +77,30 @@ func HandleUpdate(logger *zap.SugaredLogger, cancel chan struct{}, registry map[
 			return
 		}
 
+		if r.Method != http.MethodPost {
+			cl.Errorw("method not allowed", "method", r.Method)
+			http.Error(w, fmt.Errorf("method %s not allowed", r.Method).Error(), http.StatusMethodNotAllowed)
+
+			return
+		}
+
 		if _updateScheduled {
 			http.Error(w, "update already scheduled", http.StatusConflict)
 			cl.Warn("update requested when one was already scheduled")
 
 			return
+		}
+
+		values := r.URL.Query()
+
+		force := values.Get(_forceQueryKey)
+		if force == "true" {
+			cl.Warn("force update requested, exiting now")
+
+			go func() { // goroutine to allow normal http response
+				time.Sleep(time.Millisecond * 100)
+				os.Exit(_exitDueToUpdateRequest)
+			}()
 		}
 
 		_updateScheduled = true

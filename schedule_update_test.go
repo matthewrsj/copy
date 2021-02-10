@@ -1,10 +1,15 @@
 package towercontroller
 
 import (
+	"bytes"
+	"fmt"
 	"net/http"
+	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
+	"bou.ke/monkey"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
@@ -63,4 +68,30 @@ func TestHandleUpdateCancel(t *testing.T) {
 	}
 
 	assert.True(t, hit)
+}
+
+func TestHandleUpdateForce(t *testing.T) {
+	cancel := make(chan struct{})
+	srv := httptest.NewServer(HandleUpdate(zap.NewExample().Sugar(), cancel, make(map[string]*FixtureInfo)))
+
+	var calledWith int
+
+	exitP := monkey.Patch(os.Exit, func(code int) {
+		calledWith = code
+	})
+	defer exitP.Unpatch()
+
+	r, err := http.Post(fmt.Sprintf("%s?%s=true", srv.URL, _forceQueryKey), "application/json", bytes.NewReader([]byte{}))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer func() {
+		_ = r.Body.Close()
+	}()
+
+	time.Sleep(time.Millisecond * 110)
+
+	assert.Equal(t, _exitDueToUpdateRequest, calledWith)
+	assert.Equal(t, http.StatusOK, r.StatusCode)
 }
