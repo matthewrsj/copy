@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v1.4.2] - 2021-02-11
+### Changed
+- Update to latest towerproto
+
 ## [v1.4.1] - 2021-02-09
 ### Changed
 - Gather operational snapshot from last ACTIVE message, if one exists, instead of first faulted. This is

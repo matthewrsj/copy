@@ -7,54 +7,55 @@ message aXXX_Reserved { float dummy = 1; }
 
 message StibAlert {
   enum AlertId {
-    STIB_NONE                               = 0;
-    STIB_a001_SwAppBoot                     = 1;
-    STIB_a002_HalError                      = 2;
-    STIB_a003_WatchDog                      = 3;
-    STIB_a004_CpuOverRun                    = 4;
-    STIB_a005_CANBusReset                   = 5;
-    STIB_a006_STIBrx_MIA                    = 6;
-    STIB_a007_TaskStackOverrun              = 7;
-    STIB_a008_unused                        = 8;
-    STIB_a009_unused                        = 9;
-    STIB_a010_EnumerationWriteFail          = 10;
-    STIB_a011_AllegroHwOC                   = 11;
-    STIB_a012_ComparatorHwOC                = 12;
-    STIB_a013_SwOC                          = 13;
-    STIB_a014_BusUV                         = 14;
-    STIB_a015_BusOV                         = 15;
-    STIB_a016_StringOV                      = 16;
-    STIB_a017_StringUV                      = 17;
-    STIB_a018_SwitchTempTooHigh             = 18;
-    STIB_a019_ShuntTempTooHigh              = 19;
-    STIB_a020_VoltageMatchingTimeout        = 20;
-    STIB_a021_LossOfCurrentControl          = 21;
-    STIB_a022_SensorOffsetTooHigh           = 22;
-    STIB_a023_EnableLineLost                = 23;
-    STIB_a024_irefCorrectionIrrational      = 24;
-    STIB_a025_unused                        = 25;
-    STIB_a026_unused                        = 26;
-    STIB_a027_unused                        = 27;
-    STIB_a028_AppliedCurrentIsSaturated     = 28;
-    STIB_a029_CellSafetyCheckFailed         = 29;
-    STIB_a030_CellQualityCheckFailed        = 30;
-    STIB_a031_CellOV                        = 31;
-    STIB_a032_CellUV                        = 32;
-    STIB_a033_CellDvDT                      = 33;
-    STIB_a034_PogoVIrrational               = 34;
-    STIB_a035_CibFaulted                    = 35;
-    STIB_a036_CellTempTooHigh               = 36;
-    STIB_a037_FormationTimeout              = 37;
-    STIB_a038_FormationCheckFailed          = 38;
-    STIB_a039_unused                        = 39;
-    STIB_a040_unused                        = 40;
-    STIB_a041_CIBDataInvalid                = 41;
-    STIB_a042_Reserved                      = 42;
-    STIB_a043_CIBNotConnected               = 43;
-    STIB_a044_CIBCellSwitchWriteFail        = 44;
-    STIB_a045_CIB_NegVoltageProtection      = 45;
-    STIB_a046_CIB_STIB_VStringDiffCheckFail = 46;
-    STIB_a047_CIBCalibrationFail            = 47;
+    STIB_NONE                                 = 0;
+    STIB_a001_SwAppBoot                       = 1;
+    STIB_a002_HalError                        = 2;
+    STIB_a003_WatchDog                        = 3;
+    STIB_a004_CpuOverRun                      = 4;
+    STIB_a005_CANBusReset                     = 5;
+    STIB_a006_STIBrx_MIA                      = 6;
+    STIB_a007_TaskStackOverrun                = 7;
+    STIB_a008_unused                          = 8;
+    STIB_a009_unused                          = 9;
+    STIB_a010_EnumerationWriteFail            = 10;
+    STIB_a011_AllegroHwOC                     = 11;
+    STIB_a012_ComparatorHwOC                  = 12;
+    STIB_a013_SwOC                            = 13;
+    STIB_a014_BusUV                           = 14;
+    STIB_a015_BusOV                           = 15;
+    STIB_a016_StringOV                        = 16;
+    STIB_a017_StringUV                        = 17;
+    STIB_a018_SwitchTempTooHigh               = 18;
+    STIB_a019_ShuntTempTooHigh                = 19;
+    STIB_a020_VoltageMatchingTimeout          = 20;
+    STIB_a021_LossOfCurrentControl            = 21;
+    STIB_a022_SensorOffsetTooHigh             = 22;
+    STIB_a023_EnableLineLost                  = 23;
+    STIB_a024_irefCorrectionIrrational        = 24;
+    STIB_a025_unused                          = 25;
+    STIB_a026_unused                          = 26;
+    STIB_a027_unused                          = 27;
+    STIB_a028_AppliedCurrentIsSaturated       = 28;
+    STIB_a029_CellSafetyCheckFailed           = 29;
+    STIB_a030_CellQualityCheckFailed          = 30;
+    STIB_a031_CellOV                          = 31;
+    STIB_a032_CellUV                          = 32;
+    STIB_a033_CellDvDT                        = 33;
+    STIB_a034_PogoVIrrational                 = 34;
+    STIB_a035_CibFaulted                      = 35;
+    STIB_a036_CellTempTooHigh                 = 36;
+    STIB_a037_FormationTimeout                = 37;
+    STIB_a038_FormationCheckFailed            = 38;
+    STIB_a039_unused                          = 39;
+    STIB_a040_unused                          = 40;
+    STIB_a041_CIBDataInvalid                  = 41;
+    STIB_a042_Reserved                        = 42;
+    STIB_a043_CIBNotConnected                 = 43;
+    STIB_a044_CIBCellSwitchWriteFail          = 44;
+    STIB_a045_CIB_NegVoltageProtection        = 45;
+    STIB_a046_CIB_STIB_VStringDiffCheckFail   = 46;
+    STIB_a047_CIBCalibrationFail              = 47;
+    STIB_a048_CIBCellSwitchWriteFailPermanent = 48;
   }
 
   message a004_CpuOverRun {
@@ -237,7 +238,10 @@ message StibAlert {
     float vd                      = 17; // V
   }
 
-  message a044_CIBCellSwitchWriteFail { uint32 cell_switch_data = 1; }
+  message a044_CIBCellSwitchWriteFail {
+    uint32 cell_switch_data    = 1;
+    uint32 cell_switch_request = 2;
+  }
 
   message a046_CIB_STIB_VStringDiffCheckFail { float cib_stib_vstring_diff = 1; }
 
@@ -248,52 +252,58 @@ message StibAlert {
     uint32       cib_cal_sid_lsb = 4;
   }
 
+  message a048_CIBCellSwitchWriteFailPermanent {
+    uint32 cell_switch_data    = 1;
+    uint32 cell_switch_request = 2;
+  }
+
   message AlertData {
     oneof Payload {
-      aXXX_Reserved                      a003 = 3;
-      a004_CpuOverRun                    a004 = 4;
-      aXXX_Reserved                      a005 = 5;
-      aXXX_Reserved                      a006 = 6;
-      a007_TaskStackOverrun              a007 = 7;
-      aXXX_Reserved                      a008 = 8;
-      aXXX_Reserved                      a009 = 9;
-      a010_EnumerationWriteFail          a010 = 10;
-      aXXX_Reserved                      a011 = 11;
-      aXXX_Reserved                      a012 = 12;
-      aXXX_Reserved                      a013 = 13;
-      aXXX_Reserved                      a014 = 14;
-      aXXX_Reserved                      a015 = 15;
-      aXXX_Reserved                      a016 = 16;
-      aXXX_Reserved                      a017 = 17;
-      aXXX_Reserved                      a018 = 18;
-      aXXX_Reserved                      a019 = 19;
-      a020_VoltageMatchingTimeout        a020 = 20;
-      aXXX_Reserved                      a021 = 21;
-      aXXX_Reserved                      a022 = 22;
-      aXXX_Reserved                      a023 = 23;
-      a024_irefCorrectionIrrational      a024 = 24;
-      aXXX_Reserved                      a025 = 25;
-      aXXX_Reserved                      a026 = 26;
-      aXXX_Reserved                      a027 = 27;
-      a028_AppliedCurrentIsSaturated     a028 = 28;
-      a029_CellSafetyCheckFailed         a029 = 29;
-      a030_CellQualityCheckFailed        a030 = 30;
-      a031_CellOV                        a031 = 31;
-      a032_CellUV                        a032 = 32;
-      aXXX_Reserved                      a033 = 33;
-      a034_PogoVIrrational               a034 = 34;
-      a036_CellTempTooHigh               a036 = 36;
-      a037_FormationTimeout              a037 = 37;
-      a038_FormationCheckFailed          a038 = 38;
-      aXXX_Reserved                      a039 = 39;
-      aXXX_Reserved                      a040 = 40;
-      a041_CIBDataInvalid                a041 = 41;
-      aXXX_Reserved                      a042 = 42;
-      aXXX_Reserved                      a043 = 43;
-      a044_CIBCellSwitchWriteFail        a044 = 44;
-      a045_CIB_NegVoltageProtection      a045 = 45;
-      a046_CIB_STIB_VStringDiffCheckFail a046 = 46;
-      a047_CIBCalibrationFail            a047 = 47;
+      aXXX_Reserved                        a003 = 3;
+      a004_CpuOverRun                      a004 = 4;
+      aXXX_Reserved                        a005 = 5;
+      aXXX_Reserved                        a006 = 6;
+      a007_TaskStackOverrun                a007 = 7;
+      aXXX_Reserved                        a008 = 8;
+      aXXX_Reserved                        a009 = 9;
+      a010_EnumerationWriteFail            a010 = 10;
+      aXXX_Reserved                        a011 = 11;
+      aXXX_Reserved                        a012 = 12;
+      aXXX_Reserved                        a013 = 13;
+      aXXX_Reserved                        a014 = 14;
+      aXXX_Reserved                        a015 = 15;
+      aXXX_Reserved                        a016 = 16;
+      aXXX_Reserved                        a017 = 17;
+      aXXX_Reserved                        a018 = 18;
+      aXXX_Reserved                        a019 = 19;
+      a020_VoltageMatchingTimeout          a020 = 20;
+      aXXX_Reserved                        a021 = 21;
+      aXXX_Reserved                        a022 = 22;
+      aXXX_Reserved                        a023 = 23;
+      a024_irefCorrectionIrrational        a024 = 24;
+      aXXX_Reserved                        a025 = 25;
+      aXXX_Reserved                        a026 = 26;
+      aXXX_Reserved                        a027 = 27;
+      a028_AppliedCurrentIsSaturated       a028 = 28;
+      a029_CellSafetyCheckFailed           a029 = 29;
+      a030_CellQualityCheckFailed          a030 = 30;
+      a031_CellOV                          a031 = 31;
+      a032_CellUV                          a032 = 32;
+      aXXX_Reserved                        a033 = 33;
+      a034_PogoVIrrational                 a034 = 34;
+      a036_CellTempTooHigh                 a036 = 36;
+      a037_FormationTimeout                a037 = 37;
+      a038_FormationCheckFailed            a038 = 38;
+      aXXX_Reserved                        a039 = 39;
+      aXXX_Reserved                        a040 = 40;
+      a041_CIBDataInvalid                  a041 = 41;
+      aXXX_Reserved                        a042 = 42;
+      aXXX_Reserved                        a043 = 43;
+      a044_CIBCellSwitchWriteFail          a044 = 44;
+      a045_CIB_NegVoltageProtection        a045 = 45;
+      a046_CIB_STIB_VStringDiffCheckFail   a046 = 46;
+      a047_CIBCalibrationFail              a047 = 47;
+      a048_CIBCellSwitchWriteFailPermanent a048 = 48;
     }
   }
 
@@ -414,6 +424,7 @@ message FxrAlert {
     FXR_a031_FanPwrCheckFail               = 31;
     FXR_a032_StibPwrCheckFail              = 32;
     FXR_a033_FanHwPwrSupplyFail            = 33;
+    FXR_a034_temp_sensor_comms_irrational  = 34;
   }
 
   message a001_SwAppBoot {}
@@ -496,11 +507,7 @@ message FxrAlert {
     fault_reason           fixture_fault_reason   = 3;
   }
 
-  message a020_thermal_event_level_0 {
-    float threshold   = 1;
-    bool  stib_mia    = 2;
-    bool  cib_offline = 3;
-  }
+  message a020_thermal_event_level_0 { float threshold = 1; }
 
   message a021_thermal_event_level_1 { float threshold = 1; }
 
@@ -536,6 +543,11 @@ message FxrAlert {
 
   message a033_FanHwPwrSupplyFail { bool fan_power_bad = 1; }
 
+  message a034_temp_sensor_comms_irrational {
+    bool stib_mia    = 1;
+    bool cib_offline = 2;
+  }
+
   message AlertData {
     oneof Payload {
       a001_SwAppBoot                     a001 = 1;
@@ -570,6 +582,7 @@ message FxrAlert {
       a031_FanPwrCheckFail               a031 = 31;
       a032_StibPwrCheckFail              a032 = 32;
       a033_FanHwPwrSupplyFail            a033 = 33;
+      a034_temp_sensor_comms_irrational  a034 = 34;
     }
   }
 
