@@ -11,4 +11,4 @@ RUN cd cmd && go build -mod vendor -o cdcapp . && cd ..
 RUN chmod +x cmd/cdcapp
 RUN mkdir /var/log/cdcontroller
 
-CMD cd cmd && ./cdcapp -loglvl debug -logf /var/log/cdcontroller/server.log -conf /etc/cdcontroller.d/server.yaml
+CMD cd cmd && ./cdcapp -loglvl debug -logf /var/log/cdcontroller/server.log -conf ../configuration/server/server.yaml

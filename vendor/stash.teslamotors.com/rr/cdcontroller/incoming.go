@@ -630,6 +630,14 @@ func (ah *availabilityHandler) getAvailability() error {
 	}
 
 	ah.second = reports[1]
+
+	// now check if the second report was for the prohibited column for the back fork
+	if ah.second.layout.GetOneFXRForBackFork() == nil {
+		// it was, so swap them so the front fork gets that column and the back fork gets the safe one
+		ah.lg.Info("second fork was going to get prohibited column for second fork, swapping assignments")
+		ah.first, ah.second = ah.second, ah.first
+	}
+
 	ah.lg.Info("fixtures in aisle found for two trays")
 
 	return nil
@@ -667,7 +675,7 @@ func getLocation(aisle *Aisle, lg *zap.SugaredLogger, trays []string, timesToTry
 	case 2:
 		if ah.first.numFree == 1 {
 			front, back = ah.first, ah.second
-			front.fixture, back.fixture = ah.first.layout.GetOneFXR(), ah.second.layout.GetOneFXR()
+			front.fixture, back.fixture = ah.first.layout.GetOneFXR(), ah.second.layout.GetOneFXRForBackFork()
 			sendTwo = true
 		} else {
 			front, back = ah.first, ah.first
@@ -676,6 +684,17 @@ func getLocation(aisle *Aisle, lg *zap.SugaredLogger, trays []string, timesToTry
 				sendTwo = true
 			}
 		}
+
+		if front.fixture == nil || back.fixture == nil {
+			lg.Errorw("internal error, did not identify two fixtures", "front", front.fixture, "back", back.fixture, "front_layout", ah.first.layout, "back_layout", ah.second.layout)
+			return operation{}, fmt.Errorf("internal error, did not identify two fixtures: %#v %#v", front.fixture, back.fixture)
+		}
+
+		if back.fixture.Coord.Col == _prohibitedColForBackFork {
+			lg.Errorw("internal error, tried to place back tray in prohibited column", "front", front.fixture, "back", back.fixture, "front_layout", ah.first.layout, "back_layout", ah.second.layout)
+			return operation{}, fmt.Errorf("internal error, tried to place back tray in prohibited column; fixture: %#v", back.fixture)
+		}
+
 	default:
 		return operation{}, fmt.Errorf("unexpected number of trays received: %d", len(trays))
 	}

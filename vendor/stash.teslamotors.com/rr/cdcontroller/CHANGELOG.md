@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v1.1.4] - 2021-02-11
+### Fixed
+- Do not place tray in column 16 with the back fork, as this is not physically possible.
+
 ## [v1.1.3] - 2021-01-26
 ### Changed
 - All non-production trays now use round-robin routing algorithm since non-production trays

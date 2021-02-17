@@ -9,6 +9,8 @@ import (
 	tower "stash.teslamotors.com/rr/towerproto"
 )
 
+const _prohibitedColForBackFork = 16
+
 // FXR is the status of an individual fixture
 type FXR struct {
 	Status          tower.FixtureStatus
@@ -106,7 +108,6 @@ func (fl *FXRLayout) GetNeighbor(coord Coordinates) *FXR {
 // GetTwoFXRs returns two FXRs in order of physical front/back location
 // in the case where there is not a front/back fixture they are returned in
 // order of lower/higher fixtures.
-// nolint:gocognit,wsl // the algorithm is a simple one if all in one place; leading commented-out code for hack TODO: REMOVE COMMENTS AROUND CODE
 func (fl *FXRLayout) GetTwoFXRs() (front, back *FXR) {
 	var (
 		col1Lowest, col2Lowest             *FXR
@@ -121,7 +122,7 @@ func (fl *FXRLayout) GetTwoFXRs() (front, back *FXR) {
 
 		current, neighbor := fl.Get(c), fl.GetNeighbor(c)
 
-		if current != nil && current.Free {
+		if current != nil && current.Free && current.Coord.Col != _prohibitedColForBackFork {
 			if overallLowest == nil {
 				overallLowest = current
 			} else if overallSecondLowest == nil {
@@ -179,8 +180,11 @@ const _maximumEfficientTravelHeight = 3
 // decisions.
 //
 // This is not calculated on the fly, instead a constant _maximumEfficientTravelHeight was introduced.
-// nolint:deadcode,unused // not used while hack is in place TODO: REMOVE WHEN HACK REMOVED
 func getMinimumTravelDistance(frontLowest, backLowest, overallLowest, overallSecondLowest *FXR) (front, back *FXR) {
+	if frontLowest != nil && frontLowest.Coord.Col == _prohibitedColForBackFork {
+		return frontLowest, backLowest
+	}
+
 	// if either of these are nil we can't use these, use overall
 	if frontLowest == nil || backLowest == nil {
 		return overallLowest, overallSecondLowest
@@ -221,13 +225,40 @@ func (fl *FXRLayout) GetOneFXR() *FXR {
 	return nil
 }
 
+// GetOneFXRForBackFork returns the lowest and rear-most fixture available
+func (fl *FXRLayout) GetOneFXRForBackFork() *FXR {
+	// prioritize lower levels (shortest route for crane)
+	// this means we loop over level then column instead of column then level.
+	for i := 1; i <= NumLevel; i++ {
+		for j := 1; j <= NumCol; j++ {
+			if current := fl.Get(Coordinates{Col: j, Lvl: i}); current != nil && current.Free && current.Coord.Col != _prohibitedColForBackFork {
+				return current
+			}
+		}
+	}
+
+	// nothing found
+	return nil
+}
+
 // GetAvail returns the number of available FXRs in the system
 func (fl *FXRLayout) GetAvail() int {
-	var avail int
+	var (
+		avail         int
+		countedMaxCol bool
+	)
 
 	for _, col := range fl.layout {
 		for _, f := range col {
 			if f != nil && f.Free {
+				if f.Coord.Col == _prohibitedColForBackFork {
+					if countedMaxCol {
+						continue
+					}
+
+					countedMaxCol = true
+				}
+
 				avail++
 			}
 		}
