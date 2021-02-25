@@ -77,9 +77,10 @@ func main() {
 
 	for _, name := range conf.AllFixtures {
 		registry[name] = &towercontroller.FixtureInfo{
-			Name: name,
-			PFD:  make(chan cdcontroller.PreparedForDelivery),
-			LDC:  make(chan cdcontroller.FXRLoad),
+			Name:      name,
+			PFD:       make(chan cdcontroller.PreparedForDelivery),
+			LDC:       make(chan cdcontroller.FXRLoad),
+			Unreserve: make(chan struct{}),
 			FixtureState: towercontroller.RunNewFixtureState(
 				towercontroller.WithAllDataExpiry(time.Second*7), // min data rate (5s) + 40% (2s)
 				towercontroller.WithContext(ctx),
