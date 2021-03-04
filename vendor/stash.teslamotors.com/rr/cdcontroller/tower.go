@@ -25,22 +25,32 @@ const (
 	_loadEndpoint         = "/load"
 )
 
-func (t *Tower) getAvailability() (*FXRLayout, error) {
+func (t *Tower) getAvailability() (*FXRLayout, *PowerAvailable, error) {
 	as, err := t.fetchAvailability()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return as.ToFXRLayout()
+	fl, err := as.ToFXRLayout()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return fl, &as.Power, nil
 }
 
-func (t *Tower) getAvailabilityForCommissioning() (*FXRLayout, error) {
+func (t *Tower) getAvailabilityForCommissioning() (*FXRLayout, *PowerAvailable, error) {
 	as, err := t.fetchAvailability()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return as.ToFXRLayoutForCommissioning()
+	fl, err := as.ToFXRLayoutForCommissioning()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return fl, &as.Power, nil
 }
 
 func (t *Tower) fetchAvailability() (TowerAvailability, error) {

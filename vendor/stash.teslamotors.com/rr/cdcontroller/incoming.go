@@ -119,7 +119,7 @@ func selectWithRoundRobin(logger *zap.SugaredLogger, prodAM, testAM *AisleManage
 					availFunc = tower.getAvailabilityForCommissioning
 				}
 
-				available, err := availFunc()
+				available, _, err := availFunc()
 				if err != nil {
 					logger.Errorw("get tower availability", "error", err)
 					return
@@ -203,7 +203,7 @@ func selectMaxAvailable(logger *zap.SugaredLogger, prodAM, testAM *AisleManager,
 					availFunc = tower.getAvailabilityForCommissioning
 				}
 
-				available, err := availFunc()
+				available, _, err := availFunc()
 				if err != nil {
 					logger.Errorw("get tower availability", "error", err)
 					return
@@ -328,18 +328,18 @@ func handleTowerLoad(g asrsapi.Terminal_LoadOperationsServer, lg *zap.SugaredLog
 }
 
 func handleTowerLoadCommissioning(g asrsapi.Terminal_LoadOperationsServer, lg *zap.SugaredLogger, aisles map[string]*Aisle, lo *asrsapi.LoadOperation) error {
-	return handleTowerLoadForGetter(g, lg, aisles, lo, func(t *Tower) (*FXRLayout, error) {
+	return handleTowerLoadForGetter(g, lg, aisles, lo, func(t *Tower) (*FXRLayout, *PowerAvailable, error) {
 		return t.getAvailabilityForCommissioning()
 	})
 }
 
 func handleTowerLoadNormalOperation(g asrsapi.Terminal_LoadOperationsServer, lg *zap.SugaredLogger, aisles map[string]*Aisle, lo *asrsapi.LoadOperation) error {
-	return handleTowerLoadForGetter(g, lg, aisles, lo, func(t *Tower) (*FXRLayout, error) {
+	return handleTowerLoadForGetter(g, lg, aisles, lo, func(t *Tower) (*FXRLayout, *PowerAvailable, error) {
 		return t.getAvailability()
 	})
 }
 
-type layoutGetter func(t *Tower) (*FXRLayout, error)
+type layoutGetter func(t *Tower) (*FXRLayout, *PowerAvailable, error)
 
 func handleTowerLoadForGetter(g asrsapi.Terminal_LoadOperationsServer, lg *zap.SugaredLogger, aisles map[string]*Aisle, lo *asrsapi.LoadOperation, getter layoutGetter) error {
 	loc := lo.GetLocation().GetCmFormat().GetEquipment()
@@ -513,6 +513,7 @@ func handleTowerLoaded(logger *zap.SugaredLogger, g asrsapi.Terminal_LoadOperati
 type availabilityReport struct {
 	tower   *Tower
 	layout  *FXRLayout
+	power   *PowerAvailable
 	numFree int
 
 	fixture *FXR
@@ -570,19 +571,30 @@ func (ah *availabilityHandler) getAvailability() error {
 				return
 			}
 
-			available, err := ah.getter(tower)
-			if err != nil || available == nil {
+			available, power, err := ah.getter(tower)
+			if err != nil || available == nil || power == nil {
 				ah.lg.Warnw("get tower availability", "error", err)
 				return
 			}
 
 			numFree := available.GetAvail()
 
+			if numFree == 0 {
+				ah.lg.Debugw("no fixtures available in tower", "tower", tower.Remote)
+				return
+			}
+
+			if power.AvailableW < _maxPowerNeededForTray {
+				ah.lg.Infow("not enough power in tower for tray", "tower", tower.Remote, "power", *power)
+				return
+			}
+
 			ah.lg.Debugw("availability for tower", "tower", tower.Remote, "available", numFree)
 
 			arChan <- availabilityReport{
 				tower:   tower,
 				layout:  available,
+				power:   power,
 				numFree: numFree,
 			}
 		}(tower)
@@ -611,10 +623,8 @@ func (ah *availabilityHandler) getAvailability() error {
 
 	ah.lg.Infow("checking if we need another tower", "ah.first.numFree", ah.first.numFree, "len(ah.trays)", len(ah.trays))
 
-	needAnotherTower := ah.first.numFree < 2 && len(ah.trays) == 2
-
-	if !needAnotherTower {
-		// we have enough fixtures in this tower for the two trays
+	if !needAnotherTower(len(ah.trays), ah.first) {
+		// we have enough fixtures and power in this tower for the two trays
 		ah.lg.Info("enough fixtures in tower for two trays")
 		return nil
 	}
@@ -641,6 +651,10 @@ func (ah *availabilityHandler) getAvailability() error {
 	ah.lg.Info("fixtures in aisle found for two trays")
 
 	return nil
+}
+
+func needAnotherTower(numTrays int, firstTower availabilityReport) bool {
+	return numTrays == 2 && (firstTower.numFree < 2 || firstTower.power.AvailableW < _maxPowerNeededForTray*2)
 }
 
 func getLocation(aisle *Aisle, lg *zap.SugaredLogger, trays []string, timesToTry int, getter layoutGetter) (operation, error) {

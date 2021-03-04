@@ -74,13 +74,6 @@ func TestStartProcess_Action(t *testing.T) {
 	})
 	defer pio.Unpatch()
 
-	ups := monkey.PatchInstanceMethod(
-		reflect.TypeOf(&cdcontroller.CellAPIClient{}),
-		"UpdateProcessStatus",
-		func(*cdcontroller.CellAPIClient, string, string, cdcontroller.TrayStatus) error { return nil },
-	)
-	defer ups.Unpatch()
-
 	pub := monkey.PatchInstanceMethod(
 		reflect.TypeOf(&protostream.Socket{}),
 		"PublishTo",

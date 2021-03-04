@@ -16,7 +16,7 @@ require (
 	stash.teslamotors.com/cas/asrs v0.0.3
 	stash.teslamotors.com/ctet/go-socketcan v0.0.2
 	stash.teslamotors.com/ctet/statemachine/v2 v2.0.1
-	stash.teslamotors.com/rr/cdcontroller v1.2.0-rc1
+	stash.teslamotors.com/rr/cdcontroller v1.2.1
 	stash.teslamotors.com/rr/protostream v1.0.1
 	stash.teslamotors.com/rr/towerproto v0.7.3
 )

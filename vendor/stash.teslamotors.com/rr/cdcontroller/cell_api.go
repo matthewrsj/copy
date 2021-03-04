@@ -23,10 +23,8 @@ type CellData struct {
 
 // CellStatusRequest contains the data to post cell statuses
 type CellStatusRequest struct {
-	EquipmentName string       `json:"equipment_name"`
-	RecipeName    string       `json:"recipe_name"`
-	RecipeVersion int          `json:"recipe_version"`
-	Cells         []CellPFData `json:"cells"`
+	EquipmentName string            `json:"equipment_name"`
+	CellStatus    map[string]string `json:"status"`
 }
 
 // CellPFData contains the pass/fail data of a given cell
@@ -68,8 +66,8 @@ const (
 	// DefaultCellMapFmt is the default endpoint for the cell mapping. Format directive is for the tray serial.
 	DefaultCellMapFmt = "/trays/%s/cells"
 	// DefaultProcessStatusFmt is the default endpoint for posting the process status of a tray.
-	// Format directives are for the tray serial, process step name, and status.
-	DefaultProcessStatusFmt = "/trays/%s/%s/%s"
+	// Format directives are for the tray serial, start/end, process step name, and recipe version.
+	DefaultProcessStatusFmt = "/trays/%s/cd/%s/%s/%d"
 	// DefaultNextProcessStepFmt is the default endpoint for getting the next process step of a tray.
 	// Format directives is for the tray serial.
 	DefaultNextProcessStepFmt = "/trays/%s/formation"
@@ -276,16 +274,23 @@ func (c *CellAPIClient) getCellMapWithStatusOption(sn string, useStatus bool) (m
 	return cm, nil
 }
 
-// UpdateProcessStatus updates the cell API of the start or end of a recipe
-func (c *CellAPIClient) UpdateProcessStatus(sn, fixture string, s TrayStatus) error {
-	if !s.isValid() {
-		return fmt.Errorf("status %s is not valid", s)
+// StartProcess updates the cell API of the start or end of a recipe
+func (c *CellAPIClient) StartProcess(sn, fixture, recipe string, version int) error {
+	url := urlJoin(c.baseURL, fmt.Sprintf(c.eps.processStatusFmt, sn, "start", recipe, version))
+
+	eq := struct {
+		EqName string `json:"equipment_name"`
+	}{
+		EqName: fixture,
 	}
 
-	url := urlJoin(c.baseURL, fmt.Sprintf(c.eps.processStatusFmt, sn, fixture, s))
+	jb, err := json.Marshal(eq)
+	if err != nil {
+		return fmt.Errorf("marshal request: %v", err)
+	}
 
 	// nolint:gosec // easier to construct the URL
-	resp, err := http.Post(url, "", nil)
+	resp, err := http.Post(url, "application/json", bytes.NewReader(jb))
 	if err != nil {
 		return fmt.Errorf("POST to %s: %v", url, err)
 	}
@@ -328,29 +333,27 @@ func (c *CellAPIClient) UpdateProcessStatus(sn, fixture string, s TrayStatus) er
 }
 
 // SetCellStatusesNoClose sets the pass/fail data of a list of cells but does not close the step
-func (c *CellAPIClient) SetCellStatusesNoClose(tray, eqName, recipe string, ver int, cpf []CellPFData) error {
+func (c *CellAPIClient) SetCellStatusesNoClose(tray, eqName, recipe string, ver int, cpf map[string]string) error {
 	return c.setCellStatusesWithCloseOption(tray, eqName, recipe, ver, cpf, false)
 }
 
 // SetCellStatuses sets the pass/fail data of a list of cells
-func (c *CellAPIClient) SetCellStatuses(tray string, eqName, recipe string, ver int, cpf []CellPFData) error {
+func (c *CellAPIClient) SetCellStatuses(tray string, eqName, recipe string, ver int, cpf map[string]string) error {
 	return c.setCellStatusesWithCloseOption(tray, eqName, recipe, ver, cpf, true)
 }
 
-func (c *CellAPIClient) setCellStatusesWithCloseOption(tray, eqName, recipe string, ver int, cpf []CellPFData, closeStep bool) error {
+func (c *CellAPIClient) setCellStatusesWithCloseOption(tray, eqName, recipe string, ver int, cpf map[string]string, closeStep bool) error {
 	req := CellStatusRequest{
 		EquipmentName: eqName,
-		RecipeName:    recipe,
-		RecipeVersion: ver,
-		Cells:         cpf,
+		CellStatus:    cpf,
 	}
+
+	url := urlJoin(c.baseURL, fmt.Sprintf(c.eps.processStatusFmt, tray, "end", recipe, ver))
 
 	b, err := json.Marshal(req)
 	if err != nil {
 		return fmt.Errorf("marshal request json: %v", err)
 	}
-
-	url := urlJoin(c.baseURL, fmt.Sprintf(c.eps.cellStatusFmt, tray))
 
 	if !closeStep {
 		// default is to close the step unless complete query parameter is set to 0

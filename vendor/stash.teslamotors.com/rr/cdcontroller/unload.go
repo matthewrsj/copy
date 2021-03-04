@@ -123,7 +123,7 @@ func HandleUnloads(server *terminal.Server, lg *zap.SugaredLogger, conf Configur
 				return
 			}
 
-			op, err := getLocation(aisle, logger, []string{tc.ID}, 3 /* timesToTry */, func(t *Tower) (*FXRLayout, error) {
+			op, err := getLocation(aisle, logger, []string{tc.ID}, 3 /* timesToTry */, func(t *Tower) (*FXRLayout, *PowerAvailable, error) {
 				return t.getAvailabilityForCommissioning()
 			})
 			if err != nil {

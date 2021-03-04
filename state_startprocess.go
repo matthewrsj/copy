@@ -157,18 +157,20 @@ func (s *StartProcess) action() {
 	s.performHandshake(&twr2Fxr)
 
 	if !s.mockCellAPI {
-		// out of band and ignoring all errors update Cell API that we started
-		// does not affect any process just makes it easier to find data
-		go func() {
-			s.childLogger.Debug("updating process status", "status", "end")
+		bo.Reset()
+		// no perm error resulting from infinite retry
+		_ = backoff.Retry(func() error {
+			s.childLogger.Debugw("updating process status", "status", "start")
 
-			err := s.CellAPIClient.UpdateProcessStatus(s.tbc.SN, s.fxbc.Raw, cdcontroller.StatusStart)
-			if err != nil {
+			if err := s.CellAPIClient.StartProcess(s.tbc.SN, s.fxbc.Raw, s.processStepName, s.recipeVersion); err != nil {
 				s.childLogger.Warnw("unable to update Cell API of recipe start", "error", err)
+				return err
 			}
-		}()
+
+			return nil
+		}, bo)
 	} else {
-		s.childLogger.Warn("cell API mocked, skipping UpdateProcessStatus")
+		s.childLogger.Warn("cell API mocked, skipping StartProcess")
 	}
 }
 

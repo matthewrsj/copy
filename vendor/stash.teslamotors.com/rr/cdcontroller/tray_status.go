@@ -11,10 +11,6 @@ const (
 	StatusEnd
 )
 
-func (s TrayStatus) isValid() bool {
-	return s >= StatusStart && s <= StatusEnd
-}
-
 func (s TrayStatus) String() string {
 	switch s {
 	case StatusStart:

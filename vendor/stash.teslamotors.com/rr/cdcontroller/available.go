@@ -9,6 +9,21 @@ import (
 // CommissionSelfTestRecipeName is the recipe name TC and CDC use to special-case loading instructions
 const CommissionSelfTestRecipeName = "commission-self-test"
 
+/*
+The following calculation is the maximum capacity allocated to each fixture based on maximum powertray population.
+Can revert to this calculation if requirements change on maximum expected power.
+
+  const (
+  	_ptPerTower            = 8
+  	_fixturesPerTower      = 24
+  	_capPerPT              = 14000                                         // W
+  	_maxPowerNeededForTray = (_ptPerTower * _capPerPT) / _fixturesPerTower // W
+  )
+*/
+
+// _maxPowerNeededForTray is based on charge/discharge profiles
+const _maxPowerNeededForTray = 4300 // W
+
 // TowerAvailability is a map of fixtures to their corresponding statuses and power availability for a tower
 type TowerAvailability struct {
 	FXRs  map[string]FXRAvailable `json:"fixtures"`

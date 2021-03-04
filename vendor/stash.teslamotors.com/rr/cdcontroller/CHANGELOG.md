@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v1.2.1] - 2021-03-03
+### Changed
+- Convert to new API for start/end step.
+
+## [v1.2.0] - 2021-02-23
+### Added
+- No longer route to towers that do not have enough power capacity for the tray(s) being routed.
+
 ## [v1.1.4] - 2021-02-11
 ### Fixed
 - Do not place tray in column 16 with the back fork, as this is not physically possible.

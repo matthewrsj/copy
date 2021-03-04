@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"bou.ke/monkey"
-	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cdcontroller"
@@ -87,15 +86,6 @@ func TestEndProcess_Action(t *testing.T) {
 		}
 	}()
 
-	ups := monkey.PatchInstanceMethod(
-		reflect.TypeOf(&cdcontroller.CellAPIClient{}),
-		"UpdateProcessStatus",
-		func(*cdcontroller.CellAPIClient, string, string, cdcontroller.TrayStatus) error {
-			return nil
-		},
-	)
-	defer ups.Unpatch()
-
 	nps := monkey.PatchInstanceMethod(
 		reflect.TypeOf(&cdcontroller.CellAPIClient{}),
 		"GetNextProcessStep",
@@ -108,7 +98,7 @@ func TestEndProcess_Action(t *testing.T) {
 	scs := monkey.PatchInstanceMethod(
 		reflect.TypeOf(&cdcontroller.CellAPIClient{}),
 		"SetCellStatusesNoClose",
-		func(*cdcontroller.CellAPIClient, string, string, string, int, []cdcontroller.CellPFData) error {
+		func(*cdcontroller.CellAPIClient, string, string, string, int, map[string]string) error {
 			return nil
 		},
 	)
@@ -192,15 +182,6 @@ func TestEndProcess_ActionBadOrientation(t *testing.T) {
 			t.Errorf("panic when actions called: %v", r)
 		}
 	}()
-
-	ups := monkey.PatchInstanceMethod(
-		reflect.TypeOf(&cdcontroller.CellAPIClient{}),
-		"UpdateProcessStatus",
-		func(*cdcontroller.CellAPIClient, string, string, cdcontroller.TrayStatus) error {
-			return assert.AnError
-		},
-	)
-	defer ups.Unpatch()
 
 	nps := monkey.PatchInstanceMethod(
 		reflect.TypeOf(&cdcontroller.CellAPIClient{}),
@@ -307,15 +288,6 @@ func TestEndProcess_ActionShortMap(t *testing.T) {
 			t.Errorf("panic when actions called: %v", r)
 		}
 	}()
-
-	ups := monkey.PatchInstanceMethod(
-		reflect.TypeOf(&cdcontroller.CellAPIClient{}),
-		"UpdateProcessStatus",
-		func(*cdcontroller.CellAPIClient, string, string, cdcontroller.TrayStatus) error {
-			return assert.AnError
-		},
-	)
-	defer ups.Unpatch()
 
 	nps := monkey.PatchInstanceMethod(
 		reflect.TypeOf(&cdcontroller.CellAPIClient{}),

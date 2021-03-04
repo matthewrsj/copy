@@ -9,7 +9,7 @@ cell_api:
   base: https://cellapi-rr.us-sjc25-prd-factory.k8s.tesla.com:31443/module/api/v0.1
   endpoints:
     cell_map: /trays/%s/cells                        # tray_serial
-    process_status: /trays/%s/%s/%s                  # tray_serial|process|status
+    process_status: /trays/%s/cd/%s/%s/%d            # tray_serial|process|status|recipe|version
     next_process_step: /trays/%s/next_formation_step # tray_serial
     close_process: /trays/%s/formation/next          # tray_serial
     cell_status: /trays/%s/formation/cd/status       # tray_serial

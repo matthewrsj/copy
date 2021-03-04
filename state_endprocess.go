@@ -68,21 +68,6 @@ func (e *EndProcess) action() {
 		}, bo)
 	}
 
-	if !e.mockCellAPI {
-		// out of band and ignoring all errors update Cell API that we finished
-		// does not affect any process just makes it easier to find data
-		// this is different from ending it with the process name as it just leaves a marker on the fixture itself instead
-		// of closing the actual process step.
-		go func() {
-			e.childLogger.Debug("updating process status", "status", "end")
-
-			err := e.CellAPIClient.UpdateProcessStatus(e.tbc.SN, fmt.Sprintf("CM2-%s%s-%s", e.Config.Loc.Process, e.Config.Loc.Aisle, e.fxrInfo.Name), cdcontroller.StatusEnd)
-			if err != nil {
-				e.childLogger.Warnw("unable to update Cell API of recipe end", "error", err)
-			}
-		}()
-	}
-
 	if !e.skipClose {
 		e.childLogger.Info("setting cell statuses")
 		e.setCellStatuses()
@@ -202,7 +187,7 @@ type trayComplete struct {
 
 func (e *EndProcess) setCellStatuses() {
 	// nolint:prealloc // we don't know how long this will be, depends on what the FXR Cells' content is
-	cpf := []cdcontroller.CellPFData{}
+	cpf := make(map[string]string)
 
 	type cellStats struct {
 		Serial string `json:"cell_serial"`
@@ -243,10 +228,7 @@ func (e *EndProcess) setCellStatuses() {
 			Status: cell.GetStatus().String(),
 		}
 
-		cpf = append(cpf, cdcontroller.CellPFData{
-			Serial: cellInfo.Serial,
-			Status: cell.GetStatus().String(),
-		})
+		cpf[position] = cell.GetStatus().String()
 	}
 
 	statsBuf, err := json.Marshal(stats)
