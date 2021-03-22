@@ -98,6 +98,7 @@ func (i *InProcess) action() {
 
 			i.fixtureFault = true
 
+			i.cellResponse = msg.GetOp().GetCells()
 			i.childLogger.Infow("cell statuses when faulted", "cells", msg.GetOp().GetCells())
 			i.childLogger.Info(statusMsg)
 
