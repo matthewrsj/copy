@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.0.1] - 2021-03-22
+### Fixed
+- POST cell statuses on faulted fixture.
+
 ## [v2.0.0] - 2021-02-23
 ### Added
 - Add power capacity, availability, and power in use metrics to availability endpoint. This changed the structure
