@@ -30,6 +30,8 @@ func HandleLatestOp(logger *zap.SugaredLogger, registry map[string]*FixtureInfo)
 		logger = logger.With("endpoint", LatestOpEndpoint, "remote", r.RemoteAddr)
 		logger.Info("got request to endpoint")
 
+		w.Header().Set("Content-Type", "application/json")
+
 		fxr, err := getFixtureFromPath(r, registry)
 		if err != nil {
 			logger.Errorw("get fixture from path", "error", err)
@@ -63,6 +65,8 @@ func HandleLatestDiag(logger *zap.SugaredLogger, registry map[string]*FixtureInf
 		logger = logger.With("endpoint", LatestOpEndpoint, "remote", r.RemoteAddr)
 		logger.Info("got request to endpoint")
 
+		w.Header().Set("Content-Type", "application/json")
+
 		fxr, err := getFixtureFromPath(r, registry)
 		if err != nil {
 			logger.Errorw("get fixture from path", "error", err)
@@ -93,6 +97,8 @@ func HandleLatestAlert(logger *zap.SugaredLogger, registry map[string]*FixtureIn
 
 		logger = logger.With("endpoint", LatestOpEndpoint, "remote", r.RemoteAddr)
 		logger.Info("got request to endpoint")
+
+		w.Header().Set("Content-Type", "application/json")
 
 		fxr, err := getFixtureFromPath(r, registry)
 		if err != nil {
