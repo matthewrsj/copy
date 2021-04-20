@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v1.3.0] - 2021-04-20
+### Changed
+- Convert to new API for step ordering recipes.
+
+### Added
+- Add protection against multiple duplicate preparedForDelivery requests on the same aisle.
+
 ## [v1.2.1] - 2021-03-03
 ### Changed
 - Convert to new API for start/end step.

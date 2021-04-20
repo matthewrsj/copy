@@ -32,7 +32,7 @@ type StartProcess struct {
 	transactID      string
 	tbc             cdcontroller.TrayBarcode
 	fxbc            cdcontroller.FixtureBarcode
-	steps           cdcontroller.StepConfiguration
+	steps           cdcontroller.StepList
 	stepType        string
 	cells           map[string]cdcontroller.CellData
 	smFatal         bool
@@ -66,14 +66,14 @@ func (s *StartProcess) action() {
 	if !s.mockCellAPI {
 		_ = backoff.Retry(func() error {
 			var err error
-			if s.steps, err = s.CellAPIClient.GetStepConfiguration(s.tbc.Raw); err != nil {
+			if s.steps, err = s.CellAPIClient.GetStepList(s.tbc.Raw); err != nil {
 				s.Logger.Errorw("get step configuration", "error", err)
 				return err
 			}
 
-			s.Logger.Infow("retrieved steps from cell API", "num_steps", len(s.steps))
+			s.Logger.Infow("retrieved steps from cell API", "num_steps", len(s.steps.Steps))
 
-			if len(s.steps) == 0 {
+			if len(s.steps.Steps) == 0 {
 				s.Logger.Error("invalid empty step configuration retrieved from Cell API")
 				return errors.New("empty step configuration retrieved from Cell API")
 			}
@@ -85,7 +85,10 @@ func (s *StartProcess) action() {
 	s.childLogger.Info("sending recipe and other information to FXR")
 
 	twr2Fxr := tower.TowerToFixture{
-		Recipe: &tower.Recipe{FormRequest: tower.FormRequest_FORM_REQUEST_START},
+		Recipe: &tower.Recipe{
+			FormRequest:  tower.FormRequest_FORM_REQUEST_START,
+			StepOrdering: s.steps.StepOrdering,
+		},
 		Info: &tower.Info{
 			TrayBarcode:     s.tbc.Raw,
 			FixtureLocation: s.fxbc.Raw,
@@ -96,7 +99,7 @@ func (s *StartProcess) action() {
 		},
 	}
 
-	for _, step := range s.steps {
+	for _, step := range s.steps.Steps {
 		twr2Fxr.Recipe.Steps = append(twr2Fxr.Recipe.Steps, &tower.RecipeStep{
 			Mode:            modeStringToEnum(step.Mode),
 			ChargeCurrent:   step.ChargeCurrentAmps,

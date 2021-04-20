@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/peer"
@@ -24,6 +25,7 @@ type TerminalServer struct {
 	*terminal.Server
 
 	prodAM, testAM *AisleManager
+	pfdM           *pfdManager
 	aisles         map[string]*Aisle
 
 	Feeds InputFeeds
@@ -35,6 +37,7 @@ func NewTerminalServer(prodAM, testAM *AisleManager, aisles map[string]*Aisle) *
 		prodAM: prodAM,
 		testAM: testAM,
 		aisles: aisles,
+		pfdM:   newPFDManager(withPFDExpiry(time.Second * 5)),
 		Feeds: InputFeeds{
 			LoadOp:   make(chan *asrsapi.LoadOperation),
 			UnloadOp: make(chan *asrsapi.UnloadOperation),
@@ -126,7 +129,7 @@ func (s *TerminalServer) LoadOperations(g asrsapi.Terminal_LoadOperationsServer)
 			}
 
 			go func() {
-				if err := handleIncomingLoad(g, s.SugaredLogger, s.prodAM, s.testAM, s.aisles, in); err != nil {
+				if err := handleIncomingLoad(g, s.SugaredLogger, s.prodAM, s.testAM, s.aisles, s.pfdM, in); err != nil {
 					s.Error(err)
 				}
 			}()

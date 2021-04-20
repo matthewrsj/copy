@@ -381,14 +381,14 @@ func (c *CellAPIClient) setCellStatusesWithCloseOption(tray, eqName, recipe stri
 	return nil
 }
 
-// GetStepConfiguration returns the step configuration for the tray
-func (c *CellAPIClient) GetStepConfiguration(sn string) (StepConfiguration, error) {
+// GetStepList returns the step configuration for the tray
+func (c *CellAPIClient) GetStepList(sn string) (StepList, error) {
 	url := urlJoin(c.baseURL, fmt.Sprintf(c.eps.nextProcessStepFmt, sn))
 
 	// nolint:gosec // easier to construct the URL
 	resp, err := http.Get(url)
 	if err != nil {
-		return nil, fmt.Errorf("GET %s: %v", url, err)
+		return StepList{}, fmt.Errorf("GET %s: %v", url, err)
 	}
 
 	defer func() {
@@ -397,18 +397,16 @@ func (c *CellAPIClient) GetStepConfiguration(sn string) (StepConfiguration, erro
 
 	rBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("read response body from %s: %v", url, err)
+		return StepList{}, fmt.Errorf("read response body from %s: %v", url, err)
 	}
 
-	respData := struct {
-		StepConfig map[string]Step `json:"step_configuration"`
-	}{}
+	var respData FormationStep
 
 	if err := json.Unmarshal(rBody, &respData); err != nil {
-		return nil, fmt.Errorf("unmarshal response body from %s: %v", url, err)
+		return StepList{}, fmt.Errorf("unmarshal response body from %s: %v", url, err)
 	}
 
-	return NewStepConfiguration(respData.StepConfig)
+	return NewStepList(respData)
 }
 
 // GetNextProcessStep returns the NextFormationStep for the tray SN

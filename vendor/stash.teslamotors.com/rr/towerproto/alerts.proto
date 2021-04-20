@@ -54,24 +54,26 @@ message StibAlert {
     STIB_a044_CIBCellSwitchWriteFail          = 44;
     STIB_a045_CIB_NegVoltageProtection        = 45;
     STIB_a046_CIB_STIB_VStringDiffCheckFail   = 46;
-    STIB_a047_CIBCalibrationFail              = 47;
+    STIB_a047_ShuntCalibrationFail            = 47;
     STIB_a048_CIBCellSwitchWriteFailPermanent = 48;
+    STIB_a049_CellDvDtOutOfBounds             = 49;
   }
 
   message a004_CpuOverRun {
     float ISR_time_max     = 1; // us
     float f_1kHz_time_max  = 2; // us
-    float f_100Hz_time_max = 3; // us
+    float f_10Hz_time_max  = 3; // us
+    float f_100Hz_time_max = 4; // us
   }
 
   message a007_TaskStackOverrun {
-    bool Task_Proto_Stack_Overrun       = 1;
-    bool Task_Default1kHz_Stack_Overrun = 2;
-    bool Task_1Hz_Stack_Overrun         = 3;
-    bool Task_10ms_Stack_Overrun        = 4;
-    bool Task_CANtx_Stack_Overrun       = 5;
-    bool Task_OSIdle_Stack_Overrun      = 6;
-    bool Task_OSTimer_Stack_Overrun     = 7;
+    bool Task_Proto_Stack_Overrun  = 1;
+    bool Task_1kHz_Stack_Overrun   = 2;
+    bool Task_10Hz_Stack_Overrun   = 3;
+    bool Task_Fs_Stack_Overrun     = 4;
+    bool Task_CanTx_Stack_Overrun  = 5;
+    bool Task_OsIdle_Stack_Overrun = 6;
+    bool Task_100Hz_Stack_Overrun  = 7;
   }
 
   message a010_EnumerationWriteFail {}
@@ -179,12 +181,22 @@ message StibAlert {
     float  pogo_r       = 5; // Ohm
   }
 
+  message a035_CibFaulted {
+    float  string_voltage   = 1;
+    float  shunt_current    = 2;
+    float  current_phase_1  = 3;
+    float  current_phase_2  = 4;
+    uint32 cell_switch_mask = 5;
+  }
+
   message a045_CIB_NegVoltageProtection {
-    uint32 node_index   = 1;
-    float  node_voltage = 2; // V
-    float  pogo_voltage = 3; // V
-    float  current      = 4; // A
-    uint32 switches     = 5;
+    uint32 node_index                       = 1;
+    float  node_voltage                     = 2; // V
+    float  pogo_voltage                     = 3; // V
+    float  current                          = 4; // A
+    uint32 switches                         = 5;
+    uint32 pogo_resistance_saturation_count = 6;
+    uint32 discharge_step                   = 7;
   }
 
   message a036_CellTempTooHigh {
@@ -245,16 +257,24 @@ message StibAlert {
 
   message a046_CIB_STIB_VStringDiffCheckFail { float cib_stib_vstring_diff = 1; }
 
-  message a047_CIBCalibrationFail {
-    CibCalStatus cib_cal_status  = 1;
-    float        cib_i_cal_a     = 2;
-    float        cib_i_cal_b     = 3;
-    uint32       cib_cal_sid_lsb = 4;
+  message a047_ShuntCalibrationFail {
+    ShuntCalStatus status  = 1;
+    float          i_cal_a = 2;
+    float          i_cal_b = 3;
+    uint32         sid_lsb = 4;
   }
 
   message a048_CIBCellSwitchWriteFailPermanent {
     uint32 cell_switch_data    = 1;
     uint32 cell_switch_request = 2;
+  }
+
+  message a049_CellDvDtOutOfBounds {
+    uint32 cell_index   = 1;
+    float  cell_voltage = 2;
+    float  dvdt_value   = 3;
+    float  current      = 4;
+    float  cell_ah      = 5;
   }
 
   message AlertData {
@@ -291,6 +311,7 @@ message StibAlert {
       a032_CellUV                          a032 = 32;
       aXXX_Reserved                        a033 = 33;
       a034_PogoVIrrational                 a034 = 34;
+      a035_CibFaulted                      a035 = 35;
       a036_CellTempTooHigh                 a036 = 36;
       a037_FormationTimeout                a037 = 37;
       a038_FormationCheckFailed            a038 = 38;
@@ -302,8 +323,9 @@ message StibAlert {
       a044_CIBCellSwitchWriteFail          a044 = 44;
       a045_CIB_NegVoltageProtection        a045 = 45;
       a046_CIB_STIB_VStringDiffCheckFail   a046 = 46;
-      a047_CIBCalibrationFail              a047 = 47;
+      a047_ShuntCalibrationFail            a047 = 47;
       a048_CIBCellSwitchWriteFailPermanent a048 = 48;
+      a049_CellDvDtOutOfBounds             a049 = 49;
     }
   }
 
@@ -590,11 +612,71 @@ message FxrAlert {
   AlertData data     = 2;
 }
 
+message DcacAlertMatrices {
+  uint32 matrix0 = 1;
+  uint32 matrix1 = 2;
+  uint32 matrix2 = 3;
+  uint32 matrix3 = 4;
+}
+
+message TauxAlert {
+  enum AlertId {
+    TAUX_NONE                       = 0;
+    TAUX_a001_SwAppBoot             = 1;
+    TAUX_a002_DcacAlert             = 2;
+    TAUX_a003_NoPowerCapacity       = 3;
+    TAUX_a004_PowerCapacityDecrease = 4;
+    TAUX_a005_PowerOverload         = 5;
+  }
+
+  message a001_SwAppBoot {}
+
+  message a002_DcacAlert {
+    enum Ecu {
+      DCAC_ALERT_ECU_UNKOWN_UNSPECIFIED = 0;
+      DCAC_ALERT_ECU_POD                = 1;
+      DCAC_ALERT_ECU_PINV               = 2;
+    }
+
+    uint32 pt_index      = 1; // powertray has alert
+    uint32 dcac_index    = 2; // dcac index in powertray
+    uint32 alert_id      = 3; // id of dcac alert
+    Ecu    faulted_ecu   = 4;
+    string subpackage_sn = 5;
+  }
+
+  message a003_NoPowerCapacity {}
+
+  message a004_PowerCapacityDecrease {
+    int32 previous_capacity_w = 1;
+    int32 power_capacity_w    = 2;
+  }
+
+  message a005_PowerOverload {
+    int32 previous_in_use_w = 1;
+    int32 power_capacity_w  = 2;
+  }
+
+  message AlertData {
+    oneof Payload {
+      a001_SwAppBoot             a001 = 1;
+      a002_DcacAlert             a002 = 2;
+      a003_NoPowerCapacity       a003 = 3;
+      a004_PowerCapacityDecrease a004 = 4;
+      a005_PowerOverload         a005 = 5;
+    }
+  }
+
+  AlertId   alert_id = 1;
+  AlertData data     = 2;
+}
+
 message AlertLog {
   oneof EcuAlert {
     FxrAlert  fxr_alert  = 1;
     FibAlert  fib_alert  = 2;
     StibAlert stib_alert = 3;
+    TauxAlert taux_alert = 4;
   }
 }
 

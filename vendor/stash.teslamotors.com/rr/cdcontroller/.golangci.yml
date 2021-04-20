@@ -121,3 +121,4 @@ issues:
       linters:
         - lll # Don't whine about long lines in tests, some testdata is long
         - scopelint # we use test tables like real humans
+        - funlen

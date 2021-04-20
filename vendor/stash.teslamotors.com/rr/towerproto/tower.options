@@ -29,5 +29,7 @@ Cell.position max_size:0
 
 TauxDiagnostic.powertrays max_count:8
 Powertray.dcacs max_count:2
+Powertray.subpackage_sn max_size:14
+Dcac.subpackage_sn max_size:14
 
 FxrToStib.cells max_count:16

@@ -59,13 +59,47 @@ message FxrSensors {
   bool  enumeration_gpio_valid    = 17; // enumeration set via GPIO PCBA
 }
 
+message TaskStats {
+  float stack_usage_pct = 1; // percent stack usage
+}
+
+message QueueStats {
+  float usage_pct          = 1;
+  float peak_usage_pct     = 2;
+  float peak_10s_usage_pct = 3;
+}
+
 message FxrInternal {
-  float  stack_usage_system = 7;
-  float  stack_usage_1khz   = 8;
-  float  stack_usage_10hz   = 9;
-  float  stack_usage_uds    = 10;
-  float  stack_usage_nvram  = 11;
-  uint32 uptime_s           = 12; // uptime in seconds
+  uint32 uptime_s = 12; // uptime in seconds
+
+  TaskStats task_proto_op       = 21;
+  TaskStats task_proto_diag     = 22;
+  TaskStats task_stib0_proto    = 23;
+  TaskStats task_stib1_proto    = 24;
+  TaskStats task_stib2_proto    = 25;
+  TaskStats task_stib3_proto    = 26;
+  TaskStats task_fib_proto      = 27;
+  TaskStats task_10hz           = 28;
+  TaskStats task_1khz           = 29;
+  TaskStats task_tower_can_tx   = 30;
+  TaskStats task_fixture_can_tx = 31;
+  TaskStats task_watchdog       = 32;
+  TaskStats task_file_system    = 33;
+  TaskStats task_rtos_idle      = 34;
+
+  QueueStats queue_proto_rx_op    = 50;
+  QueueStats queue_proto_rx_diag  = 51;
+  QueueStats queue_alert_rx_stib0 = 52;
+  QueueStats queue_alert_rx_stib1 = 53;
+  QueueStats queue_alert_rx_stib2 = 54;
+  QueueStats queue_alert_rx_stib3 = 55;
+  QueueStats queue_alert_rx_fib   = 56;
+  QueueStats queue_alert_tx       = 57;
+  QueueStats queue_tower_can_tx   = 58;
+  QueueStats queue_tower_can_rx   = 59;
+  QueueStats queue_fixture_can_tx = 60;
+  QueueStats queue_fixture_can_rx = 61;
+  QueueStats queue_uds_rx         = 62;
 }
 
 message FxrOutputs {
@@ -189,11 +223,11 @@ message StibStatistics {
 }
 
 message StibInternal {
-  StibDCDCState dcdc_state         = 1;
-  StibFormState form_state         = 2;
-  StibDCDCState dcdc_state_req     = 3;
-  int32         uptime_s           = 4; // uptime in seconds
-  CibCalStatus  calibration_status = 5; // calibration status of each cib
+  StibDCDCState  dcdc_state       = 1;
+  StibFormState  form_state       = 2;
+  StibDCDCState  dcdc_state_req   = 3;
+  int32          uptime_s         = 4; // uptime in seconds
+  ShuntCalStatus shunt_cal_status = 5; // calibration status of current sense
 }
 
 message Stib {
@@ -335,34 +369,37 @@ message Taux {
 }
 
 message Dcac {
-  uint32 dcac_id                       = 1;
-  bool   grid_compliant                = 2;
-  bool   form_active                   = 3;
-  float  ac_power_kw                   = 4; // PINV_Pout
-  uint64 subpackage_sn_1_7             = 5;
-  uint64 subpackage_sn_8_14            = 6;
-  uint64 app_githash                   = 7;
-  float  bus_lv                        = 8;  // POD_Vbatt
-  float  bus_hv                        = 9;  // PINV_Vdc
-  float  pinv_heatsink_temp            = 10; // PINV_HeatsinkTemp
-  bool   is_pod_persistant_fault       = 11; // POD_PersistentlyFaulted
-  bool   is_pod_permanent_fault        = 12; // POD_PersistentlyFaulted
-  float  lifetime_energy_discharged_wh = 13; // PINV_LifetimeEnergyDischarged
-  float  lifetime_energy_charged_wh    = 14; // PINV_LifetimeEnergyCharged
-  float  v_thd                         = 15; // PINV_v_thd
-  float  grid_resistance               = 16; // PINV_gridResistance
-  float  cbc_events                    = 17; // PINV_cbcEvents
-  bool   hw_enable_line                = 18; // PINV_HardwareEnableLine
+  uint32            dcac_id                       = 1;
+  bool              grid_non_compliant            = 2;
+  bool              form_inactive                 = 3;
+  float             ac_power_kw                   = 4; // PINV_Pout
+  uint64            subpackage_sn_1_7             = 5;
+  uint64            subpackage_sn_8_14            = 6;
+  uint64            app_githash                   = 7;
+  float             bus_lv                        = 8;  // POD_Vbatt
+  float             bus_hv                        = 9;  // PINV_Vdc
+  float             pinv_heatsink_temp            = 10; // PINV_HeatsinkTemp
+  bool              is_pod_persistant_fault       = 11; // POD_PersistentlyFaulted
+  bool              is_pod_permanent_fault        = 12; // POD_PersistentlyFaulted
+  float             lifetime_energy_discharged_wh = 13; // PINV_LifetimeEnergyDischarged
+  float             lifetime_energy_charged_wh    = 14; // PINV_LifetimeEnergyCharged
+  float             v_thd                         = 15; // PINV_v_thd
+  float             grid_resistance               = 16; // PINV_gridResistance
+  float             cbc_events                    = 17; // PINV_cbcEvents
+  bool              hw_enable_line                = 18; // PINV_HardwareEnableLine
+  DcacAlertMatrices dcac_alert_matrices           = 19;
+  string            subpackage_sn                 = 20;
 }
 
 message Powertray {
-  uint32        powertray_index = 1;
-  bool          enumeration_ok  = 2;
-  bool          precharge_ready = 3;
-  bool          form_active     = 4;
-  float         ac_power_kw     = 5;
-  float         bus_lv          = 7;
-  repeated Dcac dcacs           = 10;
+  uint32        powertray_index     = 1;
+  bool          bad_enumeration     = 2;
+  bool          precharge_not_ready = 3;
+  bool          form_inactive       = 4;
+  float         ac_power_kw         = 5;
+  float         bus_lv              = 7;
+  repeated Dcac dcacs               = 10;
+  string        subpackage_sn       = 11;
 }
 
 message TauxDiagnostic {
@@ -373,8 +410,9 @@ message TauxDiagnostic {
 
 message TauxToTower {
   oneof content {
-    TauxOperational op   = 1;
-    TauxDiagnostic  diag = 2;
+    TauxOperational op        = 1;
+    TauxDiagnostic  diag      = 2;
+    AlertLog        alert_log = 3;
   }
   Versions versions = 5;
 }

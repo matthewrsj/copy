@@ -1,11 +1,21 @@
 package cdcontroller
 
-import (
-	"sort"
-)
+import "sort"
+
+// StepConfiguration contains a recipe list
+type StepConfiguration struct {
+	RecipeList   map[string]Step `json:"recipe_list"`
+	StepOrdering []uint32        `json:"step_ordering"`
+}
 
 // Step defines an individual recipe step
 type Step struct {
+	Name   string      `json:"name"`
+	Values Ingredients `json:"values"`
+}
+
+// Ingredients contains the various parameters for a recipe step
+type Ingredients struct {
 	Mode               string  `json:"mode"`
 	EndingStyle        string  `json:"ending_style"`
 	ChargeCurrentAmps  float32 `json:"charge_current"`
@@ -21,74 +31,102 @@ type Step struct {
 }
 
 /*
-StepConfiguration from CND (cell api) looks like this, a map with the keys increasing from STEP00 onward
-
-TC/FXRs need a slice of steps in step order, so drop the keys and just make a slice here
+FormationStep from cell api looks like this
 {
-	"STEP00": {
-		"mode": "FORM_REQ_CC",
-		"charge_current": 8.67,
-		"max_current": 9.0,
-		"cutoff_voltage": 4.1,
-		"cutoff_current": 0.0,
-		"cutoff_dv": 0.0,
-		"charge_power": 4.5,
-		"cutoff_ah": 0.0,
-		"ending_style": 1,
-		"v_cell_min_quality": 0.1,
-		"v_cell_max_quality": 4.0,
-		"step_timeout": 10800
-	},
-	"STEP01": {
-		"mode": "FORM_REQ_CV",
-		"charge_current": 8.7,
-		"max_current": 9.0,
-		"cutoff_voltage": 4.1,
-		"cutoff_current": 0.0,
-		"cutoff_dv": 0.0,
-		"charge_power": 4.5,
-		"cutoff_ah": 0.0,
-		"ending_style": 1,
-		"v_cell_min_quality": 0.1,
-		"v_cell_max_quality": 4.0,
-		"step_timeout": 10800
-	},
-	"STEP02": {
-		"mode": "FORM_REQ_CC",
-		"charge_current": -8.67,
-		"max_current": 8.67,
-		"cutoff_voltage": 4.1,
-		"cutoff_current": 0.0,
-		"cutoff_dv": 0.0,
-		"charge_power": 4.5,
-		"cutoff_ah": 0.0,
-		"ending_style": 1,
-		"v_cell_min_quality": 0.1,
-		"v_cell_max_quality": 4.0,
-		"step_timeout": 9000
-	}
+    "name": "swift_baseline_14 - 1",
+    "step": "swift_quality_cycling - 1",
+    "step_type": "cm_cd",
+    "step_configuration": {
+        "recipe_list": {
+            "1": {
+                "name": "swift_cycle_charge_cc/1",
+                "values": {
+                    "charge_current": 10.0,
+                    "cutoff_ah": 0.0,
+                    "cutoff_current": 0.0,
+                    "cutoff_dv": 0.01,
+                    "cutoff_voltage": 4.1,
+                    "ending_style": "ENDING_STYLE_CELL_BYPASS_ENABLE",
+                    "max_current": 10.5,
+                    "mode": "FORM_MODE_CC",
+                    "step_timeout": 9000,
+                    "v_cell_max_quality": 4.2,
+                    "v_cell_min_quality": 2.85
+                }
+            },
+            "2": {
+                "name": "swift_cycle_charge_cv/1",
+                "values": {
+                    "charge_current": 10.0,
+                    "cutoff_ah": 0.0,
+                    "cutoff_current": 1.3,
+                    "cutoff_dv": 0.01,
+                    "cutoff_voltage": 4.1,
+                    "ending_style": "ENDING_STYLE_CELL_BYPASS_ENABLE",
+                    "max_current": 10.5,
+                    "mode": "FORM_MODE_CV",
+                    "step_timeout": 10800,
+                    "v_cell_max_quality": 4.21,
+                    "v_cell_min_quality": 3.8
+                }
+            },
+            "3": {
+                "name": "swift_cycle_wait_charge/1",
+                "values": {
+                    "charge_current": 0.0,
+                    "cutoff_ah": 0.0,
+                    "cutoff_current": 0.0,
+                    "cutoff_dv": 0.0,
+                    "cutoff_voltage": 0.0,
+                    "ending_style": "ENDING_STYLE_UNKNOWN_UNSPECIFIED",
+                    "max_current": 0.5,
+                    "mode": "FORM_MODE_DELAY",
+                    "step_timeout": 900,
+                    "v_cell_max_quality": 4.21,
+                    "v_cell_min_quality": -0.1
+                }
+            }
+        },
+        "step_ordering": [1, 2, 3, 2, 1]
+    }
 }
 */
-// StepConfiguration is the slice of steps that defines a recipe
-type StepConfiguration []Step
+// FormationStep is the slice of steps that defines a recipe
+type FormationStep struct {
+	Name        string            `json:"name"`
+	Step        string            `json:"step"`
+	StepType    string            `json:"step_type"`
+	StepConfMap StepConfiguration `json:"step_configuration"`
+}
 
-// NewStepConfiguration parses a new StepConfiguration out of a byte slice
-func NewStepConfiguration(scm map[string]Step) (StepConfiguration, error) {
-	keys := make([]string, len(scm))
+// StepList contains a list of steps to be sent to the firmware
+type StepList struct {
+	Steps        []Ingredients
+	StepOrdering []uint32
+}
+
+// NewStepList parses a new FormationStep out of a byte slice
+func NewStepList(sc FormationStep) (StepList, error) {
+	var sl StepList
+
+	keys := make([]string, len(sc.StepConfMap.RecipeList))
 
 	var i int
 
-	for k := range scm {
+	for k := range sc.StepConfMap.RecipeList {
 		keys[i] = k
 		i++
 	}
 
 	sort.Strings(keys)
 
-	sc := make(StepConfiguration, len(keys))
+	sl.Steps = make([]Ingredients, len(keys))
+
 	for i, key := range keys {
-		sc[i] = scm[key]
+		sl.Steps[i] = sc.StepConfMap.RecipeList[key].Values
 	}
 
-	return sc, nil
+	sl.StepOrdering = sc.StepConfMap.StepOrdering
+
+	return sl, nil
 }

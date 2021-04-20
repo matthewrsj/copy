@@ -8,11 +8,11 @@ location:
 cell_api:
   base: https://cellapi-rr.us-sjc25-prd-factory.k8s.tesla.com:31443/module/api/v0.1
   endpoints:
-    cell_map: /trays/%s/cells                        # tray_serial
-    process_status: /trays/%s/cd/%s/%s/%d            # tray_serial|process|status|recipe|version
-    next_process_step: /trays/%s/next_formation_step # tray_serial
-    close_process: /trays/%s/formation/next          # tray_serial
-    cell_status: /trays/%s/formation/cd/status       # tray_serial
+    cell_map: /trays/%s/cells                                # tray_serial
+    process_status: /trays/%s/cd/%s/%s/%d                    # tray_serial|process|status|recipe|version
+    next_process_step: /trays/%s/next_formation_step?dedup=1 # tray_serial
+    close_process: /trays/%s/formation/next                  # tray_serial
+    cell_status: /trays/%s/formation/cd/status               # tray_serial
 
 all_fixtures: [01-01, 01-02, 01-03, 01-04, 01-05, 01-06, 01-07, 01-08, 01-09, 01-10, 01-11, 01-12,
                02-01, 02-02, 02-03, 02-04, 02-05, 02-06, 02-07, 02-08, 02-09, 02-10, 02-11, 02-12]

@@ -19,6 +19,7 @@ func handleIncomingLoad(
 	lg *zap.SugaredLogger,
 	prodAM, testAM *AisleManager,
 	aisles map[string]*Aisle,
+	pfdM *pfdManager,
 	lo *asrsapi.LoadOperation,
 ) error {
 	logger := lg.With(
@@ -48,7 +49,7 @@ func handleIncomingLoad(
 		// if aisleLocation is populated perform the tower load
 		logger.Infow("aisle location", "aisle", aisleLocation)
 
-		return handleTowerLoad(g, logger, aisles, lo)
+		return handleTowerLoad(g, logger, aisles, pfdM, lo)
 	case asrsapi.LoadOperationState_Loaded:
 		logger.Info("got Loaded")
 
@@ -59,7 +60,7 @@ func handleIncomingLoad(
 
 		logger.Info("Loaded Current")
 
-		return handleTowerLoaded(logger, g, aisles, lo)
+		return handleTowerLoaded(logger, g, aisles, pfdM, lo)
 	default:
 		logger.Warnw("unhandled GetState().GetState()", "state", lo.GetState().GetState())
 	}
@@ -302,7 +303,7 @@ func rejectLoad(g asrsapi.Terminal_LoadOperationsServer, lo *asrsapi.LoadOperati
 	return err
 }
 
-func handleTowerLoad(g asrsapi.Terminal_LoadOperationsServer, lg *zap.SugaredLogger, aisles map[string]*Aisle, lo *asrsapi.LoadOperation) error {
+func handleTowerLoad(g asrsapi.Terminal_LoadOperationsServer, lg *zap.SugaredLogger, aisles map[string]*Aisle, pfdM *pfdManager, lo *asrsapi.LoadOperation) error {
 	stepName := strings.TrimPrefix(strings.TrimSpace(strings.Split(lo.GetRecipe().GetStep(), " - ")[0]), _nonProdPrefix)
 	isCommissionRecipe := strings.HasPrefix(stepName, CommissionSelfTestRecipeName)
 
@@ -311,14 +312,15 @@ func handleTowerLoad(g asrsapi.Terminal_LoadOperationsServer, lg *zap.SugaredLog
 	if isCommissionRecipe {
 		lg.Debug("commissioning tray, routing to fixture that needs commissioning")
 
-		if err := handleTowerLoadCommissioning(g, lg, aisles, lo); err != nil {
+		if err := handleTowerLoadCommissioning(g, lg, pfdM, aisles, lo); err != nil {
 			lg.Errorw("handle tower load for commissioning tray", "error", err)
+
 			return err
 		}
 	} else {
 		lg.Debug("non-commissioning tray, routing to fixture for normal operation")
 
-		if err := handleTowerLoadNormalOperation(g, lg, aisles, lo); err != nil {
+		if err := handleTowerLoadNormalOperation(g, lg, pfdM, aisles, lo); err != nil {
 			lg.Errorw("handle tower load for normal operation", "error", err)
 			return err
 		}
@@ -327,21 +329,28 @@ func handleTowerLoad(g asrsapi.Terminal_LoadOperationsServer, lg *zap.SugaredLog
 	return nil
 }
 
-func handleTowerLoadCommissioning(g asrsapi.Terminal_LoadOperationsServer, lg *zap.SugaredLogger, aisles map[string]*Aisle, lo *asrsapi.LoadOperation) error {
-	return handleTowerLoadForGetter(g, lg, aisles, lo, func(t *Tower) (*FXRLayout, *PowerAvailable, error) {
+func handleTowerLoadCommissioning(g asrsapi.Terminal_LoadOperationsServer, lg *zap.SugaredLogger, pfdM *pfdManager, aisles map[string]*Aisle, lo *asrsapi.LoadOperation) error {
+	return handleTowerLoadForGetter(g, lg, pfdM, aisles, lo, func(t *Tower) (*FXRLayout, *PowerAvailable, error) {
 		return t.getAvailabilityForCommissioning()
 	})
 }
 
-func handleTowerLoadNormalOperation(g asrsapi.Terminal_LoadOperationsServer, lg *zap.SugaredLogger, aisles map[string]*Aisle, lo *asrsapi.LoadOperation) error {
-	return handleTowerLoadForGetter(g, lg, aisles, lo, func(t *Tower) (*FXRLayout, *PowerAvailable, error) {
+func handleTowerLoadNormalOperation(g asrsapi.Terminal_LoadOperationsServer, lg *zap.SugaredLogger, pfdM *pfdManager, aisles map[string]*Aisle, lo *asrsapi.LoadOperation) error {
+	return handleTowerLoadForGetter(g, lg, pfdM, aisles, lo, func(t *Tower) (*FXRLayout, *PowerAvailable, error) {
 		return t.getAvailability()
 	})
 }
 
 type layoutGetter func(t *Tower) (*FXRLayout, *PowerAvailable, error)
 
-func handleTowerLoadForGetter(g asrsapi.Terminal_LoadOperationsServer, lg *zap.SugaredLogger, aisles map[string]*Aisle, lo *asrsapi.LoadOperation, getter layoutGetter) error {
+func handleTowerLoadForGetter(
+	g asrsapi.Terminal_LoadOperationsServer,
+	lg *zap.SugaredLogger,
+	pfdM *pfdManager,
+	aisles map[string]*Aisle,
+	lo *asrsapi.LoadOperation,
+	getter layoutGetter,
+) (err error) {
 	loc := lo.GetLocation().GetCmFormat().GetEquipment()
 	trays := lo.GetTray().GetTrayId()
 	logger := lg.With("num_trays", len(trays))
@@ -350,6 +359,19 @@ func handleTowerLoadForGetter(g asrsapi.Terminal_LoadOperationsServer, lg *zap.S
 	if !ok {
 		return rejectLoad(g, lo, fmt.Errorf("invalid aisle %s", loc))
 	}
+
+	if pfdM.has(loc) {
+		lg.Warnw("already received prepared_for_delivery for this aisle, ignoring", "aisle", loc, "trays", trays)
+		return nil
+	}
+
+	pfdM.sentFor(loc)
+
+	defer func() {
+		if err != nil {
+			pfdM.clearFor(loc)
+		}
+	}()
 
 	op, err := getLocation(aisle, lg, trays, 0 /* timesToTry (forever) */, getter)
 	if err != nil {
@@ -377,20 +399,16 @@ func handleTowerLoadForGetter(g asrsapi.Terminal_LoadOperationsServer, lg *zap.S
 			}
 
 			ws, subID := fmt.Sprintf("%02d", report.fixture.Coord.Col), fmt.Sprintf("%02d", report.fixture.Coord.Lvl)
-			lo0.GetLocation().GetCmFormat().Workstation = ws
-			lo0.GetLocation().GetCmFormat().SubIdentifier = subID
+			lo0.GetLocation().GetCmFormat().Workstation, lo0.GetLocation().GetCmFormat().SubIdentifier = ws, subID
 
 			lo0.GetLocation().GetCmFormat().EquipmentId, err = replaceWorkstationSubID(lo.GetLocation().GetCmFormat().GetEquipmentId(), ws, subID)
 			if err != nil {
 				return rejectLoad(g, lo, fmt.Errorf("replaceWorkstationSubID: %v", err))
 			}
 
-			logger.Info("determined equipment ID", "equipment_id", lo.GetLocation().GetCmFormat().GetEquipmentId())
-			logger.Info("sending response to CND")
+			logger.Info("determined equipment ID and sending to CND", "equipment_id", lo.GetLocation().GetCmFormat().GetEquipmentId())
 
-			if err = backoff.Retry(func() error {
-				return g.Send(lo0)
-			}, backoff.NewExponentialBackOff()); err != nil {
+			if err = backoff.Retry(func() error { return g.Send(lo0) }, backoff.NewExponentialBackOff()); err != nil {
 				return rejectLoad(g, lo, fmt.Errorf("send load operation %v", err))
 			}
 
@@ -413,20 +431,16 @@ func handleTowerLoadForGetter(g asrsapi.Terminal_LoadOperationsServer, lg *zap.S
 	}
 
 	ws, subID := fmt.Sprintf("%02d", op.front.fixture.Coord.Col), fmt.Sprintf("%02d", op.front.fixture.Coord.Lvl)
-	lo.GetLocation().GetCmFormat().Workstation = ws
-	lo.GetLocation().GetCmFormat().SubIdentifier = subID
+	lo.GetLocation().GetCmFormat().Workstation, lo.GetLocation().GetCmFormat().SubIdentifier = ws, subID
 
 	lo.GetLocation().GetCmFormat().EquipmentId, err = replaceWorkstationSubID(lo.GetLocation().GetCmFormat().GetEquipmentId(), ws, subID)
 	if err != nil {
 		return rejectLoad(g, lo, fmt.Errorf("replaceWorkstationSubID: %v", err))
 	}
 
-	logger.Infow("determined equipment ID", "equipment_id", lo.GetLocation().GetCmFormat().GetEquipmentId())
-	logger.Info("sending response to CND")
+	logger.Infow("determined equipment ID and sending to CND", "equipment_id", lo.GetLocation().GetCmFormat().GetEquipmentId())
 
-	if err = backoff.Retry(func() error {
-		return g.Send(lo)
-	}, backoff.NewExponentialBackOff()); err != nil {
+	if err = backoff.Retry(func() error { return g.Send(lo) }, backoff.NewExponentialBackOff()); err != nil {
 		return rejectLoad(g, lo, fmt.Errorf("send load operation: %v", err))
 	}
 
@@ -455,8 +469,10 @@ func handleTowerLoadForGetter(g asrsapi.Terminal_LoadOperationsServer, lg *zap.S
 	return nil
 }
 
-func handleTowerLoaded(logger *zap.SugaredLogger, g asrsapi.Terminal_LoadOperationsServer, aisles map[string]*Aisle, lo *asrsapi.LoadOperation) error {
+func handleTowerLoaded(logger *zap.SugaredLogger, g asrsapi.Terminal_LoadOperationsServer, aisles map[string]*Aisle, pfdM *pfdManager, lo *asrsapi.LoadOperation) error {
 	aisleName := lo.GetLocation().GetCmFormat().GetEquipment()
+
+	pfdM.clearFor(aisleName)
 
 	aisle, ok := aisles[aisleName]
 	if !ok {

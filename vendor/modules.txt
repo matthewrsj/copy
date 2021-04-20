@@ -202,12 +202,12 @@ stash.teslamotors.com/ctet/go-socketcan/pkg/socketcan
 # stash.teslamotors.com/ctet/statemachine/v2 v2.0.1
 ## explicit
 stash.teslamotors.com/ctet/statemachine/v2
-# stash.teslamotors.com/rr/cdcontroller v1.2.1
+# stash.teslamotors.com/rr/cdcontroller v1.3.0
 ## explicit
 stash.teslamotors.com/rr/cdcontroller
 # stash.teslamotors.com/rr/protostream v1.0.1
 ## explicit
 stash.teslamotors.com/rr/protostream
-# stash.teslamotors.com/rr/towerproto v0.7.3
+# stash.teslamotors.com/rr/towerproto v0.7.6
 ## explicit
 stash.teslamotors.com/rr/towerproto
