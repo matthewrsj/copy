@@ -27,14 +27,14 @@ func HandleLatestOp(logger *zap.SugaredLogger, registry map[string]*FixtureInfo)
 	return func(w http.ResponseWriter, r *http.Request) {
 		allowCORS(w)
 
-		logger = logger.With("endpoint", LatestOpEndpoint, "remote", r.RemoteAddr)
-		logger.Info("got request to endpoint")
+		l := logger.With("endpoint", LatestOpEndpoint, "remote", r.RemoteAddr)
+		l.Info("got request to endpoint")
 
 		w.Header().Set("Content-Type", "application/json")
 
 		fxr, err := getFixtureFromPath(r, registry)
 		if err != nil {
-			logger.Errorw("get fixture from path", "error", err)
+			l.Errorw("get fixture from path", "error", err)
 			http.Error(w, err.Error(), http.StatusBadRequest)
 
 			return
@@ -42,18 +42,18 @@ func HandleLatestOp(logger *zap.SugaredLogger, registry map[string]*FixtureInfo)
 
 		jb, err := getLatestMessageWithGetter(fxr.GetOp)
 		if err != nil {
-			logger.Errorw("get latest message", "error", err)
+			l.Errorw("get latest message", "error", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 
 			return
 		}
 
 		if _, err := w.Write(jb); err != nil {
-			logger.Errorw("write response body", "error", err)
+			l.Errorw("write response body", "error", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 
-		logger.Info("responded to request")
+		l.Info("responded to request")
 	}
 }
 
@@ -62,14 +62,14 @@ func HandleLatestDiag(logger *zap.SugaredLogger, registry map[string]*FixtureInf
 	return func(w http.ResponseWriter, r *http.Request) {
 		allowCORS(w)
 
-		logger = logger.With("endpoint", LatestOpEndpoint, "remote", r.RemoteAddr)
-		logger.Info("got request to endpoint")
+		l := logger.With("endpoint", LatestOpEndpoint, "remote", r.RemoteAddr)
+		l.Info("got request to endpoint")
 
 		w.Header().Set("Content-Type", "application/json")
 
 		fxr, err := getFixtureFromPath(r, registry)
 		if err != nil {
-			logger.Errorw("get fixture from path", "error", err)
+			l.Errorw("get fixture from path", "error", err)
 			http.Error(w, err.Error(), http.StatusBadRequest)
 
 			return
@@ -77,14 +77,14 @@ func HandleLatestDiag(logger *zap.SugaredLogger, registry map[string]*FixtureInf
 
 		jb, err := getLatestMessageWithGetter(fxr.GetDiag)
 		if err != nil {
-			logger.Errorw("get latest message", "error", err)
+			l.Errorw("get latest message", "error", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 
 			return
 		}
 
 		if _, err := w.Write(jb); err != nil {
-			logger.Errorw("write response body", "error", err)
+			l.Errorw("write response body", "error", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	}
@@ -95,14 +95,14 @@ func HandleLatestAlert(logger *zap.SugaredLogger, registry map[string]*FixtureIn
 	return func(w http.ResponseWriter, r *http.Request) {
 		allowCORS(w)
 
-		logger = logger.With("endpoint", LatestOpEndpoint, "remote", r.RemoteAddr)
-		logger.Info("got request to endpoint")
+		l := logger.With("endpoint", LatestOpEndpoint, "remote", r.RemoteAddr)
+		l.Info("got request to endpoint")
 
 		w.Header().Set("Content-Type", "application/json")
 
 		fxr, err := getFixtureFromPath(r, registry)
 		if err != nil {
-			logger.Errorw("get fixture from path", "error", err)
+			l.Errorw("get fixture from path", "error", err)
 			http.Error(w, err.Error(), http.StatusBadRequest)
 
 			return
@@ -110,14 +110,14 @@ func HandleLatestAlert(logger *zap.SugaredLogger, registry map[string]*FixtureIn
 
 		jb, err := getLatestMessageWithGetter(fxr.GetAlert)
 		if err != nil {
-			logger.Errorw("get latest message", "error", err)
+			l.Errorw("get latest message", "error", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 
 			return
 		}
 
 		if _, err := w.Write(jb); err != nil {
-			logger.Errorw("write response body", "error", err)
+			l.Errorw("write response body", "error", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	}
