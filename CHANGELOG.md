@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.1.0] - 2021-04-22
+### Changed
+- Update to latest towerproto.
+
+### Fixed
+- Create child logger in /{fixture}/{msgtype} endpoints instead of recursively overwriting the existing ones
+  so it doesn't keep adding new additional fields with every request to the endpoint.
+
+### Added
+- Add long-recipe support by using the Cell API dedup feature and step ordering fields. This feature validated
+  on-the-line on 2021-04-22.
+
 ## [v2.0.1] - 2021-03-22
 ### Fixed
 - POST cell statuses on faulted fixture.
