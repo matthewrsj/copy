@@ -1,0 +1,8 @@
+/var/log/drlog/stib/*/*/*.log {
+    daily
+    rotate 4
+    compress
+    copytruncate
+    notifempty
+    nocreate
+}
