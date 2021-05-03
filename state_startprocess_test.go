@@ -42,7 +42,7 @@ func TestStartProcess_Action(t *testing.T) {
 			Fxn:   "01",
 			Raw:   "CM2-63010-01-01",
 		},
-		steps: cdcontroller.StepConfiguration{{Mode: "test"}},
+		steps: cdcontroller.StepList{},
 	}
 	as := (&spState).Actions()
 

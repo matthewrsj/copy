@@ -47,11 +47,24 @@ enum FixturePosition {
 }
 
 enum EquipmentRequest {
-  EQUIPMENT_REQUEST_UNKNOWN_UNSPECIFIED = 0;
-  EQUIPMENT_REQUEST_SELF_TEST_APPROVED  = 1; // operator has reviewed self test data, put fixture into production
-  EQUIPMENT_REQUEST_MAINTENANCE         = 2; // put fixture in maintenance mode
-  EQUIPMENT_REQUEST_RECOMMISSIONING     = 3; // reset fixture hardware status to require commissioning
-  EQUIPMENT_REQUEST_PERFORM_MAINTENANCE = 4; // reset fixture hardware status to IN_MAINTENANCE
+  EQUIPMENT_REQUEST_UNKNOWN_UNSPECIFIED     = 0;
+  EQUIPMENT_REQUEST_SELF_TEST_APPROVED      = 1; // operator has reviewed self test data, put fixture into production
+  EQUIPMENT_REQUEST_MAINTENANCE             = 2; // put fixture in maintenance mode
+  EQUIPMENT_REQUEST_RECOMMISSIONING         = 3; // reset fixture hardware status to require commissioning
+  EQUIPMENT_REQUEST_PERFORM_MAINTENANCE     = 4; // reset fixture hardware status to IN_MAINTENANCE
+  EQUIPMENT_REQUEST_MAINTENANCE_FW_VERSION  = 5; // request maintenance if firmware is out of date
+  EQUIPMENT_REQUEST_MAINTENANCE_TRAY_SENSOR = 6; // request maintenance for tray sensor issue
+  EQUIPMENT_REQUEST_MAINTENANCE_FXR_NOT_RESPONDING = 7; // fixture not responding or unexpected info
+}
+
+enum MaintenanceReason {
+  MAINTENANCE_REASON_UNKNOWN_UNSPECIFIED  = 0;
+  MAINTENANCE_REASON_FAILED_COMMISSIONING = 1; // Failed commissioning
+  MAINTENANCE_REASON_FIRMWARE_VERSION     = 2; // Firmware version is not compliant with line requirements
+  MAINTENANCE_REASON_TRAY_SENSOR          = 3; // Tray present sensor needs maintenance
+  MAINTENANCE_REASON_FAN_FAULTED          = 4; // Fan faulted
+  MAINTENANCE_REASON_ENUMERATION_CHANGED  = 5; // Enumeration change
+  MAINTENANCE_REASON_FXR_NOT_RESPONDING   = 6; // fixture not responding
 }
 
 enum EquipmentStatus {
@@ -164,6 +177,7 @@ enum CellStatus {
   CELL_STATUS_FAILED                     = 4;
   CELL_STATUS_FAILED_SAFETY_LIMIT        = 5;
   CELL_STATUS_FAILED_POGO_PIN_IRRATIONAL = 6;
+  CELL_STATUS_COMPLETE_WARNING           = 7;
 }
 
 enum CellDetectStatus {

@@ -27,12 +27,12 @@ func HandleSendFormRequest(publisher *protostream.Socket, logger *zap.SugaredLog
 	return func(w http.ResponseWriter, r *http.Request) {
 		allowCORS(w)
 
-		logger = logger.With("endpoint", SendFormRequestEndpoint, "remote", r.RemoteAddr)
-		logger.Info("got request to endpoint")
+		cl := logger.With("endpoint", SendFormRequestEndpoint, "remote", r.RemoteAddr)
+		cl.Info("got request to endpoint")
 
 		jb, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			logger.Errorw("read request body", "error", err)
+			cl.Errorw("read request body", "error", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 
 			return
@@ -41,7 +41,7 @@ func HandleSendFormRequest(publisher *protostream.Socket, logger *zap.SugaredLog
 		var rf RequestForm
 
 		if err = json.Unmarshal(jb, &rf); err != nil {
-			logger.Errorw("unmarshal request body", "error", err)
+			cl.Errorw("unmarshal request body", "error", err)
 			http.Error(w, err.Error(), http.StatusBadRequest)
 
 			return
@@ -50,7 +50,7 @@ func HandleSendFormRequest(publisher *protostream.Socket, logger *zap.SugaredLog
 		// confirm the fixture is valid
 		fxrInfo, ok := registry[rf.FixtureID]
 		if !ok {
-			logger.Errorw("unable to find fixture in registry", "fixture", rf.FixtureID)
+			cl.Errorw("unable to find fixture in registry", "fixture", rf.FixtureID)
 			http.Error(w, fmt.Sprintf("unable to find fixture %s in registry", rf.FixtureID), http.StatusBadRequest)
 
 			return
@@ -58,27 +58,35 @@ func HandleSendFormRequest(publisher *protostream.Socket, logger *zap.SugaredLog
 
 		formReq, ok := tower.FormRequest_value[rf.FormRequest]
 		if !ok {
-			logger.Errorw("invalid form request", "form_request", rf.FormRequest)
+			cl.Errorw("invalid form request", "form_request", rf.FormRequest)
 			http.Error(w, fmt.Sprintf("invalid form request %s", rf.FormRequest), http.StatusBadRequest)
 
 			return
 		}
 
-		sendMsg := tower.TowerToFixture{
-			Recipe: &tower.Recipe{
-				FormRequest: tower.FormRequest(formReq),
-			},
-		}
-
-		if err := sendProtoMessage(publisher, &sendMsg, fxrInfo.Name); err != nil {
-			logger.Errorw("unable to send data to protostream", "error", err)
+		if err := sendFormRequest(publisher, tower.FormRequest(formReq), fxrInfo.Name); err != nil {
+			cl.Errorw("send formation request", zap.Error(err))
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 
 			return
 		}
 
-		logger.Infow("published form request", "form_request", rf.FormRequest)
+		cl.Infow("published form request", "form_request", rf.FormRequest)
 
 		w.WriteHeader(http.StatusOK)
 	}
+}
+
+func sendFormRequest(publisher *protostream.Socket, formReq tower.FormRequest, fixtureName string) error {
+	sendMsg := tower.TowerToFixture{
+		Recipe: &tower.Recipe{
+			FormRequest: formReq,
+		},
+	}
+
+	if err := sendProtoMessage(publisher, &sendMsg, fixtureName); err != nil {
+		return err
+	}
+
+	return nil
 }

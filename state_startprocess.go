@@ -236,7 +236,23 @@ func (s *StartProcess) Next() statemachine.State {
 	return next
 }
 
+func (s *StartProcess) requestMaintenanceIfTimedOut() {
+	if !s.unload {
+		s.childLogger.Debug("not requesting maintenance, s.unload not set")
+		return
+	}
+
+	if err := sendEquipmentRequest(s.Publisher, tower.EquipmentRequest_EQUIPMENT_REQUEST_MAINTENANCE_FXR_NOT_RESPONDING, s.fxrInfo.Name); err != nil {
+		s.childLogger.Errorw("unable to send automatic maintenance request to fixture", zap.Error(err))
+		return
+	}
+
+	s.childLogger.Info("sent automatic maintenance request to fixture")
+}
+
 func (s *StartProcess) performHandshake(msg proto.Message) {
+	defer s.requestMaintenanceIfTimedOut()
+
 	start := time.Now()
 
 	s.childLogger.Info("checking that FXR is ready to handshake")
@@ -267,6 +283,16 @@ func (s *StartProcess) performHandshake(msg proto.Message) {
 
 	if s.unload {
 		s.childLogger.Warn("timeout trying to send recipe to FXR")
+		// tray sensor never indicated a tray had arrived and fixture was READY to start a recipe
+		if err := sendEquipmentRequest(s.Publisher, tower.EquipmentRequest_EQUIPMENT_REQUEST_MAINTENANCE_TRAY_SENSOR, s.fxrInfo.Name); err != nil {
+			s.childLogger.Errorw("unable to send automatic maintenance request to fixture",
+				zap.Error(err), zap.String("equip_req", tower.EquipmentRequest_EQUIPMENT_REQUEST_MAINTENANCE_FXR_NOT_RESPONDING.String()))
+			return
+		}
+
+		s.childLogger.Infow("sent automatic maintenance request to fixture",
+			zap.String("equip_req", tower.EquipmentRequest_EQUIPMENT_REQUEST_MAINTENANCE_FXR_NOT_RESPONDING.String()))
+
 		return
 	}
 
@@ -310,9 +336,20 @@ func (s *StartProcess) performHandshake(msg proto.Message) {
 
 	if s.unload {
 		s.childLogger.Warn("timeout trying to send recipe to FXR")
-	} else {
-		s.childLogger.Info("sent recipe and other information to FXR")
+		// fixture never acknowledged the info message
+		if err := sendEquipmentRequest(s.Publisher, tower.EquipmentRequest_EQUIPMENT_REQUEST_MAINTENANCE_FXR_NOT_RESPONDING, s.fxrInfo.Name); err != nil {
+			s.childLogger.Errorw("unable to send automatic maintenance request to fixture",
+				zap.Error(err), zap.String("equip_req", tower.EquipmentRequest_EQUIPMENT_REQUEST_MAINTENANCE_FXR_NOT_RESPONDING.String()))
+			return
+		}
+
+		s.childLogger.Infow("sent automatic maintenance request to fixture",
+			zap.String("equip_req", tower.EquipmentRequest_EQUIPMENT_REQUEST_MAINTENANCE_FXR_NOT_RESPONDING.String()))
+
+		return
 	}
+
+	s.childLogger.Info("sent recipe and other information to FXR")
 }
 
 func getFaultRecord(logger *zap.SugaredLogger, conf Configuration, tid string) (cdcontroller.FaultRecord, error) {

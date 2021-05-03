@@ -18,7 +18,7 @@ message StibAlert {
     STIB_a008_unused                          = 8;
     STIB_a009_unused                          = 9;
     STIB_a010_EnumerationWriteFail            = 10;
-    STIB_a011_AllegroHwOC                     = 11;
+    STIB_a011_CurrentSensorHwOC               = 11;
     STIB_a012_ComparatorHwOC                  = 12;
     STIB_a013_SwOC                            = 13;
     STIB_a014_BusUV                           = 14;
@@ -57,26 +57,40 @@ message StibAlert {
     STIB_a047_ShuntCalibrationFail            = 47;
     STIB_a048_CIBCellSwitchWriteFailPermanent = 48;
     STIB_a049_CellDvDtOutOfBounds             = 49;
+    STIB_a050_Cell_Detect_MIA                 = 50;
   }
 
   message a004_CpuOverRun {
-    float ISR_time_max     = 1; // us
-    float f_1kHz_time_max  = 2; // us
-    float f_10Hz_time_max  = 3; // us
-    float f_100Hz_time_max = 4; // us
+    float ISR_time_max        = 1; // us
+    float f_1kHz_time_max     = 2; // us
+    float f_10Hz_time_max     = 3; // us
+    float f_100Hz_time_max    = 4; // us
+    float f_1kHz_pri_time_max = 5; // us
   }
 
   message a007_TaskStackOverrun {
-    bool Task_Proto_Stack_Overrun  = 1;
-    bool Task_1kHz_Stack_Overrun   = 2;
-    bool Task_10Hz_Stack_Overrun   = 3;
-    bool Task_Fs_Stack_Overrun     = 4;
-    bool Task_CanTx_Stack_Overrun  = 5;
-    bool Task_OsIdle_Stack_Overrun = 6;
-    bool Task_100Hz_Stack_Overrun  = 7;
+    bool Task_Proto_Stack_Overrun    = 1;
+    bool Task_1kHz_Stack_Overrun     = 2;
+    bool Task_10Hz_Stack_Overrun     = 3;
+    bool Task_Fs_Stack_Overrun       = 4;
+    bool Task_CanTx_Stack_Overrun    = 5;
+    bool Task_OsIdle_Stack_Overrun   = 6;
+    bool Task_100Hz_Stack_Overrun    = 7;
+    bool Task_1kHz_Pri_Stack_Overrun = 8;
   }
 
   message a010_EnumerationWriteFail {}
+
+  message a011_CurrentSensorHwOC {
+    float bus_voltage      = 1; // V
+    float string_voltage   = 2; // V
+    float iphase_1         = 3; // A
+    float iphase_2         = 4; // A
+    bool  iphase_1_ovr_pos = 5;
+    bool  iphase_1_ovr_neg = 6;
+    bool  iphase_2_ovr_pos = 7;
+    bool  iphase_2_ovr_neg = 8;
+  }
 
   message a012_ComparatorHwOC {
     float bus_voltage      = 1; // V
@@ -277,6 +291,8 @@ message StibAlert {
     float  cell_ah      = 5;
   }
 
+  message a050_CellDetectMIA { uint32 cell_detect_mia_mask = 1; }
+
   message AlertData {
     oneof Payload {
       aXXX_Reserved                        a003 = 3;
@@ -447,6 +463,8 @@ message FxrAlert {
     FXR_a032_StibPwrCheckFail              = 32;
     FXR_a033_FanHwPwrSupplyFail            = 33;
     FXR_a034_temp_sensor_comms_irrational  = 34;
+    FXR_a035_enumeration_change            = 35;
+    FXR_a036_multiple_pogo_pin_irrational  = 36;
   }
 
   message a001_SwAppBoot {}
@@ -540,11 +558,12 @@ message FxrAlert {
   message a024_busHV_ov_fault { float voltage = 1; }
 
   message a025_EquipmentNeedsMaintenance {
-    int32 prev_status               = 1; // what equipment status transitioning from
-    int32 faulting_alert_id         = 2; // alert id causing transition if non-zero
-    bool  fixture_status_faulted    = 3; // if fixture status faulted is causing transition
-    bool  equipment_maintenance_req = 4; // if needs maintenance was requested via equipment request
-    bool  cells_incomplete          = 5; // fail due to cell(s) not complete during commissioning recipe
+    int32             prev_status               = 1; // what equipment status transitioning from
+    int32             faulting_alert_id         = 2; // alert id causing transition if non-zero
+    bool              fixture_status_faulted    = 3; // if fixture status faulted is causing transition
+    bool              equipment_maintenance_req = 4; // if needs maintenance was requested via equipment request
+    bool              cells_incomplete          = 5; // fail due to cell(s) not complete during commissioning recipe
+    MaintenanceReason maintenance_reason        = 6; // reason for needs maintenance status
   }
 
   message a027_24VBus_UV_fault { float voltage = 1; }
@@ -568,6 +587,18 @@ message FxrAlert {
   message a034_temp_sensor_comms_irrational {
     bool stib_mia    = 1;
     bool cib_offline = 2;
+  }
+
+  message a035_enumeration_change {
+    uint32 address_current = 1;
+    uint32 address_new     = 2;
+    bool   uart_enum       = 3;
+    bool   gpio_enum       = 4;
+  }
+
+  message a036_multiple_pogo_pin_irrational {
+    uint32 pogo_needs_inspection_mask_upper = 1;
+    uint32 pogo_needs_inspection_mask_lower = 2;
   }
 
   message AlertData {
@@ -605,6 +636,8 @@ message FxrAlert {
       a032_StibPwrCheckFail              a032 = 32;
       a033_FanHwPwrSupplyFail            a033 = 33;
       a034_temp_sensor_comms_irrational  a034 = 34;
+      a035_enumeration_change            a035 = 35;
+      a036_multiple_pogo_pin_irrational  a036 = 36;
     }
   }
 

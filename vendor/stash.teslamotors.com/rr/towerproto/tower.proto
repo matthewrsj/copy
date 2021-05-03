@@ -131,15 +131,16 @@ message Filesystem {
 }
 
 message Fxr {
-  FxrSensors            sensors        = 1;
-  FxrInternal           internal       = 2;
-  FxrOutputs            outputs        = 3;
-  Genealogy             genealogy      = 4;
-  AlertMatrix           alert_matrices = 5;
-  FxrIsolation          isolation      = 6;
-  Filesystem            filesystem     = 7;
-  Position              position       = 8;
-  FixtureControlSmState state          = 9;
+  FxrSensors            sensors            = 1;
+  FxrInternal           internal           = 2;
+  FxrOutputs            outputs            = 3;
+  Genealogy             genealogy          = 4;
+  AlertMatrix           alert_matrices     = 5;
+  FxrIsolation          isolation          = 6;
+  Filesystem            filesystem         = 7;
+  Position              position           = 8;
+  FixtureControlSmState state              = 9;
+  MaintenanceReason     maintenance_reason = 10;
 }
 
 message FibSensors {
