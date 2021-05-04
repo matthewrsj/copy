@@ -36,7 +36,7 @@ func TestHandleCanary(t *testing.T) {
 	}
 
 	router := mux.NewRouter()
-	router.HandleFunc(CanaryEndpoint, HandleCanary(zap.NewExample().Sugar(), registry))
+	router.HandleFunc(CanaryEndpoint, HandleCanary(zap.NewExample().Sugar(), registry, Versions{}))
 
 	port, err := freeport.GetFreePort()
 	if err != nil {

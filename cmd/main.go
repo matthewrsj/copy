@@ -33,6 +33,11 @@ const (
 	_localUserDef = "0.0.0.0:13173"
 )
 
+// build variables for govvv
+// nolint:golint // don't need its own declaration when it's all just being used by a build tool
+// in other words... DON'T CHANGE
+var GitCommit, GitBranch, GitState, GitSummary, BuildDate, Version string
+
 // nolint:funlen // main func
 func main() {
 	logLvl := zap.LevelFlag("loglvl", _logLvlDef, "log level for zap logger")
@@ -117,6 +122,15 @@ func main() {
 		backoff.NewConstantBackOff(time.Second*5),
 	)
 
+	versions := towercontroller.Versions{
+		GitCommit:  GitCommit,
+		GitBranch:  GitBranch,
+		GitState:   GitState,
+		GitSummary: GitSummary,
+		BuildDate:  BuildDate,
+		Version:    Version,
+	}
+
 	/*
 		The Operational API is the API used by the C/D Controller to control each Tower Controller by
 		querying availability, informing the TC a tray has been loaded, reserving fixtures when a
@@ -134,7 +148,7 @@ func main() {
 	// handle incoming posts to broadcast to fixtures
 	opsRouter.HandleFunc(cdcontroller.BroadcastEndpoint, towercontroller.HandleBroadcastRequest(publisher, sugar, registry)).Methods(http.MethodPost)
 	// handle incoming gets to canary
-	opsRouter.HandleFunc(towercontroller.CanaryEndpoint, towercontroller.HandleCanary(sugar, registry)).Methods(http.MethodGet)
+	opsRouter.HandleFunc(towercontroller.CanaryEndpoint, towercontroller.HandleCanary(sugar, registry, versions)).Methods(http.MethodGet)
 
 	/*
 		The User API is the API intended for engineers to send maintenance-type commands to manually exercise

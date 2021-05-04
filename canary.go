@@ -14,10 +14,21 @@ const CanaryEndpoint = "/canary"
 type canaryResponse struct {
 	FixturesUp   []string `json:"fixtures_broadcasting"`
 	FixturesDown []string `json:"fixtures_not_broadcasting"`
+	VersionInfo  Versions `json:"versions"`
+}
+
+// Versions contains all the version information of towercontroller
+type Versions struct {
+	GitCommit  string `json:"git_commit"`
+	GitBranch  string `json:"git_branch"`
+	GitState   string `json:"git_state"`
+	GitSummary string `json:"git_summary"`
+	BuildDate  string `json:"build_date"`
+	Version    string `json:"version"`
 }
 
 // HandleCanary handles incoming requests to the canary endpoint
-func HandleCanary(logger *zap.SugaredLogger, registry map[string]*FixtureInfo) http.HandlerFunc {
+func HandleCanary(logger *zap.SugaredLogger, registry map[string]*FixtureInfo, versions Versions) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		allowCORS(w)
 
@@ -27,6 +38,7 @@ func HandleCanary(logger *zap.SugaredLogger, registry map[string]*FixtureInfo) h
 		cr := canaryResponse{
 			FixturesUp:   []string{},
 			FixturesDown: []string{},
+			VersionInfo:  versions,
 		}
 
 		for name, info := range registry {
