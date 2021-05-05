@@ -1,11 +1,16 @@
 package cdcontroller
 
-import "sort"
+import (
+	"sort"
+
+	tower "stash.teslamotors.com/rr/towerproto"
+)
 
 // StepConfiguration contains a recipe list
 type StepConfiguration struct {
-	RecipeList   map[string]Step `json:"recipe_list"`
-	StepOrdering []uint32        `json:"step_ordering"`
+	RecipeList   map[string]Step       `json:"recipe_list"`
+	StepOrdering []uint32              `json:"step_ordering"`
+	ParamLims    []ParameterizedLimits `json:"parameterized_limits"`
 }
 
 // Step defines an individual recipe step
@@ -103,6 +108,17 @@ type FormationStep struct {
 type StepList struct {
 	Steps        []Ingredients
 	StepOrdering []uint32
+	ParamLims    []*tower.ParameterizedLimit
+}
+
+// ParameterizedLimits contains configurable limits per recipe step
+type ParameterizedLimits struct {
+	StepNumber       uint32  `json:"step_number"`
+	LimitType        string  `json:"limit_type"`
+	LimitActive      string  `json:"limit_active"`
+	LimitLowerBound  float32 `json:"limit_lower_bound"`
+	LimitUpperBound  float32 `json:"limit_upper_bound"`
+	CellStatusResult string  `json:"cell_status_result"`
 }
 
 // NewStepList parses a new FormationStep out of a byte slice
@@ -127,6 +143,18 @@ func NewStepList(sc FormationStep) (StepList, error) {
 	}
 
 	sl.StepOrdering = sc.StepConfMap.StepOrdering
+
+	sl.ParamLims = make([]*tower.ParameterizedLimit, len(sc.StepConfMap.ParamLims))
+	for i, lims := range sc.StepConfMap.ParamLims {
+		sl.ParamLims[i] = &tower.ParameterizedLimit{
+			StepNumber:       lims.StepNumber,
+			LimitType:        tower.ParamLimitType(tower.ParamLimitType_value[lims.LimitType]),
+			LimitActive:      tower.ParamLimitActive(tower.ParamLimitActive_value[lims.LimitActive]),
+			CellStatusResult: tower.CellStatus(tower.CellStatus_value[lims.CellStatusResult]),
+			LimitUpperBound:  lims.LimitUpperBound,
+			LimitLowerBound:  lims.LimitLowerBound,
+		}
+	}
 
 	return sl, nil
 }

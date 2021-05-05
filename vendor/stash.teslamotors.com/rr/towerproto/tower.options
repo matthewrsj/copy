@@ -17,6 +17,7 @@ Versions.software_version max_size:30
 Recipe.steps max_count:20
 Recipe.cell_masks max_count:2
 Recipe.step_ordering max_count:200
+Recipe.parameterized_limits max_count:30
 
 Fib.fans max_count:9
 
@@ -32,4 +33,5 @@ Powertray.dcacs max_count:2
 Powertray.subpackage_sn max_size:14
 Dcac.subpackage_sn max_size:14
 
-FxrToStib.cells max_count:16
+CellData.cells max_count:16
+StepParameters.step_parameterized_limits max_count:10

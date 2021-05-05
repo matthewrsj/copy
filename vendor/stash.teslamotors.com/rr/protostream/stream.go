@@ -18,13 +18,15 @@ import (
 // Stream sends Messages over a socket for other processes to read and injects proto messages
 // onto the CAN bus when published to.
 type Stream struct {
-	fixtures        map[string]CANConfig
-	listenerAddress string
-	wsAddress       string
-	logDir          string
-	recvTimeout     time.Duration
-	publisher       *Socket
-	logger          *zap.SugaredLogger
+	fixtures             map[string]CANConfig
+	tcauxCol1, tcauxCol2 CANConfig
+	listenerAddress      string
+	wsAddress            string
+	logDir               string
+	recvTimeout          time.Duration
+	publisher            *Socket
+	metricsHandler       *MetricsHandler
+	logger               *zap.SugaredLogger
 }
 
 // NewStream starts streaming Messages to the socket
@@ -113,7 +115,64 @@ func receiveMessagesFromCan(ctx context.Context, rxFromCAN chan<- *ProtoMessage,
 	}
 }
 
-func loopForMessages(ctx context.Context, sock *Socket, inject <-chan *ProtoMessage, can CANConfig, logDir string, wg *sync.WaitGroup, logger *zap.SugaredLogger) {
+// simpler version for TCAUX which only listens to one device for only one type of message
+func loopForTCAUXMessages(ctx context.Context, sock *Socket, can CANConfig, wg *sync.WaitGroup, logger *zap.SugaredLogger, mh *MetricsHandler) {
+	defer wg.Done()
+
+	cl := logger.With("fixture", can.NodeID, "can_bus", can.Bus, "can_tx", fmt.Sprintf("0x%X", can.TX), "can_rx", fmt.Sprintf("0x%X", can.RX))
+
+	dev, err := createDevice(can.Bus, can.RX, can.TX, can.RecvTimeout)
+	if err != nil {
+		cl.Errorw("create new ISOTP interface", "error", err)
+		return
+	}
+
+	defer func() {
+		_ = dev.Close()
+	}()
+
+	for {
+		select {
+		case <-ctx.Done(): // done
+			return
+		default:
+			buf, err := dev.RecvBuf()
+			if err != nil {
+				cl.Debugw("receive buffer", "error", err)
+				continue
+			}
+
+			var msg tower.TauxToTower
+
+			if err = proto.Unmarshal(buf, &msg); err != nil {
+				cl.Debugw("unmarshal proto message", "error", err)
+				continue
+			}
+
+			event := &ProtoMessage{
+				Location:          can.NodeID,
+				TimeStampUnixNano: time.Now().UnixNano(),
+				Body:              buf,
+			}
+
+			jb, err := json.Marshal(event)
+			if err != nil {
+				cl.Warnw("marshal event to publish", "error", err)
+				continue
+			}
+
+			if err := sock.PublishTo(can.NodeID, jb); err != nil {
+				cl.Warnw("send event JSON", "error", err)
+			}
+
+			mh.CountTauxToTower()
+
+			cl.Info("published TCAUX message")
+		}
+	}
+}
+
+func loopForMessages(ctx context.Context, sock *Socket, inject <-chan *ProtoMessage, can CANConfig, logDir string, wg *sync.WaitGroup, logger *zap.SugaredLogger, mh *MetricsHandler) {
 	defer wg.Done()
 
 	cl := logger.With("fixture", can.NodeID, "can_bus", can.Bus)
@@ -161,8 +220,9 @@ func loopForMessages(ctx context.Context, sock *Socket, inject <-chan *ProtoMess
 				return
 			}
 
-			cl.Debugw("sent TowerToFixture message", "message", protoMsg.String())
+			mh.CountTowerToFixture()
 
+			cl.Debugw("sent TowerToFixture message", "message", protoMsg.String())
 		case event := <-rxFromCAN:
 			jb, err := json.Marshal(event)
 			if err != nil {
@@ -173,6 +233,8 @@ func loopForMessages(ctx context.Context, sock *Socket, inject <-chan *ProtoMess
 			if err := sock.PublishTo(can.NodeID, jb); err != nil {
 				cl.Warnw("send event JSON", "error", err)
 			}
+
+			mh.CountFixtureToTower()
 
 			cl.Info("published FixtureToTower message")
 		}
@@ -246,6 +308,12 @@ func (s *Stream) Start(ctx context.Context) chan struct{} {
 
 		var wg sync.WaitGroup
 
+		// loop on both buses
+		wg.Add(2)
+
+		go loopForTCAUXMessages(ctx, s.publisher, s.tcauxCol1, &wg, cl, s.metricsHandler)
+		go loopForTCAUXMessages(ctx, s.publisher, s.tcauxCol2, &wg, cl, s.metricsHandler)
+
 		for location, canConf := range s.fixtures {
 			canConf.NodeID = location
 			canConf.RecvTimeout = s.recvTimeout
@@ -269,7 +337,7 @@ func (s *Stream) Start(ctx context.Context) chan struct{} {
 			// maximum lag time should only be encountered when there is nothing talking (and likely
 			// nothing listening) on the bus anyways. Typical maximum lag time will be around 1 second
 			// due to the TX rate (1 Hz) of the FXRs on the bus.
-			go loopForMessages(ctx, s.publisher, inject, canConf, s.logDir, &wg, cl)
+			go loopForMessages(ctx, s.publisher, inject, canConf, s.logDir, &wg, cl, s.metricsHandler)
 		}
 
 		wg.Wait()

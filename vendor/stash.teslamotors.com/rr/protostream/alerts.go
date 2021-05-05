@@ -59,6 +59,7 @@ const (
 // HandleAlerts serves the alerts for a fixture queried (fxr). Returns the last N lines (n)
 func HandleAlerts(mux *http.ServeMux, logDir string) {
 	mux.HandleFunc(_alertsLogEndpoint, func(w http.ResponseWriter, r *http.Request) {
+		allowCORS(w)
 		if r.Method != http.MethodGet {
 			http.Error(w, "only GET supported for this endpoint", http.StatusBadRequest)
 			return

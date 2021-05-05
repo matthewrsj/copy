@@ -2,3 +2,5 @@ cmd/cmd
 cmd/log
 cmd/logs
 .idea
+sim/runone/runone
+sim/runone/logs

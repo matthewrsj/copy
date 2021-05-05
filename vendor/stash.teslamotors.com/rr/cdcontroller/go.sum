@@ -221,3 +221,5 @@ stash.teslamotors.com/cas/asrs v0.0.3/go.mod h1:FMUWKdzLLmN95tP24OJ+7IfNakh+vk+O
 stash.teslamotors.com/cas/router v0.0.0-20200817111520-9eae46cc47dd/go.mod h1:sIGnPfP9jsKST2JF+Zau6a3VKNWkdXHM9Wq0bFZMip4=
 stash.teslamotors.com/rr/towerproto v0.0.11 h1:YuHr+mmW77amAYt+j8ay5OIZ1qxNLLroabDiJjHJ8UE=
 stash.teslamotors.com/rr/towerproto v0.0.11/go.mod h1:FDbAtKBEKCStkYKJSOamESQ6NjyN7zmV9HAqydiJQs4=
+stash.teslamotors.com/rr/towerproto v0.8.0 h1:BEyebeUuIhM5Qd0A7SOAFDLhe1AEys5M+6iSw/FRkZY=
+stash.teslamotors.com/rr/towerproto v0.8.0/go.mod h1:FDbAtKBEKCStkYKJSOamESQ6NjyN7zmV9HAqydiJQs4=

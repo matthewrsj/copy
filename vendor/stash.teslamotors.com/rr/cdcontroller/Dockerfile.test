@@ -1,0 +1,19 @@
+FROM golang:stretch
+
+# install golangci-lint
+RUN wget -O- -nv https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.27.0
+
+# install git for go get and ocpua dependency
+RUN apt update -y && apt upgrade -y && \
+    apt install -y bash git build-essential
+
+# install gocov
+RUN go get github.com/axw/gocov/gocov
+
+COPY . /go/src
+
+CMD cd /go/src && \
+    golangci-lint run ./... && \
+    go test -gcflags=-l -mod vendor -cover -coverprofile=cover.out -coverpkg ./... -tags test ./... && \
+    gocov convert cover.out | gocov report && \
+    [ $(gocov convert cover.out | gocov report | tail -1 | grep -o -E '[0-9]+' | head -1) -ge 50 ]

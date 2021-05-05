@@ -167,6 +167,8 @@ enum StibFormState {
   STIB_FORM_STATE_CELL_SW                  = 10;
   STIB_FORM_STATE_FAULT                    = 11;
   STIB_FORM_STATE_FAULT_COOL               = 12;
+  STIB_FORM_STATE_PRE_CHECK                = 13;
+  STIB_FORM_STATE_POST_CHECK               = 14;
 }
 
 enum CellStatus {
@@ -175,9 +177,11 @@ enum CellStatus {
   CELL_STATUS_IN_PROCESS                 = 2;
   CELL_STATUS_COMPLETE                   = 3;
   CELL_STATUS_FAILED                     = 4;
-  CELL_STATUS_FAILED_SAFETY_LIMIT        = 5;
+  CELL_STATUS_FAILED_SAFETY_LIMIT        = 5; // failure at cell level
   CELL_STATUS_FAILED_POGO_PIN_IRRATIONAL = 6;
   CELL_STATUS_COMPLETE_WARNING           = 7;
+  CELL_STATUS_FAILED_SAFETY_LEVEL2       = 8; // failure at tray level
+  CELL_STATUS_FAILED_SAFETY_LEVEL3       = 9; // failure at fire? level : TODO: check what this is??
 }
 
 enum CellDetectStatus {
@@ -209,4 +213,23 @@ enum TauxStatus {
   TAUX_STATUS_PRECHARGE           = 2; // Taux is precharging bus to 76V
   TAUX_STATUS_ACTIVE              = 3; // Taux is commanding bus to 85V
   TAUX_STATUS_FAULTED             = 4; // Taux is faulted
+}
+
+// RECIPE PARAMETERS
+enum ParamLimitType {
+  PARAM_LIMIT_TYPE_UNKNOWN_UNSPECIFIED = 0;
+  PARAM_LIMIT_TYPE_VOLTAGE             = 1;
+  PARAM_LIMIT_TYPE_CURRENT             = 2;
+  PARAM_LIMIT_TYPE_TEMPERATURE         = 3;
+  PARAM_LIMIT_TYPE_TIME                = 4;
+  PARAM_LIMIT_TYPE_CAPACITY            = 5;
+  PARAM_LIMIT_TYPE_DVDT                = 6;
+  PARAM_LIMIT_TYPE_DVDQ                = 7;
+}
+
+enum ParamLimitActive {
+  PARAM_LIMIT_ACTIVE_UNKNOWN_UNSPECIFIED = 0;
+  PARAM_LIMIT_ACTIVE_BEFORE              = 1;
+  PARAM_LIMIT_ACTIVE_DURING              = 2;
+  PARAM_LIMIT_ACTIVE_AFTER               = 3;
 }

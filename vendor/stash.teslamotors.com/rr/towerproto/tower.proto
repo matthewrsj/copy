@@ -322,11 +322,21 @@ message RecipeStep {
   float       v_cell_max_quality = 12;
 }
 
+message ParameterizedLimit {
+  uint32           step_number        = 1;
+  ParamLimitType   limit_type         = 2;
+  ParamLimitActive limit_active       = 3;
+  CellStatus       cell_status_result = 4;
+  float            limit_upper_bound  = 5;
+  float            limit_lower_bound  = 6;
+}
+
 message Recipe {
-  repeated RecipeStep steps         = 1;
-  repeated uint32     cell_masks    = 2;
-  FormRequest         form_request  = 3;
-  repeated uint32     step_ordering = 4;
+  repeated RecipeStep         steps                = 1;
+  repeated uint32             cell_masks           = 2;
+  FormRequest                 form_request         = 3;
+  repeated uint32             step_ordering        = 4;
+  repeated ParameterizedLimit parameterized_limits = 5;
 }
 
 message Info {
@@ -418,4 +428,12 @@ message TauxToTower {
   Versions versions = 5;
 }
 
-message FxrToStib { repeated Cell cells = 1; }
+message CellData { repeated Cell cells = 1; }
+message StepParameters { repeated ParameterizedLimit step_parameterized_limits = 1; }
+
+message FxrToStib {
+  oneof content {
+    CellData       cell_data       = 1;
+    StepParameters step_parameters = 2;
+  }
+}

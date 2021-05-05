@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v1.3.1] - 2021-05-05
+### Changed
+- Convert to new API for parameterized limits
+
 ## [v1.3.0] - 2021-04-20
 ### Changed
 - Convert to new API for step ordering recipes.

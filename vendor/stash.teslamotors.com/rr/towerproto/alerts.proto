@@ -58,6 +58,7 @@ message StibAlert {
     STIB_a048_CIBCellSwitchWriteFailPermanent = 48;
     STIB_a049_CellDvDtOutOfBounds             = 49;
     STIB_a050_Cell_Detect_MIA                 = 50;
+    STIB_a051_ParameterizedLimitCheckFailed   = 51;
   }
 
   message a004_CpuOverRun {
@@ -293,6 +294,15 @@ message StibAlert {
 
   message a050_CellDetectMIA { uint32 cell_detect_mia_mask = 1; }
 
+  message a051_ParameterizedLimitCheckFailed {
+    uint32           cellNum      = 1;
+    uint32           stepNum      = 2;
+    ParamLimitType   limit_type   = 3;
+    ParamLimitActive limit_active = 4;
+    float            limit_value  = 5;
+    CellStatus       status       = 6;
+  }
+
   message AlertData {
     oneof Payload {
       aXXX_Reserved                        a003 = 3;
@@ -342,6 +352,8 @@ message StibAlert {
       a047_ShuntCalibrationFail            a047 = 47;
       a048_CIBCellSwitchWriteFailPermanent a048 = 48;
       a049_CellDvDtOutOfBounds             a049 = 49;
+      a050_CellDetectMIA                   a050 = 50;
+      a051_ParameterizedLimitCheckFailed   a051 = 51;
     }
   }
 

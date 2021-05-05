@@ -29,6 +29,14 @@ func WithFixtures(fxrs map[string]CANConfig) Option {
 	}
 }
 
+// WithTCAUX sets the Stream TCAUX messages to listen for
+func WithTCAUX(tcauxCol1, tcauxCol2 CANConfig) Option {
+	return func(s *Stream) error {
+		s.tcauxCol1, s.tcauxCol2 = tcauxCol1, tcauxCol2
+		return nil
+	}
+}
+
 // WithLogger sets the stream logger
 func WithLogger(logger *zap.SugaredLogger) Option {
 	return func(s *Stream) error {
@@ -76,6 +84,17 @@ func WithRecvTimeout(d time.Duration) Option {
 func WithLogDirectory(logDir string) Option {
 	return func(s *Stream) error {
 		s.logDir = logDir
+		return nil
+	}
+}
+
+// WithMetricsHandler sets the thread safe metrics struct and starts a go routine that shifts the periods every minute
+func WithMetricsHandler(mh *MetricsHandler) Option {
+	return func(s *Stream) error {
+		s.metricsHandler = mh
+
+		go mh.Run()
+
 		return nil
 	}
 }

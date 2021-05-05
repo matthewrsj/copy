@@ -86,8 +86,9 @@ func (s *StartProcess) action() {
 
 	twr2Fxr := tower.TowerToFixture{
 		Recipe: &tower.Recipe{
-			FormRequest:  tower.FormRequest_FORM_REQUEST_START,
-			StepOrdering: s.steps.StepOrdering,
+			FormRequest:         tower.FormRequest_FORM_REQUEST_START,
+			StepOrdering:        s.steps.StepOrdering,
+			ParameterizedLimits: s.steps.ParamLims,
 		},
 		Info: &tower.Info{
 			TrayBarcode:     s.tbc.Raw,

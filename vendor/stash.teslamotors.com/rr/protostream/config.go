@@ -17,7 +17,10 @@ type Configuration struct {
 	Col2        ColumnConfig `yaml:"column2"`
 	FixtureList []string     `yaml:"fixture_locations"`
 
-	Fixtures map[string]CANConfig // constructed field
+	// constructed fields
+	Fixtures  map[string]CANConfig
+	TCAUXCol1 CANConfig // listen on both columns, though it will only show up on one
+	TCAUXCol2 CANConfig
 }
 
 // IDConfig contains information on CAN IDs for ISOTP
@@ -26,6 +29,8 @@ type IDConfig struct {
 	BaseTX     uint32 `yaml:"base_tx"`
 	BaseRXDiag uint32 `yaml:"base_rx_diag"`
 	BaseTXDiag uint32 `yaml:"base_tx_diag"`
+	TAUXRx     uint32 `yaml:"taux_rx"`
+	TAUXTx     uint32 `yaml:"taux_tx"`
 }
 
 // ColumnConfig contains the base information for a tower column
@@ -55,6 +60,22 @@ func LoadConfig(path string) (Configuration, error) {
 	var c Configuration
 	if err = yaml.Unmarshal(buf, &c); err != nil {
 		return c, fmt.Errorf("unmarshal YAML file: %v", err)
+	}
+
+	c.TCAUXCol1 = CANConfig{
+		RX:          c.ID.TAUXRx,
+		TX:          c.ID.TAUXTx,
+		Bus:         c.Col1.CANBus,
+		RecvTimeout: DefaultRecvTimeout,
+		NodeID:      "TCAUX",
+	}
+
+	c.TCAUXCol2 = CANConfig{
+		RX:          c.ID.TAUXRx,
+		TX:          c.ID.TAUXTx,
+		Bus:         c.Col2.CANBus,
+		RecvTimeout: DefaultRecvTimeout,
+		NodeID:      "TCAUX",
 	}
 
 	c.Fixtures = make(map[string]CANConfig)
