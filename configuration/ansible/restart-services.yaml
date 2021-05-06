@@ -20,6 +20,12 @@
     become_method: sudo
     tags:
       - canup
+  - name: Update protostream docker image
+    command: docker pull artifactory.teslamotors.com:2132/formation-docker-local/protostreamapp:latest
+    become: yes
+    become_method: sudo
+    tags:
+      - protostream
   - name: Restart protostream
     service:
       name: protostream.service
@@ -28,6 +34,12 @@
     become_method: sudo
     tags:
       - protostream
+  - name: Update towercontroller docker image
+    command: docker pull artifactory.teslamotors.com:2132/formation-docker-local/towercontrollerapp:latest
+    become: yes
+    become_method: sudo
+    tags:
+      - towercontroller
   - name: Restart towercontroller
     service:
       name: towercontroller.service
@@ -36,6 +48,12 @@
     become_method: sudo
     tags:
       - towercontroller
+  - name: Update towerstreamsvc docker image
+    command: docker pull artifactory.teslamotors.com:2132/formation-docker-local/towerstreamsvc:latest
+    become: yes
+    become_method: sudo
+    tags:
+      - towerstreamsvc
   - name: Restart towerstreamsvc
     service:
       name: towerstreamsvc.service
@@ -44,3 +62,17 @@
     become_method: sudo
     tags:
       - towerstreamsvc
+  - name: Update watchtower docker image
+    command: docker pull artifactory.teslamotors.com:2132/formation-docker-local/watchtowerapp:latest
+    become: yes
+    become_method: sudo
+    tags:
+      - watchtower
+  - name: Restart watchtower
+    service:
+      name: watchtower.service
+      state: restarted
+    become: yes
+    become_method: sudo
+    tags:
+      - watchtower
