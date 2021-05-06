@@ -335,7 +335,7 @@ message Recipe {
   repeated RecipeStep         steps                = 1;
   repeated uint32             cell_masks           = 2;
   FormRequest                 form_request         = 3;
-  repeated uint32             step_ordering        = 4;
+  bytes                       step_ordering        = 4;
   repeated ParameterizedLimit parameterized_limits = 5;
 }
 

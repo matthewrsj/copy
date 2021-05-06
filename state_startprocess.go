@@ -87,7 +87,7 @@ func (s *StartProcess) action() {
 	twr2Fxr := tower.TowerToFixture{
 		Recipe: &tower.Recipe{
 			FormRequest:         tower.FormRequest_FORM_REQUEST_START,
-			StepOrdering:        s.steps.StepOrdering,
+			StepOrdering:        uint32SliceToBytes(s.steps.StepOrdering),
 			ParameterizedLimits: s.steps.ParamLims,
 		},
 		Info: &tower.Info{
@@ -401,4 +401,13 @@ func getOpSnapshot(logger *zap.SugaredLogger, conf Configuration, tid string) *t
 	logger.Info("ops snapshot received from C/D Controller", "snapshot", ops.String())
 
 	return &ops
+}
+
+func uint32SliceToBytes(in []uint32) []byte {
+	so := make([]byte, len(in))
+	for i, val := range in {
+		so[i] = byte(val)
+	}
+
+	return so
 }

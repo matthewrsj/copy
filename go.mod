@@ -10,7 +10,7 @@ require (
 	github.com/phayes/freeport v0.0.0-20180830031419-95f893ade6f2
 	github.com/stretchr/testify v1.6.1
 	go.uber.org/zap v1.15.0
-	google.golang.org/protobuf v1.25.0
+	google.golang.org/protobuf v1.26.0
 	gopkg.in/yaml.v2 v2.3.0
 	nanomsg.org/go/mangos/v2 v2.0.8
 	stash.teslamotors.com/cas/asrs v0.0.3
@@ -18,5 +18,5 @@ require (
 	stash.teslamotors.com/ctet/statemachine/v2 v2.0.1
 	stash.teslamotors.com/rr/cdcontroller v1.3.1
 	stash.teslamotors.com/rr/protostream v1.1.6
-	stash.teslamotors.com/rr/towerproto v0.8.0
+	stash.teslamotors.com/rr/towerproto v0.8.1
 )
