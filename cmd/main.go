@@ -19,6 +19,8 @@ import (
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"stash.teslamotors.com/ctet/api/canary"
+	"stash.teslamotors.com/ctet/api/meter"
 	"stash.teslamotors.com/ctet/statemachine/v2"
 	"stash.teslamotors.com/rr/cdcontroller"
 	"stash.teslamotors.com/rr/protostream"
@@ -122,7 +124,7 @@ func main() {
 		backoff.NewConstantBackOff(time.Second*5),
 	)
 
-	versions := towercontroller.Versions{
+	versions := canary.Versions{
 		GitCommit:  GitCommit,
 		GitBranch:  GitBranch,
 		GitState:   GitState,
@@ -148,7 +150,15 @@ func main() {
 	// handle incoming posts to broadcast to fixtures
 	opsRouter.HandleFunc(cdcontroller.BroadcastEndpoint, towercontroller.HandleBroadcastRequest(publisher, sugar, registry)).Methods(http.MethodPost)
 	// handle incoming gets to canary
-	opsRouter.HandleFunc(towercontroller.CanaryEndpoint, towercontroller.HandleCanary(sugar, registry, versions)).Methods(http.MethodGet)
+	opsRouter.HandleFunc(
+		canary.CanaryEndpoint,
+		canary.NewHandlerFunc(
+			canary.WithLogger(logger),
+			canary.WithCallbackFunc(towercontroller.CanaryCallback(registry)),
+			canary.WithVersions(versions),
+			canary.WithCORSAllowed(),
+		),
+	).Methods(http.MethodGet)
 
 	/*
 		The User API is the API intended for engineers to send maintenance-type commands to manually exercise
@@ -172,6 +182,7 @@ func main() {
 	cc := make(chan struct{}, 1) // single buffer so handle processes doing something else at the time of write
 	userRouter.HandleFunc(towercontroller.UpdateEndpoint, towercontroller.HandleUpdate(sugar, cc, registry)).Methods(http.MethodPost, http.MethodGet)
 	userRouter.HandleFunc(towercontroller.UpdateCancelEndpoint, towercontroller.HandleUpdateCancel(sugar, cc)).Methods(http.MethodPost)
+	meter.EnableMetrics(userRouter)
 
 	opsServer := http.Server{
 		Addr:    *localAddr,
