@@ -16,7 +16,7 @@ message StibAlert {
     STIB_a006_STIBrx_MIA                      = 6;
     STIB_a007_TaskStackOverrun                = 7;
     STIB_a008_unused                          = 8;
-    STIB_a009_unused                          = 9;
+    STIB_a009_PS24V                           = 9;
     STIB_a010_EnumerationWriteFail            = 10;
     STIB_a011_CurrentSensorHwOC               = 11;
     STIB_a012_ComparatorHwOC                  = 12;
@@ -32,9 +32,9 @@ message StibAlert {
     STIB_a022_SensorOffsetTooHigh             = 22;
     STIB_a023_EnableLineLost                  = 23;
     STIB_a024_irefCorrectionIrrational        = 24;
-    STIB_a025_unused                          = 25;
-    STIB_a026_unused                          = 26;
-    STIB_a027_unused                          = 27;
+    STIB_a025_Rail12V                         = 25;
+    STIB_a026_Rail5V                          = 26;
+    STIB_a027_Rail3V3a                        = 27;
     STIB_a028_AppliedCurrentIsSaturated       = 28;
     STIB_a029_CellSafetyCheckFailed           = 29;
     STIB_a030_CellQualityCheckFailed          = 30;
@@ -57,8 +57,11 @@ message StibAlert {
     STIB_a047_ShuntCalibrationFail            = 47;
     STIB_a048_CIBCellSwitchWriteFailPermanent = 48;
     STIB_a049_CellDvDtOutOfBounds             = 49;
-    STIB_a050_Cell_Detect_MIA                 = 50;
-    STIB_a051_ParameterizedLimitCheckFailed   = 51;
+    STIB_a050_CellDetectMIA                   = 50;
+    STIB_a051_ParamLimitVoltageCheckFailed    = 51;
+    STIB_a052_ParamLimitDvDtCheckFailed       = 52;
+    STIB_a053_ParamLimitTempCheckFailed       = 53;
+    STIB_a054_ParamLimitCapacityCheckFailed   = 54;
   }
 
   message a004_CpuOverRun {
@@ -78,6 +81,14 @@ message StibAlert {
     bool Task_OsIdle_Stack_Overrun   = 6;
     bool Task_100Hz_Stack_Overrun    = 7;
     bool Task_1kHz_Pri_Stack_Overrun = 8;
+  }
+
+  message a009_PS24V {
+    float stib_ps_24v     = 1; // V
+    float stib_rail_12v   = 2; // V
+    float stib_rail_i_12v = 3; // I
+    float stib_rail_5v    = 4; // V
+    float stib_rail_3v3a  = 5; // V
   }
 
   message a010_EnumerationWriteFail {}
@@ -164,6 +175,30 @@ message StibAlert {
     float iphase_2  = 4; // A
   }
 
+  message a025_Rail12V {
+    float stib_ps_24v     = 1; // V
+    float stib_rail_12v   = 2; // V
+    float stib_rail_i_12v = 3; // I
+    float stib_rail_5v    = 4; // V
+    float stib_rail_3v3a  = 5; // V
+  }
+
+  message a026_Rail5V {
+    float stib_ps_24v     = 1; // V
+    float stib_rail_12v   = 2; // V
+    float stib_rail_i_12v = 3; // I
+    float stib_rail_5v    = 4; // V
+    float stib_rail_3v3a  = 5; // V
+  }
+
+  message a027_Rail3V3a {
+    float stib_ps_24v     = 1; // V
+    float stib_rail_12v   = 2; // V
+    float stib_rail_i_12v = 3; // I
+    float stib_rail_5v    = 4; // V
+    float stib_rail_3v3a  = 5; // V
+  }
+
   message a028_AppliedCurrentIsSaturated { bool AppliedCurrentIsSaturated = 1; }
 
   message a029_CellSafetyCheckFailed {
@@ -240,6 +275,7 @@ message StibAlert {
       step_timeout    = 11;
       state_timeout   = 12;
       command_msg_mia = 13;
+      cell_detect_mia = 14;
     }
     StibFormState stib_form_state = 1;
     AlertReason   alert_reason    = 2;
@@ -292,15 +328,42 @@ message StibAlert {
     float  cell_ah      = 5;
   }
 
-  message a050_CellDetectMIA { uint32 cell_detect_mia_mask = 1; }
+  message a050_CellDetectMIA {
+    uint32 cell_detect_mia_index = 1;
+    float  cell_voltage          = 2;
+    float  cell_resistance       = 3;
+  }
 
-  message a051_ParameterizedLimitCheckFailed {
+  message a051_ParamLimitVoltageCheckFailed {
     uint32           cellNum      = 1;
     uint32           stepNum      = 2;
-    ParamLimitType   limit_type   = 3;
-    ParamLimitActive limit_active = 4;
-    float            limit_value  = 5;
-    CellStatus       status       = 6;
+    ParamLimitActive limit_active = 3;
+    float            value        = 4;
+    CellStatus       status       = 5;
+  }
+
+  message a052_ParamLimitDvDtCheckFailed {
+    uint32           cellNum      = 1;
+    uint32           stepNum      = 2;
+    ParamLimitActive limit_active = 3;
+    float            value        = 4;
+    CellStatus       status       = 5;
+  }
+
+  message a053_ParamLimitTempCheckFailed {
+    uint32           thermistor_index = 1;
+    uint32           stepNum          = 2;
+    ParamLimitActive limit_active     = 3;
+    float            value            = 4;
+    CellStatus       status           = 5;
+  }
+
+  message a054_ParamLimitCapacityCheckFailed {
+    uint32           cellNum      = 1;
+    uint32           stepNum      = 2;
+    ParamLimitActive limit_active = 3;
+    float            value        = 4;
+    CellStatus       status       = 5;
   }
 
   message AlertData {
@@ -353,7 +416,10 @@ message StibAlert {
       a048_CIBCellSwitchWriteFailPermanent a048 = 48;
       a049_CellDvDtOutOfBounds             a049 = 49;
       a050_CellDetectMIA                   a050 = 50;
-      a051_ParameterizedLimitCheckFailed   a051 = 51;
+      a051_ParamLimitVoltageCheckFailed    a051 = 51;
+      a052_ParamLimitDvDtCheckFailed       a052 = 52;
+      a053_ParamLimitTempCheckFailed       a053 = 53;
+      a054_ParamLimitCapacityCheckFailed   a054 = 54;
     }
   }
 
@@ -476,7 +542,8 @@ message FxrAlert {
     FXR_a033_FanHwPwrSupplyFail            = 33;
     FXR_a034_temp_sensor_comms_irrational  = 34;
     FXR_a035_enumeration_change            = 35;
-    FXR_a036_multiple_pogo_pin_irrational  = 36;
+    FXR_a036_pogo_monitor_fault            = 36;
+    FXR_a037_fault_request                 = 37;
   }
 
   message a001_SwAppBoot {}
@@ -608,10 +675,15 @@ message FxrAlert {
     bool   gpio_enum       = 4;
   }
 
-  message a036_multiple_pogo_pin_irrational {
-    uint32 pogo_needs_inspection_mask_upper = 1;
-    uint32 pogo_needs_inspection_mask_lower = 2;
+  message a036_pogo_monitor_fault {
+    uint32 pogo_monitor_position_1_stib_index = 1;
+    uint32 pogo_monitor_position_1_cell_index = 2;
+    uint32 pogo_monitor_position_2_stib_index = 3;
+    uint32 pogo_monitor_position_2_cell_index = 4;
+    uint32 pogo_monitor_limit                 = 5;
   }
+
+  message a037_fault_request {}
 
   message AlertData {
     oneof Payload {
@@ -649,7 +721,8 @@ message FxrAlert {
       a033_FanHwPwrSupplyFail            a033 = 33;
       a034_temp_sensor_comms_irrational  a034 = 34;
       a035_enumeration_change            a035 = 35;
-      a036_multiple_pogo_pin_irrational  a036 = 36;
+      a036_pogo_monitor_fault            a036 = 36;
+      a037_fault_request                 a037 = 37;
     }
   }
 
@@ -666,12 +739,13 @@ message DcacAlertMatrices {
 
 message TauxAlert {
   enum AlertId {
-    TAUX_NONE                       = 0;
-    TAUX_a001_SwAppBoot             = 1;
-    TAUX_a002_DcacAlert             = 2;
-    TAUX_a003_NoPowerCapacity       = 3;
-    TAUX_a004_PowerCapacityDecrease = 4;
-    TAUX_a005_PowerOverload         = 5;
+    TAUX_NONE                           = 0;
+    TAUX_a001_SwAppBoot                 = 1;
+    TAUX_a002_DcacAlert                 = 2;
+    TAUX_a003_NoPowerCapacity           = 3;
+    TAUX_a004_PowerCapacityDecrease     = 4;
+    TAUX_a005_PowerOverload             = 5;
+    TAUX_a006_PowertrayOverTemperature  = 6;
   }
 
   message a001_SwAppBoot {}
@@ -702,13 +776,22 @@ message TauxAlert {
     int32 power_capacity_w  = 2;
   }
 
+  message  a006_PowertrayOverTemperature {
+    uint32 pt_index             = 1;
+    uint32 dcac_index           = 2;
+    string subpackage_sn        = 3;
+    float  PINV_HeatsinkTemp    = 4; // degC
+    float  POD_DCDCHeatsinkTemp = 5; // degC
+  }
+
   message AlertData {
     oneof Payload {
-      a001_SwAppBoot             a001 = 1;
-      a002_DcacAlert             a002 = 2;
-      a003_NoPowerCapacity       a003 = 3;
-      a004_PowerCapacityDecrease a004 = 4;
-      a005_PowerOverload         a005 = 5;
+      a001_SwAppBoot                a001 = 1;
+      a002_DcacAlert                a002 = 2;
+      a003_NoPowerCapacity          a003 = 3;
+      a004_PowerCapacityDecrease    a004 = 4;
+      a005_PowerOverload            a005 = 5;
+      a006_PowertrayOverTemperature a006 = 6;
     }
   }
 

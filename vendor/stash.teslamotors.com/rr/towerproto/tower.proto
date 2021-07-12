@@ -60,13 +60,13 @@ message FxrSensors {
 }
 
 message TaskStats {
-  float stack_usage_pct = 1; // percent stack usage
+  uint32 stack_usage_pct = 1; // percent stack usage
 }
 
 message QueueStats {
-  float usage_pct          = 1;
-  float peak_usage_pct     = 2;
-  float peak_10s_usage_pct = 3;
+  uint32 usage_pct          = 1;
+  uint32 peak_usage_pct     = 2;
+  uint32 peak_10s_usage_pct = 3;
 }
 
 message FxrInternal {
@@ -87,19 +87,19 @@ message FxrInternal {
   TaskStats task_file_system    = 33;
   TaskStats task_rtos_idle      = 34;
 
-  QueueStats queue_proto_rx_op    = 50;
-  QueueStats queue_proto_rx_diag  = 51;
-  QueueStats queue_alert_rx_stib0 = 52;
-  QueueStats queue_alert_rx_stib1 = 53;
-  QueueStats queue_alert_rx_stib2 = 54;
-  QueueStats queue_alert_rx_stib3 = 55;
-  QueueStats queue_alert_rx_fib   = 56;
-  QueueStats queue_alert_tx       = 57;
-  QueueStats queue_tower_can_tx   = 58;
-  QueueStats queue_tower_can_rx   = 59;
-  QueueStats queue_fixture_can_tx = 60;
-  QueueStats queue_fixture_can_rx = 61;
-  QueueStats queue_uds_rx         = 62;
+  // QueueStats queue_proto_rx_op    = 50;
+  // QueueStats queue_proto_rx_diag  = 51;
+  // QueueStats queue_alert_rx_stib0 = 52;
+  // QueueStats queue_alert_rx_stib1 = 53;
+  // QueueStats queue_alert_rx_stib2 = 54;
+  // QueueStats queue_alert_rx_stib3 = 55;
+  // QueueStats queue_alert_rx_fib   = 56;
+  // QueueStats queue_alert_tx       = 57;
+  // QueueStats queue_tower_can_tx   = 58;
+  // QueueStats queue_tower_can_rx   = 59;
+  // QueueStats queue_fixture_can_tx = 60;
+  // QueueStats queue_fixture_can_rx = 61;
+  // QueueStats queue_uds_rx         = 62;
 }
 
 message FxrOutputs {
@@ -211,6 +211,7 @@ message CibSensors {
   float  v_ref_2        = 3; // Vref2 3V internal reference voltage in LION chip
   float  v_rail_5v      = 4;
   string serial         = 5; // 6-byte serial converted to ascii
+  float  ambient_temp   = 6;
 }
 
 message StibOutputs {
@@ -249,6 +250,7 @@ message CellMeasurement {
   float temperature_estimate = 5;
   float pogo_resistance      = 6;
   float step_time_counter_s  = 7;
+  float voltage_10s          = 8;
 }
 
 message Cell {

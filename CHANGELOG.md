@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.1.2] - 2021-07-12
+### Changed
+- Update to latest towerproto with new form_requests for completing or faulting a recipe.
+
 ## [v2.1.1] - 2021-04-22
 ### Changed
 - Convert step_ordering field to bytes to reduce transmit size to FXR.

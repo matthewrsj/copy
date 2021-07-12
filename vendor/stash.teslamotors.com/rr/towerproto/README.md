@@ -27,5 +27,6 @@ When contributing please take the following steps to make the update usable by b
 
 - Generate the go code for software (TODO: make this part of the build)
   `protoc --go_out=. tower.proto alerts.proto # must have protoc-gen-go installed`
+  -  To run this command from a firmware development machine (i.e., ci-dev machines), prepend `./run-dev.py` to the command. The full command should look something like `./run-dev.py protoc --go_out=. tower.proto alerts.proto`.
   -  To use protoc downloaded from firmware build you can do: `~/opt/build_tools/protoc-3.11.2-linux-x86_64/bin/protoc --proto_path=. --go_out=. tower.proto alerts.proto enums.proto`
 - Bump the semver git tag following www.semver.org standards

@@ -16,6 +16,9 @@ enum FixtureControlSmState {
   FXR_ST_SEQ_COMPLETE     = 9;
   FXR_ST_SEQ_INTERRUPTED  = 10;
   FXR_ST_FAULTED          = 11;
+  FXR_ST_SEQ_PAUSED       = 12;
+  FXR_ST_UPDATING         = 13;
+  FXR_ST_CLOSED_WAIT      = 14;
 }
 
 enum FixtureStatus {
@@ -90,6 +93,8 @@ enum FormRequest {
   FORM_REQUEST_FAULT_RESET         = 4;
   FORM_REQUEST_PAUSE               = 5;
   FORM_REQUEST_RESUME              = 6;
+  FORM_REQUEST_COMPLETE            = 7; // Complete the active recipe
+  FORM_REQUEST_FAULT               = 8; // Fault the fixture
 }
 
 enum IsolationTestRequest {
@@ -150,7 +155,8 @@ enum StibDCDCState {
   STIB_DCDC_STATE_PRECHARGE                = 6;
   STIB_DCDC_STATE_AUTO_ZERO                = 7;
   STIB_DCDC_STATE_FAULT                    = 8;
-  STIB_DCDC_INTERNAL_SLOSH                 = 9;
+  STIB_DCDC_STATE_INTERNAL_SLOSH           = 9;
+  STIB_DCDC_STATE_VOLTAGE_CONTROL          = 10;
 }
 
 enum StibFormState {
@@ -219,12 +225,11 @@ enum TauxStatus {
 enum ParamLimitType {
   PARAM_LIMIT_TYPE_UNKNOWN_UNSPECIFIED = 0;
   PARAM_LIMIT_TYPE_VOLTAGE             = 1;
-  PARAM_LIMIT_TYPE_CURRENT             = 2;
-  PARAM_LIMIT_TYPE_TEMPERATURE         = 3;
-  PARAM_LIMIT_TYPE_TIME                = 4;
-  PARAM_LIMIT_TYPE_CAPACITY            = 5;
-  PARAM_LIMIT_TYPE_DVDT                = 6;
-  PARAM_LIMIT_TYPE_DVDQ                = 7;
+  PARAM_LIMIT_TYPE_TEMPERATURE         = 2;
+  PARAM_LIMIT_TYPE_TIME                = 3;
+  PARAM_LIMIT_TYPE_CAPACITY            = 4;
+  PARAM_LIMIT_TYPE_DVDT                = 5;
+  PARAM_LIMIT_TYPE_DVDQ                = 6;
 }
 
 enum ParamLimitActive {

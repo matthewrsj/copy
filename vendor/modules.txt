@@ -214,6 +214,6 @@ stash.teslamotors.com/rr/cdcontroller
 # stash.teslamotors.com/rr/protostream v1.1.6
 ## explicit
 stash.teslamotors.com/rr/protostream
-# stash.teslamotors.com/rr/towerproto v0.8.1
+# stash.teslamotors.com/rr/towerproto v0.9.0
 ## explicit
 stash.teslamotors.com/rr/towerproto
