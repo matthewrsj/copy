@@ -3,3 +3,4 @@ FxrAlert.a018_fixture_control_sm_timeout.stib_form_state max_count:4
 FxrAlert.a018_fixture_control_sm_timeout.stib_dcdc_state max_count:4
 FxrAlert.a029_RecipeMaskMissingCelldetected.MissingCellPosition max_count:5
 TauxAlert.a002_DcacAlert.subpackage_sn max_size:14
+TauxAlert.a006_PowertrayOverTemperature.subpackage_sn max_size:14

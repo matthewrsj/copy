@@ -402,6 +402,7 @@ message Dcac {
   bool              hw_enable_line                = 18; // PINV_HardwareEnableLine
   DcacAlertMatrices dcac_alert_matrices           = 19;
   string            subpackage_sn                 = 20;
+  float             pod_heatsink_temp             = 21; // POD_DCDCHeatsinkTemp
 }
 
 message Powertray {

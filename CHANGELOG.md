@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.1.3] - 2021-08-26
+### Changed
+- Reduce number of retries for faulted fixtures to one (from three) to reduce bad-recipe fallout.
+- Update to latest towerproto (0.9.2)
+
 ## [v2.1.2] - 2021-07-12
 ### Changed
 - Update to latest towerproto with new form_requests for completing or faulting a recipe.

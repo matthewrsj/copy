@@ -240,13 +240,15 @@ message StibAlert {
   }
 
   message a045_CIB_NegVoltageProtection {
-    uint32 node_index                       = 1;
-    float  node_voltage                     = 2; // V
-    float  pogo_voltage                     = 3; // V
-    float  current                          = 4; // A
-    uint32 switches                         = 5;
-    uint32 pogo_resistance_saturation_count = 6;
-    uint32 discharge_step                   = 7;
+    uint32 node_index                = 1;
+    float  node_voltage              = 2; // V
+    float  pogo_voltage              = 3; // V
+    float  current                   = 4; // A
+    uint32 switches                  = 5;
+    bool   cell_switch_active        = 6; // is cell switching active
+    uint32 cell_switch_timer         = 7; // if cell switching active, time (ms) since since cell switching started
+    uint32 cell_switch               = 8; // recently completed cell switch mask
+    uint32 cell_switch_timer_latched = 9; // recently recorded time (ms) to complete switching (above cell mask)
   }
 
   message a036_CellTempTooHigh {
@@ -739,13 +741,13 @@ message DcacAlertMatrices {
 
 message TauxAlert {
   enum AlertId {
-    TAUX_NONE                           = 0;
-    TAUX_a001_SwAppBoot                 = 1;
-    TAUX_a002_DcacAlert                 = 2;
-    TAUX_a003_NoPowerCapacity           = 3;
-    TAUX_a004_PowerCapacityDecrease     = 4;
-    TAUX_a005_PowerOverload             = 5;
-    TAUX_a006_PowertrayOverTemperature  = 6;
+    TAUX_NONE                          = 0;
+    TAUX_a001_SwAppBoot                = 1;
+    TAUX_a002_DcacAlert                = 2;
+    TAUX_a003_NoPowerCapacity          = 3;
+    TAUX_a004_PowerCapacityDecrease    = 4;
+    TAUX_a005_PowerOverload            = 5;
+    TAUX_a006_PowertrayOverTemperature = 6;
   }
 
   message a001_SwAppBoot {}
@@ -776,7 +778,7 @@ message TauxAlert {
     int32 power_capacity_w  = 2;
   }
 
-  message  a006_PowertrayOverTemperature {
+  message a006_PowertrayOverTemperature {
     uint32 pt_index             = 1;
     uint32 dcac_index           = 2;
     string subpackage_sn        = 3;
