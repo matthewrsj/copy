@@ -81,9 +81,5 @@ func sendEquipmentRequest(publisher *protostream.Socket, equipRequest tower.Equi
 		EquipmentRequest: equipRequest,
 	}
 
-	if err := sendProtoMessage(publisher, &sendMsg, fixtureName); err != nil {
-		return err
-	}
-
-	return nil
+	return sendProtoMessage(publisher, &sendMsg, fixtureName)
 }

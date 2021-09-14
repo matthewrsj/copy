@@ -1,0 +1,11 @@
+FROM golang:stretch
+
+WORKDIR /go/src/app
+COPY . .
+
+RUN cd server/cmd && go build -mod vendor -o tabitha . && cd ../../
+RUN chmod +x server/cmd/tabitha
+
+EXPOSE 8080
+
+CMD cd server/cmd && ./tabitha

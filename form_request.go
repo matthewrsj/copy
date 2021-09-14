@@ -84,9 +84,5 @@ func sendFormRequest(publisher *protostream.Socket, formReq tower.FormRequest, f
 		},
 	}
 
-	if err := sendProtoMessage(publisher, &sendMsg, fixtureName); err != nil {
-		return err
-	}
-
-	return nil
+	return sendProtoMessage(publisher, &sendMsg, fixtureName)
 }

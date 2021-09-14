@@ -1,0 +1,18 @@
+FROM node:12.18.3
+WORKDIR /app
+
+ARG TESTER_URL=http://localhost
+RUN echo "using tester url: $TESTER_URL"
+
+RUN npm install -g react-app-rewired
+
+COPY . .
+
+RUN cd ui && npm config set registry https://artifactory.teslamotors.com/artifactory/api/npm/digital-products-node/ && npm install --production && cd ..
+
+RUN echo "REACT_APP_TESTER_URL=$TESTER_URL\nREACT_APP_IS_PROD=true" > ui/.env
+
+EXPOSE 80
+
+ENV GENERATE_SOURCEMAP=false
+CMD set NODE_OPTIONS="--max-old-space-size=8192" && cd ui && npm start

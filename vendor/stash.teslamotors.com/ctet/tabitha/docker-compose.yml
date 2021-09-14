@@ -1,0 +1,35 @@
+version: '3.0'
+
+services:
+  server:
+    image: artifactory.teslamotors.com:2132/tabitha-docker-local/server
+    build:
+      context: .
+      dockerfile: Dockerfile_server
+    ports:
+      - 8080:8080
+    volumes:
+      - /var/log/tabitha-server:/go/src/app/cmd/logs/tabitha-server
+      - /etc/tabitha-server.d:/etc/tabitha-server.d
+  example:
+    image: artifactory.teslamotors.com:2132/tabitha-docker-local/example
+    build:
+      context: .
+      dockerfile: Dockerfile_example
+    ports:
+      - 49000:49000
+    volumes:
+      - /var/log/tabitha-example:/go/src/app/cmd/logs/tabitha-example
+      - /etc/tabitha-example.d:/etc/tabitha-example.d
+  ui:
+    image: artifactory.teslamotors.com:2132/tabitha-docker-local/ui
+    build:
+      context: .
+      dockerfile: Dockerfile_ui
+      args:
+        TESTER_URL: http://localhost
+    ports:
+      - 80:3000
+    volumes:
+      - /var/log/tabitha-ui:/node/src/app/cmd/logs/tabitha-ui
+      - /etc/tabitha-ui.d:/etc/tabitha-ui.d

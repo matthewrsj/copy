@@ -1,4 +1,5 @@
-//+build !test
+//go:build !test
+// +build !test
 
 // main runs the tower controller application.
 package main
@@ -7,11 +8,13 @@ import (
 	"context"
 	"crypto/tls"
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -22,6 +25,7 @@ import (
 	"stash.teslamotors.com/ctet/api/canary"
 	"stash.teslamotors.com/ctet/api/meter"
 	"stash.teslamotors.com/ctet/statemachine/v2"
+	"stash.teslamotors.com/ctet/tabitha"
 	"stash.teslamotors.com/rr/cdcontroller"
 	"stash.teslamotors.com/rr/protostream"
 	"stash.teslamotors.com/rr/towercontroller"
@@ -38,7 +42,14 @@ const (
 // build variables for govvv
 // nolint:golint // don't need its own declaration when it's all just being used by a build tool
 // in other words... DON'T CHANGE
-var GitCommit, GitBranch, GitState, GitSummary, BuildDate, Version string
+var (
+	GitCommit  string
+	GitBranch  string
+	GitState   string
+	GitSummary string
+	BuildDate  string
+	Version    string
+)
 
 // nolint:funlen // main func
 func main() {
@@ -81,6 +92,22 @@ func main() {
 	registry := make(map[string]*towercontroller.FixtureInfo)
 
 	ctx, cancel := context.WithCancel(context.Background())
+
+	// tabitha
+	if len(conf.AllFixtures) == 0 {
+		log.Fatal("configuration must contain non-empty all_fixtures field")
+	}
+
+	tcName := fmt.Sprintf("%s-TC", strings.Split(conf.AllFixtures[0], "-")[0])
+	tcID := fmt.Sprintf("%s-%s%s-%s", conf.Loc.Line, conf.Loc.Process, conf.Loc.Aisle, tcName)
+
+	go tabitha.ServeNewHandler(
+		tabitha.WithContext(ctx),
+		tabitha.WithTesterName(tcID),
+		tabitha.WithTesterVersion(Version),
+		tabitha.WithTesterGitSummary(GitSummary),
+		tabitha.WithLocalConfiguration(*configFile, tabitha.ConfigTypeYAML, &conf),
+	)
 
 	for _, name := range conf.AllFixtures {
 		registry[name] = &towercontroller.FixtureInfo{
@@ -241,4 +268,5 @@ func main() {
 	// block until a signal is received
 	<-sigs // deferred server shutdowns will be called
 	cancel()
+	time.Sleep(time.Second) // allow context to shut everything down
 }

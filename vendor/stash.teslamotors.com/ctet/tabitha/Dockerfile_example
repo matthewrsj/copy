@@ -1,0 +1,12 @@
+FROM golang:stretch
+
+WORKDIR /go/src/app
+COPY . .
+
+RUN go get github.com/ahmetb/govvv && go mod vendor && cd examples/simple && govvv build . && cd ../../
+
+RUN chmod +x examples/simple/simple
+
+EXPOSE 49000
+
+CMD cd examples/simple && ./simple

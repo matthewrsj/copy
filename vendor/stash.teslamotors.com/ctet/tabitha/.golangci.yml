@@ -6,6 +6,8 @@ linters-settings:
   govet:
     check-shadowing: true
     settings:
+  golint:
+    min-confidence: 1
   gocyclo:
     min-complexity: 20
   gocognit:
@@ -62,15 +64,16 @@ linters:
     - gocyclo
     - gofmt
     - goimports
-    - revive
+    - golint
     - gosimple
     - govet
     - lll
     - ineffassign
+    - interfacer
     - megacheck
     - misspell
     - nakedret
-    - exportloopref
+    - scopelint
     - staticcheck
     - structcheck
     - stylecheck
@@ -80,6 +83,7 @@ linters:
     - unused
     - varcheck
     - whitespace
+    - maligned
     - prealloc
     - wsl
 
@@ -116,3 +120,4 @@ issues:
     - path: _test\.go
       linters:
         - lll # Don't whine about long lines in tests, some testdata is long
+        - scopelint # we use test tables like real humans
