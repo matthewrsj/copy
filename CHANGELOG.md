@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.2.0] - 2021-09-14
+### Added
+- Added tabitha client for remote configuration management.
+
 ## [v2.1.3] - 2021-08-26
 ### Changed
 - Reduce number of retries for faulted fixtures to one (from three) to reduce bad-recipe fallout.
