@@ -94,8 +94,8 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	// tabitha
-	if len(conf.AllFixtures) == 0 {
-		log.Fatal("configuration must contain non-empty all_fixtures field")
+	if len(conf.AllFixtures) == 0 || len(conf.AllowedFixtures) == 0 {
+		log.Fatal("configuration must contain non-empty all_fixtures and allowed_fixtures fields")
 	}
 
 	tcName := fmt.Sprintf("%s-TC", strings.Split(conf.AllFixtures[0], "-")[0])
@@ -150,6 +150,10 @@ func main() {
 		},
 		backoff.NewConstantBackOff(time.Second*5),
 	)
+
+	// turn on isolation test on one fixture, make sure it is off on all the rest so the algorithm works
+	// due to len check above conf.AllowedFixture[0] is always present.
+	go towercontroller.TurnOnIsolationTest(ctx, sugar, registry, publisher, conf.AllowedFixtures, conf.AllFixtures)
 
 	versions := canary.Versions{
 		GitCommit:  GitCommit,
