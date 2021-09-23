@@ -226,7 +226,7 @@ network:
       - 10.179.205.95/24
       gateway4: 10.179.205.1
       match:
-        macaddress: 54:B2:03:91:26:6A
+        macaddress: 54:B2:03:91:15:DE
       nameservers:
         addresses:
         - 10.178.8.53
@@ -473,7 +473,7 @@ network:
       - 10.179.205.118/24
       gateway4: 10.179.205.1
       match:
-        macaddress: 54:B2:03:91:15:DE
+        macaddress: 54:B2:03:91:26:6A
       nameservers:
         addresses:
         - 10.178.8.53
