@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.3.0] - 2021-10-19
+### Added
+- Added new feature to command isolation test on one and only one fixture at a time.
+
 ## [v2.2.0] - 2021-09-14
 ### Added
 - Added tabitha client for remote configuration management.
