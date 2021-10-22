@@ -38,9 +38,12 @@ func (f file) copyTo(dst string, linkOrCopy bool) error {
 	}
 
 	if linkOrCopy {
-		if err = os.Link(f.path, dst); err != nil {
+		// linkOrCopy is set, which means attempt a link first
+		if err = os.Link(f.path, dst); err == nil {
+			// successfully linked, return from function
 			return nil
 		}
+		// link failed, continue to copy
 	}
 
 	// create dst file for write
