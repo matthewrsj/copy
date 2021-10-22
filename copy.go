@@ -31,7 +31,7 @@ func newObject(path string) (copyObject, error) {
 	case fi.Mode().IsRegular():
 		return newFile(path, fi), nil
 	default:
-		return nil, fmt.Errorf("unsupported file type %s", fi.Mode().Type().String())
+		return nil, fmt.Errorf("unsupported file type %s", fi.Mode().String())
 	}
 }
 
