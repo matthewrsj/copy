@@ -6,8 +6,6 @@ linters-settings:
   govet:
     check-shadowing: true
     settings:
-  golint:
-    min-confidence: 1
   gocyclo:
     min-complexity: 20
   gocognit:
@@ -64,16 +62,15 @@ linters:
     - gocyclo
     - gofmt
     - goimports
-    - golint
+    - revive
     - gosimple
     - govet
     - lll
     - ineffassign
-    - interfacer
     - megacheck
     - misspell
     - nakedret
-    - scopelint
+    - exportloopref
     - staticcheck
     - structcheck
     - stylecheck
@@ -83,7 +80,6 @@ linters:
     - unused
     - varcheck
     - whitespace
-    - maligned
     - prealloc
     - wsl
 
