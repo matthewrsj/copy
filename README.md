@@ -1,5 +1,3 @@
-[![Build Status](https://travis-ci.org/matthewrsj/copy.svg?branch=master)](https://travis-ci.org/matthewrsj/copy)
-
 # copy
 
 copy is a go package that allows one to recursively copy files, directories, or
