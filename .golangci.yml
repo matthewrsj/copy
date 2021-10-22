@@ -62,7 +62,6 @@ linters:
     - gocyclo
     - gofmt
     - goimports
-    - revive
     - gosimple
     - govet
     - lll

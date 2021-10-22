@@ -1,5 +1,7 @@
 # copy
 
+[![CircleCI](https://circleci.com/gh/matthewrsj/copy/tree/master.svg?style=svg)](https://circleci.com/gh/matthewrsj/copy/tree/master)
+
 copy is a go package that allows one to recursively copy files, directories, or
 links. It also allows the user to attempt a hardlink before falling back to an
 expensive recursive copy if the link fails. A link is much faster than a
