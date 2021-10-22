@@ -42,8 +42,7 @@ func (f file) copyTo(dst string, linkOrCopy bool) error {
 		if err = os.Link(f.path, dst); err == nil {
 			// successfully linked, return from function
 			return nil
-		}
-		// link failed, continue to copy
+		} // link failed, continue to copy
 	}
 
 	// create dst file for write
@@ -70,7 +69,7 @@ func (f file) copyTo(dst string, linkOrCopy bool) error {
 	// copy contents
 	_, err = io.Copy(df, sf)
 
-	return errors.Wrapf(err, "Copy(%s,%s)", df, sf)
+	return errors.Wrapf(err, "Copy(%s,%s)", df.Name(), sf.Name())
 }
 
 func (f file) String() string {
