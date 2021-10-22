@@ -3,8 +3,10 @@
 package copy
 
 import (
-	"errors"
+	"fmt"
 	"os"
+
+	"github.com/pkg/errors"
 )
 
 // interface for copying files, directories, or links
@@ -18,7 +20,7 @@ type copyObject interface {
 func newObject(path string) (copyObject, error) {
 	fi, err := os.Lstat(path)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "Lstat(%s)", path)
 	}
 
 	switch {
@@ -29,7 +31,7 @@ func newObject(path string) (copyObject, error) {
 	case fi.Mode().IsRegular():
 		return newFile(path, fi), nil
 	default:
-		return nil, errors.New("unsupported file type")
+		return nil, fmt.Errorf("unsupported file type %s", fi.Mode().Type().String())
 	}
 }
 
@@ -37,10 +39,14 @@ func newObject(path string) (copyObject, error) {
 func All(src, dst string) error {
 	obj, err := newObject(src)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "newObject(%s)", src)
 	}
 
-	return obj.copyTo(dst, false)
+	if err = obj.copyTo(dst, false); err != nil {
+		return errors.Wrapf(err, "copyTo(%s,%t)", dst, false)
+	}
+
+	return nil
 }
 
 // LinkOrCopy first attempts to hardlink src to dst and falls back
@@ -50,10 +56,14 @@ func All(src, dst string) error {
 func LinkOrCopy(src, dst string) error {
 	obj, err := newObject(src)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "newObject(%s)", src)
 	}
 
-	return obj.copyTo(dst, true)
+	if err = obj.copyTo(dst, true); err != nil {
+		return errors.Wrapf(err, "copyTo(%s,%t)", dst, true)
+	}
+
+	return nil
 }
 
 // internal function to throw away file close errors in deferred

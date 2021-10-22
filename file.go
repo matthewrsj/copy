@@ -4,6 +4,8 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+
+	"github.com/pkg/errors"
 )
 
 type file struct {
@@ -20,7 +22,7 @@ func newFile(path string, fi os.FileInfo) file {
 func (f file) copyTo(dst string, linkOrCopy bool) error {
 	// make any parent directories. Assume os.ModePerm
 	if err := os.MkdirAll(filepath.Dir(dst), os.ModePerm); err != nil {
-		return err
+		return errors.Wrapf(err, "MkdirAll(%s,%s)", filepath.Dir(dst), os.ModePerm.String())
 	}
 
 	// If the file already exists, check to see if its the same file.  If not, remove it.
@@ -32,7 +34,7 @@ func (f file) copyTo(dst string, linkOrCopy bool) error {
 	}
 
 	if err = os.Remove(dst); err != nil && !os.IsNotExist(err) {
-		return err
+		return errors.Wrapf(err, "Remove(%s)", dst)
 	}
 
 	if linkOrCopy {
@@ -44,20 +46,20 @@ func (f file) copyTo(dst string, linkOrCopy bool) error {
 	// create dst file for write
 	df, err := os.Create(dst)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "Create(%s)", dst)
 	}
 
 	defer closeFile(df)
 
 	// change dst file to have src mode
 	if err = os.Chmod(df.Name(), f.info.Mode()); err != nil {
-		return err
+		return errors.Wrapf(err, "Chmod(%s,%s)", df.Name(), f.info.Mode().String())
 	}
 
 	// open source file for read
 	sf, err := os.Open(f.path)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "Open(%s)", f.path)
 	}
 
 	defer closeFile(sf)
@@ -65,7 +67,7 @@ func (f file) copyTo(dst string, linkOrCopy bool) error {
 	// copy contents
 	_, err = io.Copy(df, sf)
 
-	return err
+	return errors.Wrapf(err, "Copy(%s,%s)", df, sf)
 }
 
 func (f file) String() string {
