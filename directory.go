@@ -4,6 +4,8 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	"github.com/pkg/errors"
 )
 
 type directory struct {
@@ -18,19 +20,19 @@ func newDirectory(path string, fi os.FileInfo) directory {
 func (d directory) copyTo(dst string, linkOrCopy bool) error {
 	// create new directory with source mode
 	if err := os.MkdirAll(dst, d.info.Mode()); err != nil {
-		return err
+		return errors.Wrapf(err, "MkdirAll(%s,%s)", dst, d.info.Mode().String())
 	}
 
 	// get all children
 	children, err := ioutil.ReadDir(d.path)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "ReadDir(%s)", d.path)
 	}
 
 	// Make sure we *can* copy the children if any
 	if len(children) > 0 && d.info.Mode()&0200 == 0 {
 		if err := os.Chmod(dst, d.info.Mode()|0200); err != nil {
-			return err
+			return errors.Wrapf(err, "Chmod(%s,%s)", dst, d.info.Mode()|0200)
 		}
 	}
 
@@ -41,18 +43,18 @@ func (d directory) copyTo(dst string, linkOrCopy bool) error {
 
 		obj, err := newObject(childSrc)
 		if err != nil {
-			return err
+			return errors.Wrapf(err, "newObject(%s)", childSrc)
 		}
 
 		if err = obj.copyTo(childDst, linkOrCopy); err != nil {
-			return err
+			return errors.Wrapf(err, "copyTo(%s,%t)", childDst, linkOrCopy)
 		}
 	}
 
 	// Restore the directories modes if we made it writeable
 	if len(children) > 0 && d.info.Mode()&0200 == 0 {
 		if err := os.Chmod(dst, d.info.Mode()); err != nil {
-			return err
+			return errors.Wrapf(err, "Chmod(%s,%s)", dst, d.info.Mode())
 		}
 	}
 
