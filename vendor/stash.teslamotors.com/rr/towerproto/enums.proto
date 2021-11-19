@@ -19,6 +19,7 @@ enum FixtureControlSmState {
   FXR_ST_SEQ_PAUSED       = 12;
   FXR_ST_UPDATING         = 13;
   FXR_ST_CLOSED_WAIT      = 14;
+  FXR_ST_FAULTED_OPEN_REQ = 15;
 }
 
 enum FixtureStatus {
@@ -175,6 +176,7 @@ enum StibFormState {
   STIB_FORM_STATE_FAULT_COOL               = 12;
   STIB_FORM_STATE_PRE_CHECK                = 13;
   STIB_FORM_STATE_POST_CHECK               = 14;
+  STIB_FORM_STATE_POWER_SUPPLY             = 15;
 }
 
 enum CellStatus {
@@ -186,8 +188,9 @@ enum CellStatus {
   CELL_STATUS_FAILED_SAFETY_LIMIT        = 5; // failure at cell level
   CELL_STATUS_FAILED_POGO_PIN_IRRATIONAL = 6;
   CELL_STATUS_COMPLETE_WARNING           = 7;
-  CELL_STATUS_FAILED_SAFETY_LEVEL2       = 8; // failure at tray level
-  CELL_STATUS_FAILED_SAFETY_LEVEL3       = 9; // failure at fire? level : TODO: check what this is??
+  CELL_STATUS_FAILED_SAFETY_LEVEL2       = 8;  // failure at tray level
+  CELL_STATUS_FAILED_SAFETY_LEVEL3       = 9;  // failure at fire? level : TODO: check what this is??
+  CELL_STATUS_IN_PROCESS_WARNING         = 10; // cell is still in process, but warning present
 }
 
 enum CellDetectStatus {

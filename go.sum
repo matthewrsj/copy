@@ -510,3 +510,5 @@ stash.teslamotors.com/rr/protostream v1.1.6/go.mod h1:xkaUTFWrUQJtJ7ZrFfYyivYrMp
 stash.teslamotors.com/rr/towerproto v0.8.0/go.mod h1:FDbAtKBEKCStkYKJSOamESQ6NjyN7zmV9HAqydiJQs4=
 stash.teslamotors.com/rr/towerproto v0.9.2 h1:Zv0Ni9wb7mDQhkC8yJ0H5My9k9HEEhnu6o/CajHF5wg=
 stash.teslamotors.com/rr/towerproto v0.9.2/go.mod h1:XUVezHUx0QcOjAr/eWndy2E5uTS3J5AceKkrE1+YsdI=
+stash.teslamotors.com/rr/towerproto v0.9.4 h1:Pdj6fszyraP/Gl+tbXdUO146/dL9Hb6+NCUk4uFnCVo=
+stash.teslamotors.com/rr/towerproto v0.9.4/go.mod h1:XUVezHUx0QcOjAr/eWndy2E5uTS3J5AceKkrE1+YsdI=

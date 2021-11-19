@@ -15,7 +15,7 @@ message StibAlert {
     STIB_a005_CANBusReset                     = 5;
     STIB_a006_STIBrx_MIA                      = 6;
     STIB_a007_TaskStackOverrun                = 7;
-    STIB_a008_unused                          = 8;
+    STIB_a008_Reserved                        = 8;
     STIB_a009_PS24V                           = 9;
     STIB_a010_EnumerationWriteFail            = 10;
     STIB_a011_CurrentSensorHwOC               = 11;
@@ -46,8 +46,8 @@ message StibAlert {
     STIB_a036_CellTempTooHigh                 = 36;
     STIB_a037_FormationTimeout                = 37;
     STIB_a038_FormationCheckFailed            = 38;
-    STIB_a039_unused                          = 39;
-    STIB_a040_unused                          = 40;
+    STIB_a039_ConvFault                       = 39;
+    STIB_a040_PSModeUnsupported               = 40;
     STIB_a041_CIBDataInvalid                  = 41;
     STIB_a042_Reserved                        = 42;
     STIB_a043_CIBNotConnected                 = 43;
@@ -63,6 +63,11 @@ message StibAlert {
     STIB_a053_ParamLimitTempCheckFailed       = 53;
     STIB_a054_ParamLimitCapacityCheckFailed   = 54;
   }
+  message a001_SwAppBoot {}
+
+  message a002_HalError {}
+
+  message a003_WatchDog {}
 
   message a004_CpuOverRun {
     float ISR_time_max        = 1; // us
@@ -71,6 +76,10 @@ message StibAlert {
     float f_100Hz_time_max    = 4; // us
     float f_1kHz_pri_time_max = 5; // us
   }
+
+  message a005_CANBusReset {}
+
+  message a006_STIBrx_MIA {}
 
   message a007_TaskStackOverrun {
     bool Task_Proto_Stack_Overrun    = 1;
@@ -82,6 +91,8 @@ message StibAlert {
     bool Task_100Hz_Stack_Overrun    = 7;
     bool Task_1kHz_Pri_Stack_Overrun = 8;
   }
+
+  message a008_Reserved {}
 
   message a009_PS24V {
     float stib_ps_24v     = 1; // V
@@ -162,11 +173,24 @@ message StibAlert {
     bool  tphase_2_ovr = 4;
   }
 
-  message a020_VoltageMatchingTimeout {
-    float  string_voltage = 1; // V
-    float  voltage_target = 2; // V
-    uint32 cell_state_req = 3;
+  message a019_ShuntTempTooHigh {
+    float tshunt = 1; // degC
   }
+
+  message a020_VoltageMatchingTimeout {
+    float  string_voltage         = 1; // V
+    float  voltage_target         = 2; // V
+    uint32 cell_state_req         = 3;
+    bool   cib_sw_write_fail      = 4;
+    bool   cib_not_enabled        = 5;
+    bool   cib_sw_disable_latched = 6;
+  }
+
+  message a021_LossOfCurrentControl {}
+
+  message a022_SensorOffsetTooHigh {}
+
+  message a023_EnableLineLost {}
 
   message a024_irefCorrectionIrrational {
     float cib_iout  = 1; // A
@@ -222,6 +246,8 @@ message StibAlert {
     uint32 cell_index   = 1;
     float  cell_voltage = 2; // V
   }
+
+  message a033_CellDvDT {}
 
   message a034_PogoVIrrational {
     uint32 cell_index   = 1;
@@ -281,7 +307,20 @@ message StibAlert {
     }
     StibFormState stib_form_state = 1;
     AlertReason   alert_reason    = 2;
+    uint32        active_cells    = 3;
+    float         charge_current  = 4;
+    bool          dcr_cmd_valid   = 5;
+    bool          cc_cmd_valid    = 6;
+    bool          cv_cmd_valid    = 7;
+    bool          cp_cmd_valid    = 8;
   }
+
+  message a039_ConvFault {
+    uint32        conv_faulting_alert_id = 1;
+    StibDCDCState conv_faulting_state    = 2;
+  }
+
+  message a040_PSModeUnsupported {}
 
   message a041_CIBDataInvalid {
     bool  REFONoff                = 1;
@@ -302,6 +341,10 @@ message StibAlert {
     bool  vd_invalid              = 16;
     float vd                      = 17; // V
   }
+
+  message a042_Reserved {}
+
+  message a043_CIBNotConnected {}
 
   message a044_CIBCellSwitchWriteFail {
     uint32 cell_switch_data    = 1;
@@ -342,6 +385,9 @@ message StibAlert {
     ParamLimitActive limit_active = 3;
     float            value        = 4;
     CellStatus       status       = 5;
+    bool             upper_limit  = 6;
+    bool             lower_limit  = 7;
+    float            limit        = 8;
   }
 
   message a052_ParamLimitDvDtCheckFailed {
@@ -350,6 +396,9 @@ message StibAlert {
     ParamLimitActive limit_active = 3;
     float            value        = 4;
     CellStatus       status       = 5;
+    bool             upper_limit  = 6;
+    bool             lower_limit  = 7;
+    float            limit        = 8;
   }
 
   message a053_ParamLimitTempCheckFailed {
@@ -358,6 +407,9 @@ message StibAlert {
     ParamLimitActive limit_active     = 3;
     float            value            = 4;
     CellStatus       status           = 5;
+    bool             upper_limit      = 6;
+    bool             lower_limit      = 7;
+    float            limit            = 8;
   }
 
   message a054_ParamLimitCapacityCheckFailed {
@@ -366,51 +418,56 @@ message StibAlert {
     ParamLimitActive limit_active = 3;
     float            value        = 4;
     CellStatus       status       = 5;
+    bool             upper_limit  = 6;
+    bool             lower_limit  = 7;
+    float            limit        = 8;
   }
 
   message AlertData {
     oneof Payload {
-      aXXX_Reserved                        a003 = 3;
+      a001_SwAppBoot                       a001 = 1;
+      a002_HalError                        a002 = 2;
+      a003_WatchDog                        a003 = 3;
       a004_CpuOverRun                      a004 = 4;
-      aXXX_Reserved                        a005 = 5;
-      aXXX_Reserved                        a006 = 6;
+      a005_CANBusReset                     a005 = 5;
+      a006_STIBrx_MIA                      a006 = 6;
       a007_TaskStackOverrun                a007 = 7;
-      aXXX_Reserved                        a008 = 8;
-      aXXX_Reserved                        a009 = 9;
+      a008_Reserved                        a008 = 8;
+      a009_PS24V                           a009 = 9;
       a010_EnumerationWriteFail            a010 = 10;
-      aXXX_Reserved                        a011 = 11;
-      aXXX_Reserved                        a012 = 12;
-      aXXX_Reserved                        a013 = 13;
-      aXXX_Reserved                        a014 = 14;
-      aXXX_Reserved                        a015 = 15;
-      aXXX_Reserved                        a016 = 16;
-      aXXX_Reserved                        a017 = 17;
-      aXXX_Reserved                        a018 = 18;
-      aXXX_Reserved                        a019 = 19;
+      a011_CurrentSensorHwOC               a011 = 11;
+      a012_ComparatorHwOC                  a012 = 12;
+      a013_SwOC                            a013 = 13;
+      a014_BusUV                           a014 = 14;
+      a015_BusOV                           a015 = 15;
+      a016_StringOV                        a016 = 16;
+      a017_StringUV                        a017 = 17;
+      a018_SwitchTempTooHigh               a018 = 18;
+      a019_ShuntTempTooHigh                a019 = 19;
       a020_VoltageMatchingTimeout          a020 = 20;
-      aXXX_Reserved                        a021 = 21;
-      aXXX_Reserved                        a022 = 22;
-      aXXX_Reserved                        a023 = 23;
+      a021_LossOfCurrentControl            a021 = 21;
+      a022_SensorOffsetTooHigh             a022 = 22;
+      a023_EnableLineLost                  a023 = 23;
       a024_irefCorrectionIrrational        a024 = 24;
-      aXXX_Reserved                        a025 = 25;
-      aXXX_Reserved                        a026 = 26;
-      aXXX_Reserved                        a027 = 27;
+      a025_Rail12V                         a025 = 25;
+      a026_Rail5V                          a026 = 26;
+      a027_Rail3V3a                        a027 = 27;
       a028_AppliedCurrentIsSaturated       a028 = 28;
       a029_CellSafetyCheckFailed           a029 = 29;
       a030_CellQualityCheckFailed          a030 = 30;
       a031_CellOV                          a031 = 31;
       a032_CellUV                          a032 = 32;
-      aXXX_Reserved                        a033 = 33;
+      a033_CellDvDT                        a033 = 33;
       a034_PogoVIrrational                 a034 = 34;
       a035_CibFaulted                      a035 = 35;
       a036_CellTempTooHigh                 a036 = 36;
       a037_FormationTimeout                a037 = 37;
       a038_FormationCheckFailed            a038 = 38;
-      aXXX_Reserved                        a039 = 39;
-      aXXX_Reserved                        a040 = 40;
+      a039_ConvFault                       a039 = 39;
+      a040_PSModeUnsupported               a040 = 40;
       a041_CIBDataInvalid                  a041 = 41;
-      aXXX_Reserved                        a042 = 42;
-      aXXX_Reserved                        a043 = 43;
+      a042_Reserved                        a042 = 42;
+      a043_CIBNotConnected                 a043 = 43;
       a044_CIBCellSwitchWriteFail          a044 = 44;
       a045_CIB_NegVoltageProtection        a045 = 45;
       a046_CIB_STIB_VStringDiffCheckFail   a046 = 46;

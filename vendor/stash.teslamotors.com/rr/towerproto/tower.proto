@@ -259,6 +259,7 @@ message Cell {
   string           serial        = 3;
   string           position      = 4;
   CellDetectStatus detect_status = 5; // cells positions detected by cib
+  uint32           alert_id      = 6; // alert id for warning or fault cell status change
 }
 
 message FixtureOperational {
@@ -273,6 +274,7 @@ message FixtureOperational {
   uint32              runtime_s             = 9;  // how long current recipe has been running in seconds
   bool                calibration_ok        = 10; // CIB calibrations are correctly loaded
   TrayOrientation     orientation           = 11;
+  uint32              step_time_s           = 12; // how long the current step has been running in seconds
 }
 
 message CellDiag { float sense_loop_resistance = 1; }
@@ -382,27 +384,29 @@ message Taux {
 }
 
 message Dcac {
-  uint32            dcac_id                       = 1;
-  bool              grid_non_compliant            = 2;
-  bool              form_inactive                 = 3;
-  float             ac_power_kw                   = 4; // PINV_Pout
-  uint64            subpackage_sn_1_7             = 5;
-  uint64            subpackage_sn_8_14            = 6;
-  uint64            app_githash                   = 7;
-  float             bus_lv                        = 8;  // POD_Vbatt
-  float             bus_hv                        = 9;  // PINV_Vdc
-  float             pinv_heatsink_temp            = 10; // PINV_HeatsinkTemp
-  bool              is_pod_persistant_fault       = 11; // POD_PersistentlyFaulted
-  bool              is_pod_permanent_fault        = 12; // POD_PersistentlyFaulted
-  float             lifetime_energy_discharged_wh = 13; // PINV_LifetimeEnergyDischarged
-  float             lifetime_energy_charged_wh    = 14; // PINV_LifetimeEnergyCharged
-  float             v_thd                         = 15; // PINV_v_thd
-  float             grid_resistance               = 16; // PINV_gridResistance
-  float             cbc_events                    = 17; // PINV_cbcEvents
-  bool              hw_enable_line                = 18; // PINV_HardwareEnableLine
-  DcacAlertMatrices dcac_alert_matrices           = 19;
-  string            subpackage_sn                 = 20;
-  float             pod_heatsink_temp             = 21; // POD_DCDCHeatsinkTemp
+  uint32            dcac_id                           = 1;
+  bool              grid_non_compliant                = 2;
+  bool              form_inactive                     = 3;
+  float             ac_power_kw                       = 4; // PINV_Pout
+  uint64            subpackage_sn_1_7                 = 5;
+  uint64            subpackage_sn_8_14                = 6;
+  uint64            app_githash                       = 7;
+  float             bus_lv                            = 8;  // POD_Vbatt
+  float             bus_hv                            = 9;  // PINV_Vdc
+  float             pinv_heatsink_temp                = 10; // PINV_HeatsinkTemp
+  bool              is_pod_persistant_fault           = 11; // POD_PersistentlyFaulted
+  bool              is_pod_permanent_fault            = 12; // POD_PersistentlyFaulted
+  float             lifetime_energy_discharged_wh     = 13; // PINV_LifetimeEnergyDischarged
+  float             lifetime_energy_charged_wh        = 14; // PINV_LifetimeEnergyCharged
+  float             v_thd                             = 15; // PINV_v_thd
+  float             grid_resistance                   = 16; // PINV_gridResistance
+  float             cbc_events                        = 17; // PINV_cbcEvents
+  bool              hw_enable_line                    = 18; // PINV_HardwareEnableLine
+  DcacAlertMatrices dcac_alert_matrices               = 19;
+  string            subpackage_sn                     = 20;
+  float             pod_heatsink_temp                 = 21; // POD_DCDCHeatsinkTemp
+  float             max_historical_pinv_heatsink_temp = 22;
+  float             max_historical_pod_heatsink_temp  = 23;
 }
 
 message Powertray {
